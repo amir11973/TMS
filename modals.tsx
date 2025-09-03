@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect, FormEvent } from 'react';
+import moment from 'moment-jalaali';
 import { User, UserRole, TeamMember } from './types';
 import { getTodayString } from './constants';
 import { ProjectIcon, ActionIcon, EditIcon, DeleteIcon } from './icons';
@@ -11,7 +12,7 @@ export const ActivityModal = ({ isOpen, onClose, onSave, users, activityToEdit, 
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '' };
     
     const [activity, setActivity] = useState(initialActivityState);
-    const responsibleUsers = teamMembers.filter(m => m.role === 'مدیر' || m.role === 'عضو تیم');
+    const responsibleUsers = teamMembers;
     const approverUsers = teamMembers.filter(m => m.role === 'مدیر' || m.role === 'ادمین');
 
     useEffect(() => {
@@ -86,17 +87,17 @@ export const ActivityModal = ({ isOpen, onClose, onSave, users, activityToEdit, 
     );
 };
 
-export const ActionModal = ({ isOpen, onClose, onSave, users, units, actionToEdit, currentUser, teamMembers }: {
+export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionToEdit, currentUser, teamMembers }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (action: any) => void;
     users: User[];
-    units: string[];
+    sections: string[];
     actionToEdit: any;
     currentUser: User;
     teamMembers: TeamMember[];
 }) => {
-    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: units[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
+    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
     const [action, setAction] = useState(initialActionState);
 
     const possibleOwners = React.useMemo(() => {
@@ -107,18 +108,19 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, units, actionToEdi
         return uniqueOwners;
     }, [currentUser, teamMembers]);
 
-    const responsibleUsers = teamMembers.filter(m => m.role === 'مدیر');
+    const responsibleUsers = teamMembers;
     const approverUsers = teamMembers.filter(m => m.role === 'مدیر' || m.role === 'ادمین');
 
     useEffect(() => {
         if (isOpen) {
+            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
             if (actionToEdit) {
-                setAction({ ...initialActionState, ...actionToEdit, owner: actionToEdit.owner || currentUser.username });
+                setAction({ ...freshInitialState, ...actionToEdit, owner: actionToEdit.owner || currentUser.username });
             } else {
-                setAction({...initialActionState, owner: currentUser.username });
+                setAction({...freshInitialState, owner: currentUser.username });
             }
         }
-    }, [isOpen, actionToEdit, currentUser]);
+    }, [isOpen, actionToEdit, currentUser, sections]);
 
     if (!isOpen) return null;
 
@@ -167,10 +169,10 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, units, actionToEdi
                             </div>
                         </div>
                          <div className="input-group">
-                            <label htmlFor="action-unit">واحد متولی</label>
+                            <label htmlFor="action-unit">بخش</label>
                             <select name="unit" id="action-unit" value={action.unit} onChange={handleChange} required>
-                                <option value="" disabled>یک واحد انتخاب کنید</option>
-                                {units.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                                <option value="" disabled>یک بخش انتخاب کنید</option>
+                                {sections.map(section => <option key={section} value={section}>{section}</option>)}
                             </select>
                         </div>
                         <div className="input-group">
@@ -327,16 +329,16 @@ export const DetailsModal = ({ isOpen, onClose, item }) => {
                             </span>
                         </div>
                         <div className="detail-group">
-                            <span className="detail-label">واحد متولی</span>
+                            <span className="detail-label">بخش</span>
                             <span className="detail-value">{item.unit}</span>
                         </div>
                         <div className="detail-group">
                             <span className="detail-label">تاریخ شروع</span>
-                            <span className="detail-value">{isProject ? item.projectStartDate : item.startDate}</span>
+                            <span className="detail-value">{moment(isProject ? item.projectStartDate : item.startDate).format('jYYYY/jMM/jDD')}</span>
                         </div>
                         <div className="detail-group">
                             <span className="detail-label">تاریخ پایان</span>
-                            <span className="detail-value">{isProject ? item.projectEndDate : item.endDate}</span>
+                            <span className="detail-value">{moment(isProject ? item.projectEndDate : item.endDate).format('jYYYY/jMM/jDD')}</span>
                         </div>
                         {isProject && (
                              <div className="detail-group full-width">
@@ -463,7 +465,7 @@ export const HistoryModal = ({ isOpen, onClose, history }) => {
                                <p><strong>وضعیت:</strong> {entry?.status ?? 'نامشخص'} {entry?.requestedStatus ? `(درخواست برای ${entry.requestedStatus})` : ''}</p>
                                {approvalStatusText && <p><strong>وضعیت تایید:</strong> {approvalStatusText}</p>}
                                <p><strong>کاربر:</strong> {entry?.user ?? 'نامشخص'}</p>
-                               <p><strong>تاریخ:</strong> {entry?.date ? new Date(entry.date).toLocaleString('fa-IR') : 'نامشخص'}</p>
+                               <p><strong>تاریخ:</strong> {entry?.date ? moment(entry.date).format('jYYYY/jMM/jDD HH:mm') : 'نامشخص'}</p>
                                {entry?.comment && <p><strong>توضیحات:</strong> {entry.comment}</p>}
                                {entry?.details && <p><strong>جزئیات:</strong> {entry.details}</p>}
                                {entry?.fileName && <p><strong>فایل:</strong> {entry.fileName}</p>}
@@ -845,13 +847,13 @@ export const CompletedTasksModal = ({ isOpen, onClose, items }) => {
                             <tbody>
                                 {items.length > 0 ? items.map(item => {
                                     const finalApprovalEntry = item.history?.slice().reverse().find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
-                                    const finalApprovalDate = finalApprovalEntry ? new Date(finalApprovalEntry.date).toLocaleDateString('fa-IR') : '—';
+                                    const finalApprovalDate = finalApprovalEntry ? moment(finalApprovalEntry.date).format('jYYYY/jMM/jDD') : '—';
                                     
                                     return (
                                         <tr key={`${item.type}-${item.id}`}>
                                             <td>{item.title}</td>
                                             <td>{item.parentName}</td>
-                                            <td>{item.endDate}</td>
+                                            <td>{moment(item.endDate).format('jYYYY/jMM/jDD')}</td>
                                             <td>{finalApprovalDate}</td>
                                         </tr>
                                     );

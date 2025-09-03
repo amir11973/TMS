@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, FormEvent, useEffect } from 'react';
+import moment from 'moment-jalaali';
 import { ItemStatus, User, UserRole, TeamMember, TeamMemberRole } from './types';
 import { getTodayString } from './constants';
 import { supabase, handleSupabaseError } from './supabaseClient';
@@ -180,7 +181,7 @@ const DashboardDataTable = ({ items }) => {
                             <th>عنوان</th>
                             <th>مالک</th>
                             <th>مسئول</th>
-                            <th>واحد متولی</th>
+                            <th>بخش</th>
                             <th>وضعیت</th>
                             <th>اهمیت</th>
                         </tr>
@@ -222,7 +223,7 @@ const DashboardDataTable = ({ items }) => {
 };
 
 
-export const DashboardPage = ({ projects, actions, currentUser, users, units }) => {
+export const DashboardPage = ({ projects, actions, currentUser, users, sections }) => {
     const [filters, setFilters] = useState({
         type: 'all',
         unit: 'all',
@@ -353,10 +354,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, units }) 
                     </select>
                 </div>
                 <div className="filter-group">
-                    <label htmlFor="unit-filter">واحد متولی</label>
+                    <label htmlFor="unit-filter">بخش</label>
                     <select id="unit-filter" name="unit" value={filters.unit} onChange={handleFilterChange}>
                         <option value="all">همه</option>
-                        {units.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                        {sections.map(section => <option key={section} value={section}>{section}</option>)}
                     </select>
                 </div>
                 <div className="filter-group">
@@ -390,7 +391,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, units }) 
                         </div>
                     </div>
                 </StatCard>
-                <BarChart data={unitData} title="تفکیک بر اساس واحد متولی" color="#e94560" />
+                <BarChart data={unitData} title="تفکیک بر اساس بخش" color="#e94560" />
                 <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" />
             </div>
             <DashboardDataTable items={filteredItems} />
@@ -591,9 +592,9 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
     );
 };
 
-export const ProjectDefinitionPage = ({ users, units, onSave, projectToEdit, projects, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject }) => {
+export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, projects, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject }) => {
     const initialProjectState = {
-        projectName: '', projectManager: '', unit: units[0] || '', priority: 'متوسط',
+        projectName: '', projectManager: '', unit: sections[0] || '', priority: 'متوسط',
         projectStartDate: getTodayString(), projectEndDate: getTodayString(), projectGoal: '',
         activities: [],
         owner: '',
@@ -616,7 +617,7 @@ export const ProjectDefinitionPage = ({ users, units, onSave, projectToEdit, pro
         return uniqueOwners;
     }, [currentUser, teamMembers]);
     
-    const projectManagers = teamMembers.filter(m => m.role === 'مدیر');
+    const projectManagers = teamMembers.filter(m => m.role !== 'عضو تیم');
 
     useEffect(() => {
         if (projectToEdit) {
@@ -741,10 +742,10 @@ export const ProjectDefinitionPage = ({ users, units, onSave, projectToEdit, pro
                             </select>
                         </div>
                         <div className="input-group">
-                            <label htmlFor="unit">واحد متولی</label>
+                            <label htmlFor="unit">بخش</label>
                             <select name="unit" id="unit" value={project.unit} onChange={handleChange} required disabled={readOnly}>
-                                <option value="" disabled>یک واحد انتخاب کنید</option>
-                                {units.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                                <option value="" disabled>یک بخش انتخاب کنید</option>
+                                {sections.map(section => <option key={section} value={section}>{section}</option>)}
                             </select>
                         </div>
                          <div className="input-group">
@@ -807,8 +808,8 @@ export const ProjectDefinitionPage = ({ users, units, onSave, projectToEdit, pro
                            {(project.activities || []).map(activity => (
                                <tr key={activity.id}>
                                    <td>{activity.title}</td>
-                                   <td>{activity.startDate}</td>
-                                   <td>{activity.endDate}</td>
+                                   <td>{moment(activity.startDate).format('jYYYY/jMM/jDD')}</td>
+                                   <td>{moment(activity.endDate).format('jYYYY/jMM/jDD')}</td>
                                    <td>{activity.responsible}</td>
                                    <td>{activity.approver}</td>
                                    <td>{activity.status}</td>
@@ -918,7 +919,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                     />
                 </div>
                 <div className="filter-group">
-                    <label htmlFor="unit-filter">واحد متولی</label>
+                    <label htmlFor="unit-filter">بخش</label>
                     <select id="unit-filter" value={unitFilter} onChange={e => setUnitFilter(e.target.value)}>
                         <option value="all">همه</option>
                         {allUnits.map(unit => <option key={unit} value={unit}>{unit}</option>)}
@@ -946,7 +947,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                         <th>عنوان</th>
                         <th>مالک</th>
                         <th>مسئول</th>
-                        <th>واحد</th>
+                        <th>بخش</th>
                         <th>اهمیت</th>
                         <th>وضعیت</th>
                         <th>عملیات</th>
@@ -959,7 +960,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                             return (
                                 <CollapsibleTableSection key={type} title={type} count={totalInType} defaultOpen={true} level={0}>
                                     {Object.entries(unitGroups).sort((a, b) => a[0].localeCompare(b[0])).map(([unit, items]) => (
-                                        <CollapsibleTableSection key={`${type}-${unit}`} title={`واحد: ${unit}`} count={items.length} defaultOpen={true} level={1}>
+                                        <CollapsibleTableSection key={`${type}-${unit}`} title={`بخش: ${unit}`} count={items.length} defaultOpen={true} level={1}>
                                             {(items as any[]).map(item => {
                                                 const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
                                                 const isProject = item.type === 'project';
@@ -1259,10 +1260,10 @@ export const ApprovalsPage = ({ items, currentUser, onApprovalDecision, onShowHi
 };
 
 
-export const SettingsPage = ({ theme, onThemeChange, units, onAddUnit, onUpdateUnit, onDeleteUnit, currentUser }) => {
+export const SettingsPage = ({ theme, onThemeChange, sections, onAddSection, onUpdateSection, onDeleteSection, currentUser }) => {
     const [view, setView] = useState('theme'); // 'theme' or 'units'
-    const [newUnit, setNewUnit] = useState('');
-    const [editingUnit, setEditingUnit] = useState<{ old: string, new: string } | null>(null);
+    const [newSection, setNewSection] = useState('');
+    const [editingSection, setEditingSection] = useState<{ old: string, new: string } | null>(null);
 
     const isAdmin = currentUser?.username === 'mahmoudi.pars@gmail.com';
 
@@ -1272,18 +1273,18 @@ export const SettingsPage = ({ theme, onThemeChange, units, onAddUnit, onUpdateU
         }
     }, [isAdmin, view]);
 
-    const handleAddOrUpdateUnit = () => {
-        if (editingUnit) {
-            onUpdateUnit(editingUnit.old, editingUnit.new);
-            setEditingUnit(null);
+    const handleAddOrUpdateSection = () => {
+        if (editingSection) {
+            onUpdateSection(editingSection.old, editingSection.new);
+            setEditingSection(null);
         } else {
-            onAddUnit(newUnit);
-            setNewUnit('');
+            onAddSection(newSection);
+            setNewSection('');
         }
     };
 
-    const startEditing = (unitName: string) => {
-        setEditingUnit({ old: unitName, new: unitName });
+    const startEditing = (sectionName: string) => {
+        setEditingSection({ old: sectionName, new: sectionName });
     };
 
     return (
@@ -1296,7 +1297,7 @@ export const SettingsPage = ({ theme, onThemeChange, units, onAddUnit, onUpdateU
                 {isAdmin && (
                     <button className={`settings-view-btn ${view === 'units' ? 'active' : ''}`} onClick={() => setView('units')}>
                         <TableIcon />
-                        <span>مدیریت واحدها</span>
+                        <span>مدیریت بخشها</span>
                     </button>
                 )}
             </div>
@@ -1318,38 +1319,38 @@ export const SettingsPage = ({ theme, onThemeChange, units, onAddUnit, onUpdateU
                 )}
                  {view === 'units' && isAdmin && (
                     <>
-                        <h3 className="list-section-header">مدیریت واحدهای سازمانی</h3>
+                        <h3 className="list-section-header">مدیریت بخشهای سازمانی</h3>
                          <div className="unit-management-form">
                             <div className="input-group">
-                               <label htmlFor="unit-name-input">نام واحد</label>
+                               <label htmlFor="unit-name-input">نام بخش</label>
                                <input 
                                    id="unit-name-input"
-                                   value={editingUnit ? editingUnit.new : newUnit}
-                                   onChange={e => editingUnit ? setEditingUnit({...editingUnit, new: e.target.value}) : setNewUnit(e.target.value)}
+                                   value={editingSection ? editingSection.new : newSection}
+                                   onChange={e => editingSection ? setEditingSection({...editingSection, new: e.target.value}) : setNewSection(e.target.value)}
                                />
                             </div>
-                            <button className="add-user-button" onClick={handleAddOrUpdateUnit}>
-                                {editingUnit ? 'ذخیره تغییرات' : 'افزودن واحد'}
+                            <button className="add-user-button" onClick={handleAddOrUpdateSection}>
+                                {editingSection ? 'ذخیره تغییرات' : 'افزودن بخش'}
                             </button>
-                            {editingUnit && <button className="cancel-btn" onClick={() => setEditingUnit(null)}>انصراف</button>}
+                            {editingSection && <button className="cancel-btn" onClick={() => setEditingSection(null)}>انصراف</button>}
                         </div>
                         <table className="user-list-table">
                             <thead>
                                 <tr>
-                                    <th>نام واحد</th>
+                                    <th>نام بخش</th>
                                     <th>عملیات</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {units.map(unit => (
-                                    <tr key={unit}>
-                                        <td>{unit}</td>
+                                {sections.map(section => (
+                                    <tr key={section}>
+                                        <td>{section}</td>
                                         <td>
                                             <div className="action-buttons">
-                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => startEditing(unit)}>
+                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => startEditing(section)}>
                                                     <EditIcon />
                                                 </button>
-                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteUnit(unit)}>
+                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteSection(section)}>
                                                     <DeleteIcon />
                                                 </button>
                                             </div>

@@ -4,6 +4,7 @@
 */
 import React, { useState, FormEvent, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import moment from 'moment-jalaali';
 import { User, TeamMember, TeamMemberRole } from './types';
 import { menuItems } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
@@ -30,6 +31,7 @@ import {
     ApprovalDecisionModal
 } from './modals';
 
+moment.loadPersian({ usePersianDigits: true });
 
 const App = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +47,7 @@ const App = () => {
     
     // Settings State
     const [theme, setTheme] = useState('dark');
-    const [units, setUnits] = useState<string[]>([]);
+    const [sections, setSections] = useState<string[]>([]);
 
     // Team Management State
     const [teams, setTeams] = useState<Record<string, TeamMember[]>>({});
@@ -80,7 +82,7 @@ const App = () => {
             }
 
             try {
-                const [usersRes, projectsRes, actionsRes, unitsRes, teamsRes] = await Promise.all([
+                const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes] = await Promise.all([
                     supabase.from('users').select('*'),
                     supabase.from('projects').select('*, activities(*)').order('id', { foreignTable: 'activities' }),
                     supabase.from('actions').select('*'),
@@ -97,8 +99,8 @@ const App = () => {
                 handleSupabaseError(actionsRes.error, 'fetching actions');
                 setActions(actionsRes.data || []);
 
-                handleSupabaseError(unitsRes.error, 'fetching units');
-                setUnits((unitsRes.data || []).map(u => u.name));
+                handleSupabaseError(sectionsRes.error, 'fetching sections');
+                setSections((sectionsRes.data || []).map(u => u.name));
 
                 handleSupabaseError(teamsRes.error, 'fetching teams');
                 const teamsData = teamsRes.data || [];
@@ -707,14 +709,14 @@ const App = () => {
         setIsHistoryModalOpen(true);
     };
 
-    const handleAddUnit = async (unitName: string) => {
+    const handleAddSection = async (sectionName: string) => {
         setIsActionLoading(true);
         try {
-            if (unitName && !units.includes(unitName)) {
-                const { error } = await supabase.from('units').insert({ name: unitName });
-                handleSupabaseError(error, 'adding unit');
+            if (sectionName && !sections.includes(sectionName)) {
+                const { error } = await supabase.from('units').insert({ name: sectionName });
+                handleSupabaseError(error, 'adding section');
                 if (!error) {
-                    setUnits(prev => [...prev, unitName]);
+                    setSections(prev => [...prev, sectionName]);
                 }
             }
         } finally {
@@ -722,35 +724,78 @@ const App = () => {
         }
     };
 
-    const handleUpdateUnit = async (oldName: string, newName: string) => {
+    const handleUpdateSection = async (oldName: string, newName: string) => {
         setIsActionLoading(true);
         try {
-            if (newName && !units.includes(newName)) {
-                const { error } = await supabase.from('units').update({ name: newName }).eq('name', oldName);
-                handleSupabaseError(error, 'updating unit');
-                if (!error) {
-                    setUnits(prev => prev.map(u => u === oldName ? newName : u));
-                    // Note: In a real app, you might need a cascading update for projects/actions using this unit.
-                }
+            if (newName && !sections.includes(newName) && oldName !== newName) {
+                // Step 1: Insert the new section name into the 'units' table.
+                const { error: insertError } = await supabase.from('units').insert({ name: newName });
+                handleSupabaseError(insertError, 'inserting new section name');
+    
+                // Step 2: Update projects referencing the old section name to the new name.
+                const { error: projectError } = await supabase.from('projects').update({ unit: newName }).eq('unit', oldName);
+                handleSupabaseError(projectError, 'updating projects for section rename');
+    
+                // Step 3: Update actions referencing the old section name to the new name.
+                const { error: actionError } = await supabase.from('actions').update({ unit: newName }).eq('unit', oldName);
+                handleSupabaseError(actionError, 'updating actions for section rename');
+                
+                // Step 4: Delete the old section name from the 'units' table.
+                const { error: deleteError } = await supabase.from('units').delete().eq('name', oldName);
+                handleSupabaseError(deleteError, 'deleting old section name');
+    
+                // If all database operations are successful, update the local state.
+                setSections(prev => prev.map(u => u === oldName ? newName : u));
+                
+                // And refetch data to ensure UI consistency.
+                const [projectsRes, actionsRes] = await Promise.all([
+                    supabase.from('projects').select('*, activities(*)').order('id', { foreignTable: 'activities' }),
+                    supabase.from('actions').select('*')
+                ]);
+    
+                handleSupabaseError(projectsRes.error, 'refetching projects after section update');
+                if (projectsRes.data) setProjects(projectsRes.data);
+                
+                handleSupabaseError(actionsRes.error, 'refetching actions after section update');
+                if (actionsRes.data) setActions(actionsRes.data);
             }
+        } catch (e: any) {
+            console.error(`Failed to update section: ${e.message}`);
+            alert(`خطا در بروزرسانی بخش: ${e.message}`);
         } finally {
             setIsActionLoading(false);
         }
     };
 
-    const handleDeleteUnit = (unitName: string) => {
+    const handleDeleteSection = (sectionName: string) => {
         handleRequestConfirmation({
-            title: 'حذف واحد',
-            message: `آیا از حذف واحد "${unitName}" اطمینان دارید؟`,
+            title: 'حذف بخش',
+            message: `آیا از حذف بخش "${sectionName}" اطمینان دارید؟`,
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
-                    const { error } = await supabase.from('units').delete().eq('name', unitName);
-                    handleSupabaseError(error, 'deleting unit');
-                    if (!error) {
-                        setUnits(prev => prev.filter(u => u !== unitName));
+                    // Check for dependencies before deleting
+                    const { count: projectCount, error: pError } = await supabase.from('projects').select('*', { count: 'exact', head: true }).eq('unit', sectionName);
+                    handleSupabaseError(pError, 'checking projects for section');
+                    
+                    const { count: actionCount, error: aError } = await supabase.from('actions').select('*', { count: 'exact', head: true }).eq('unit', sectionName);
+                    handleSupabaseError(aError, 'checking actions for section');
+                    
+                    if ((projectCount && projectCount > 0) || (actionCount && actionCount > 0)) {
+                        alert(`امکان حذف بخش "${sectionName}" وجود ندارد زیرا در حال استفاده توسط یک یا چند پروژه یا اقدام است.`);
+                        return;
                     }
-                } finally {
+    
+                    const { error } = await supabase.from('units').delete().eq('name', sectionName);
+                    handleSupabaseError(error, 'deleting section');
+                    if (!error) {
+                        setSections(prev => prev.filter(u => u !== sectionName));
+                    }
+                } catch (e: any) {
+                     console.error(`Failed to delete section: ${e.message}`);
+                     alert(`خطا در حذف بخش: ${e.message}`);
+                }
+                finally {
                     setIsActionLoading(false);
                 }
             }
@@ -903,7 +948,7 @@ const App = () => {
                             actions={actions}
                             currentUser={loggedInUser}
                             users={users}
-                            units={units}
+                            sections={sections}
                         />;
             case 'my_team':
                 return <MyTeamPage
@@ -915,9 +960,9 @@ const App = () => {
                             onUpdateRole={handleUpdateTeamMemberRole}
                         />;
             case 'users':
-                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} units={units} />;
+                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} sections={sections} />;
             case 'define_project':
-                return <ProjectDefinitionPage users={users} units={units} onSave={handleSaveProject} projectToEdit={editingProject} projects={projects} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} />;
+                return <ProjectDefinitionPage users={users} sections={sections} onSave={handleSaveProject} projectToEdit={editingProject} projects={projects} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} />;
             case 'projects_actions_list':
                 return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} />;
             case 'tasks':
@@ -948,10 +993,10 @@ const App = () => {
                 return <SettingsPage 
                             theme={theme} 
                             onThemeChange={handleThemeChange}
-                            units={units}
-                            onAddUnit={handleAddUnit}
-                            onUpdateUnit={handleUpdateUnit}
-                            onDeleteUnit={handleDeleteUnit}
+                            sections={sections}
+                            onAddSection={handleAddSection}
+                            onUpdateSection={handleUpdateSection}
+                            onDeleteSection={handleDeleteSection}
                             currentUser={loggedInUser}
                         />;
             default:
@@ -1048,7 +1093,7 @@ const supabaseAnonKey = '...';`}
                 onClose={() => setIsActionModalOpen(false)}
                 onSave={handleSaveAction}
                 users={users}
-                units={units}
+                sections={sections}
                 actionToEdit={editingAction}
                 currentUser={loggedInUser}
                 teamMembers={currentUserTeam}

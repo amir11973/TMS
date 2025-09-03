@@ -341,7 +341,7 @@ body {
 }
 
 .login-form {
-  background-color: var(--c-surface);
+  background-color: #344d8f;
   padding: 40px;
   border-radius: 12px;
   width: 100%;
