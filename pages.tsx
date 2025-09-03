@@ -484,17 +484,38 @@ export const LoginPage = ({ onLogin, onSignUp }: {
                 <h2>{isLoginView ? 'ورود به سامانه' : 'ایجاد حساب کاربری'}</h2>
                 {successMessage && <p className="success-message">{successMessage}</p>}
                 <div className="input-group">
-                    <label htmlFor="username">نام کاربری</label>
-                    <input type="text" id="username" value={username} onChange={e => setUsername(e.target.value)} required />
+                    <label htmlFor="username">{isLoginView ? 'نام کاربری' : 'ایمیل'}</label>
+                    <input 
+                        type={isLoginView ? "text" : "email"} 
+                        id="username" 
+                        value={username} 
+                        onChange={e => setUsername(e.target.value)} 
+                        placeholder={!isLoginView ? "ایمیل خود را وارد کنید" : ""}
+                        required 
+                    />
                 </div>
                 <div className="input-group">
                     <label htmlFor="password">رمز عبور</label>
-                    <input type="password" id="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                    <input 
+                        type="password" 
+                        id="password" 
+                        value={password} 
+                        onChange={e => setPassword(e.target.value)} 
+                        placeholder={!isLoginView ? "حداقل ۶ کارکتر" : ""}
+                        required 
+                    />
                 </div>
                 {!isLoginView && (
                     <div className="input-group">
                         <label htmlFor="confirm-password">تکرار رمز عبور</label>
-                        <input type="password" id="confirm-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+                        <input 
+                            type="password" 
+                            id="confirm-password" 
+                            value={confirmPassword} 
+                            onChange={e => setConfirmPassword(e.target.value)} 
+                            placeholder="رمز عبور را تکرار کنید"
+                            required 
+                        />
                     </div>
                 )}
                 <button type="submit" className="login-button">{isLoginView ? 'ورود' : 'ایجاد حساب'}</button>
