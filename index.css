@@ -1051,6 +1051,10 @@ body {
     grid-column: span 3;
 }
 
+.dashboard-grid > .dashboard-card.bar-chart-card.horizontal {
+    grid-column: span 3;
+}
+
 @media (max-width: 1200px) {
     .dashboard-grid > .dashboard-card {
         grid-column: span 3 !important;
@@ -1199,8 +1203,8 @@ body {
     flex-shrink: 0;
 }
 
-/* Bar Chart */
-.bar-chart-container {
+/* Vertical Bar Chart */
+.bar-chart-container.vertical {
     display: flex;
     gap: 16px;
     align-items: flex-end;
@@ -1212,7 +1216,7 @@ body {
     padding-bottom: 10px;
 }
 
-.bar-item {
+.bar-chart-container.vertical .bar-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1224,7 +1228,7 @@ body {
     justify-content: flex-end;
 }
 
-.bar-wrapper {
+.bar-chart-container.vertical .bar-wrapper {
     width: 100%;
     flex-grow: 1;
     display: flex;
@@ -1236,15 +1240,11 @@ body {
 }
 
 @keyframes growUp {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
 }
 
-.bar {
+.bar-chart-container.vertical .bar {
     width: 100%;
     transition: height 0.4s ease-out, filter 0.2s;
     position: relative;
@@ -1255,22 +1255,22 @@ body {
     animation: growUp 0.5s ease-out;
 }
 
-.bar-item:hover .bar {
+.bar-chart-container.vertical .bar-item:hover .bar {
     filter: brightness(1.25);
 }
-.bar-item:hover .bar-label {
+
+.bar-chart-container.vertical .bar-item:hover .bar-label {
     color: var(--c-text);
 }
 
-
-.bar-value {
+.bar-chart-container.vertical .bar-value {
     color: white;
     font-size: 0.9rem;
     font-weight: bold;
     margin-top: 4px;
 }
 
-.bar-label {
+.bar-chart-container.vertical .bar-label {
     font-size: 0.8rem;
     color: var(--c-text-muted);
     white-space: nowrap;
@@ -1280,6 +1280,80 @@ body {
     text-align: center;
     transition: color 0.2s;
 }
+
+/* Horizontal Bar Chart */
+.bar-chart-container.horizontal {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    height: auto;
+    flex-grow: 1;
+    min-height: 200px;
+    padding-bottom: 0;
+}
+
+.bar-chart-container.horizontal .bar-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: auto;
+    width: 100%;
+}
+
+.bar-chart-container.horizontal .bar-label {
+    order: 2;
+    width: 100px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+    transition: color 0.2s;
+    overflow-wrap: break-word;
+}
+
+.bar-chart-container.horizontal .bar-wrapper {
+    order: 1;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    height: 24px;
+    border-radius: 4px;
+    background-color: var(--c-header);
+    overflow: hidden;
+}
+
+@keyframes growRight {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.bar-chart-container.horizontal .bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    transform-origin: left;
+    animation: growRight 0.5s ease-out;
+    transition: filter 0.2s;
+}
+
+.bar-chart-container.horizontal .bar-value {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.bar-chart-container.horizontal .bar-item:hover .bar {
+    filter: brightness(1.25);
+}
+
+.bar-chart-container.horizontal .bar-item:hover .bar-label {
+    color: var(--c-text);
+}
+
 
 /* New Dashboard Data Table Card */
 .data-table-card {

@@ -131,23 +131,23 @@ const PieChart = ({ data, isDonut = false, title }: { data: { name: string; valu
     );
 };
 
-const BarChart = ({ data, title, color }: { data: { name: string; value: number }[], title: string, color: string }) => {
-     if (!data || data.length === 0) {
+const BarChart = ({ data, title, color, orientation = 'vertical' }: { data: { name: string; value: number }[], title: string, color: string, orientation?: 'vertical' | 'horizontal' }) => {
+     if (!data || data.length === 0 || data.every(d => d.value === 0)) {
         return <div className="dashboard-card bar-chart-card"><h4 className="chart-title">{title}</h4><p className="no-data-message">داده‌ای برای نمایش وجود ندارد</p></div>;
     }
     const maxValue = Math.max(...data.map(item => item.value), 0);
 
     return (
-        <div className="dashboard-card bar-chart-card">
+        <div className={`dashboard-card bar-chart-card ${orientation}`}>
             <h4 className="chart-title">{title}</h4>
-            <div className="bar-chart-container">
+            <div className={`bar-chart-container ${orientation}`}>
                 {data.map(item => (
                     <div key={item.name} className="bar-item">
                         <div className="bar-wrapper">
                             <div 
                                 className="bar" 
                                 style={{ 
-                                    height: maxValue > 0 ? `${(item.value / maxValue) * 100}%` : '0%',
+                                    [orientation === 'vertical' ? 'height' : 'width']: maxValue > 0 ? `${(item.value / maxValue) * 100}%` : '0%',
                                     backgroundColor: color 
                                 }}
                                 title={`${item.name}: ${item.value}`}
@@ -392,7 +392,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
                     </div>
                 </StatCard>
                 <BarChart data={unitData} title="تفکیک بر اساس بخش" color="#e94560" />
-                <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" />
+                <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" orientation="horizontal" />
             </div>
             <DashboardDataTable items={filteredItems} />
         </div>
