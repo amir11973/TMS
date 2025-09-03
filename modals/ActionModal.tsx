@@ -1,0 +1,137 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
+import React, { useState, useEffect } from 'react';
+import { User, TeamMember } from '../types';
+import { getTodayString } from '../constants';
+
+export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, currentUser, teamMembers }: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (action: any) => void;
+    users: User[];
+    sections: string[];
+    actionToEdit: any;
+    currentUser: User;
+    teamMembers: TeamMember[];
+}) => {
+    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
+    const [action, setAction] = useState(initialActionState);
+
+    const possibleOwners = React.useMemo(() => {
+        if (!currentUser) return [];
+        const ownerList = [{ username: currentUser.username }, ...teamMembers];
+        const uniqueOwners = Array.from(new Set(ownerList.map(u => u.username)))
+                                 .map(username => ({ username }));
+        return uniqueOwners;
+    }, [currentUser, teamMembers]);
+
+    const responsibleUsers = teamMembers;
+    const approverUsers = teamMembers.filter(m => m.role === 'مدیر' || m.role === 'ادمین');
+
+    useEffect(() => {
+        if (isOpen) {
+            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
+            if (actionToEdit) {
+                setAction({ ...freshInitialState, ...actionToEdit, owner: actionToEdit.owner || currentUser.username });
+            } else {
+                setAction({...freshInitialState, owner: currentUser.username });
+            }
+        }
+    }, [isOpen, actionToEdit, currentUser, sections]);
+
+    if (!isOpen) return null;
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setAction(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSave = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(action);
+    };
+
+    const modalTitle = actionToEdit ? "ویرایش اقدام" : "تعریف اقدام جدید";
+
+    return (
+        <div className="modal-backdrop" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <form onSubmit={handleSave}>
+                    <div className="modal-header">
+                        <h3>{modalTitle}</h3>
+                        <button type="button" className="close-button" onClick={onClose}>&times;</button>
+                    </div>
+                    <div className="modal-body">
+                         <div className="input-grid-col-2">
+                            <div className="input-group">
+                                <label htmlFor="action-title">عنوان اقدام</label>
+                                <input name="title" id="action-title" value={action.title} onChange={handleChange} required />
+                            </div>
+                             <div className="input-group">
+                                <label htmlFor="action-owner">مالک</label>
+                                <select name="owner" id="action-owner" value={action.owner} onChange={handleChange} required>
+                                    <option value="" disabled>یک مالک انتخاب کنید</option>
+                                    {possibleOwners.map(u => <option key={u.username} value={u.username}>{u.username}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                         <div className="input-grid-col-2">
+                             <div className="input-group">
+                                <label htmlFor="action-startDate">تاریخ شروع</label>
+                                <input type="date" name="startDate" id="action-startDate" value={action.startDate} onChange={handleChange} required />
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="action-endDate">تاریخ پایان</label>
+                                <input type="date" name="endDate" id="action-endDate" value={action.endDate} onChange={handleChange} required />
+                            </div>
+                        </div>
+                         <div className="input-group">
+                            <label htmlFor="action-unit">بخش</label>
+                            <select name="unit" id="action-unit" value={action.unit} onChange={handleChange} required>
+                                <option value="" disabled>یک بخش انتخاب کنید</option>
+                                {sections.map(section => <option key={section} value={section}>{section}</option>)}
+                            </select>
+                        </div>
+                        <div className="input-group">
+                            <label htmlFor="action-priority">درجه اهمیت</label>
+                            <select name="priority" id="action-priority" value={action.priority} onChange={handleChange} required>
+                                <option value="کم">کم</option>
+                                <option value="متوسط">متوسط</option>
+                                <option value="زیاد">زیاد</option>
+                            </select>
+                        </div>
+                        <div className="input-group">
+                            <label htmlFor="action-status">وضعیت</label>
+                            <select name="status" id="action-status" value={action.status || 'شروع نشده'} onChange={handleChange} disabled>
+                                <option value="شروع نشده">شروع نشده</option>
+                                <option value="در حال اجرا">در حال اجرا</option>
+                                <option value="ارسال برای تایید">ارسال برای تایید</option>
+                                <option value="خاتمه یافته">خاتمه یافته</option>
+                            </select>
+                        </div>
+                        <div className="input-group">
+                            <label htmlFor="action-responsible">مسئول انجام</label>
+                            <select name="responsible" id="action-responsible" value={action.responsible} onChange={handleChange} required>
+                                <option value="" disabled>یک کاربر انتخاب کنید</option>
+                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{user.username}</option>)}
+                            </select>
+                        </div>
+                        <div className="input-group">
+                            <label htmlFor="action-approver">تایید کننده</label>
+                            <select name="approver" id="action-approver" value={action.approver} onChange={handleChange} required>
+                                <option value="" disabled>یک کاربر انتخاب کنید</option>
+                                {approverUsers.map(user => <option key={user.username} value={user.username}>{user.username}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="cancel-btn" onClick={onClose}>انصراف</button>
+                        <button type="submit" className="save-btn">ذخیره اطلاعات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};

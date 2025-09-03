@@ -9,6 +9,7 @@ import { User, TeamMember, TeamMemberRole } from './types';
 import { menuItems } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
 
+// FIX: Corrected import path to avoid conflict with empty pages.tsx file.
 import { 
     LoginPage, 
     UserManagementPage, 
@@ -19,7 +20,8 @@ import {
     SettingsPage,
     DashboardPage,
     MyTeamPage
-} from './pages';
+} from './pages/index';
+// FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { 
     ActionModal, 
     DetailsModal, 
@@ -29,7 +31,7 @@ import {
     UserEditModal,
     ApprovalInfoModal,
     ApprovalDecisionModal
-} from './modals';
+} from './modals/index';
 
 moment.loadPersian({ usePersianDigits: true });
 
@@ -1088,6 +1090,32 @@ const supabaseAnonKey = '...';`}
                     </div>
                 </main>
             </div>
+            
+            <nav className="bottom-nav" aria-label="Main Navigation">
+                {menuItems
+                    .filter(item => {
+                        if (item.id === 'users') return isAdmin;
+                        if (item.id === 'define_new') return false; // Action button, not for navigation bar
+                        return true;
+                    })
+                    .map(item => {
+                        const badgeCount = badgeCounts[item.id] || 0;
+                        return (
+                            <button
+                                key={item.id}
+                                className={`bottom-nav-button ${view === item.id ? 'active' : ''}`}
+                                onClick={() => handleMenuClick(item.id, item.name)}
+                                title={item.name}
+                                aria-current={view === item.id ? 'page' : undefined}
+                            >
+                                {item.icon}
+                                <span className="bottom-nav-button-text">{item.name}</span>
+                                {badgeCount > 0 && <span className="bottom-nav-badge">{badgeCount}</span>}
+                            </button>
+                        );
+                    })}
+            </nav>
+
             <ActionModal 
                 isOpen={isActionModalOpen}
                 onClose={() => setIsActionModalOpen(false)}
