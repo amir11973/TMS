@@ -797,6 +797,7 @@ body {
     animation: slideIn 0.3s;
     display: flex;
     flex-direction: column;
+    max-height: 90vh; /* Ensure modal fits on screen */
 }
 
 .modal-content.action-modal-content {
@@ -969,7 +970,7 @@ body {
 
 .detail-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr; /* Mobile-first single column */
     gap: 1rem;
     margin-bottom: 1rem;
 }
@@ -1796,6 +1797,10 @@ body.theme-light .group-header-row:hover {
     .project-form {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr 1fr;
     }
 
     .input-grid-col-2 {
