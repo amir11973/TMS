@@ -181,7 +181,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     
                     {activeTab === 'main' && (
                         <div className="tab-content" style={{ backgroundColor: 'transparent', padding: '12px 0' }}>
-                            <form className="project-form" onSubmit={handleSave}>
+                            <form id="project-form" className="project-form" onSubmit={handleSave}>
                                 <div className="form-header">
                                    <h3>مشخصات کلی پروژه</h3>
                                 </div>
@@ -234,13 +234,6 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                     <label htmlFor="projectGoal">هدف پروژه</label>
                                     <textarea name="projectGoal" id="projectGoal" rows={4} value={project.projectGoal} onChange={handleChange} disabled={readOnly} />
                                 </div>
-
-                                {!readOnly && (
-                                     <div className="modal-footer full-width" style={{ border: 'none', padding: '16px 0 0 0', margin: 0 }}>
-                                        <button type="button" className="cancel-btn" onClick={onClose}>انصراف</button>
-                                        <button type="submit" className="save-btn">{project.isNew ? 'ایجاد و ادامه' : 'ذخیره پروژه'}</button>
-                                    </div>
-                                )}
                             </form>
                         </div>
                     )}
@@ -255,49 +248,58 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                     </button>
                                 )}
                             </div>
-                            <table className="user-list-table">
-                                <thead>
-                                    <tr>
-                                        <th>عنوان</th>
-                                        <th>اهمیت</th>
-                                        <th>وضعیت</th>
-                                        <th>عملیات</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                   {(project.activities || []).map((activity: any) => (
-                                       <tr key={activity.id}>
-                                           <td>{activity.title}</td>
-                                           <td>{renderPriorityBadge(activity.priority)}</td>
-                                           <td>{activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status}</td>
-                                           <td>
-                                                <div className="action-buttons">
-                                                    <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
-                                                        <DetailsIcon />
-                                                    </button>
-                                                    {!readOnly && (
-                                                        <>
-                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
-                                                                <EditIcon />
-                                                            </button>
-                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
-                                                                <DeleteIcon />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
-                                                        <HistoryIcon />
-                                                    </button>
-                                                </div>
-                                           </td>
-                                       </tr>
-                                   ))}
-                                </tbody>
-                            </table>
-                             <div className="modal-footer" style={{ border: 'none', padding: '16px 0 0 0', margin: 0 }}>
-                                <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>
+                            <div className="table-wrapper">
+                                <table className="user-list-table">
+                                    <thead>
+                                        <tr>
+                                            <th>عنوان</th>
+                                            <th>اهمیت</th>
+                                            <th>وضعیت</th>
+                                            <th>عملیات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                       {(project.activities || []).map((activity: any) => (
+                                           <tr key={activity.id}>
+                                               <td>{activity.title}</td>
+                                               <td>{renderPriorityBadge(activity.priority)}</td>
+                                               <td>{activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status}</td>
+                                               <td>
+                                                    <div className="action-buttons">
+                                                        <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
+                                                            <DetailsIcon />
+                                                        </button>
+                                                        {!readOnly && (
+                                                            <>
+                                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
+                                                                    <EditIcon />
+                                                                </button>
+                                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
+                                                                    <DeleteIcon />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
+                                                            <HistoryIcon />
+                                                        </button>
+                                                    </div>
+                                               </td>
+                                           </tr>
+                                       ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
+                    )}
+                </div>
+                 <div className="modal-footer">
+                    {activeTab === 'main' && !readOnly ? (
+                        <>
+                            <button type="button" className="cancel-btn" onClick={onClose}>انصراف</button>
+                            <button type="submit" form="project-form" className="save-btn">{project.isNew ? 'ایجاد و ادامه' : 'ذخیره پروژه'}</button>
+                        </>
+                    ) : (
+                        <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>
                     )}
                 </div>
                 <ActivityModal 

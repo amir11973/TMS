@@ -64,7 +64,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-content action-modal-content" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSave}>
                     <div className="modal-header">
                         <h3>{modalTitle}</h3>
@@ -83,8 +83,6 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                                     {possibleOwners.map(u => <option key={u.username} value={u.username}>{userMap.get(u.username) || u.username}</option>)}
                                 </select>
                             </div>
-                        </div>
-                         <div className="input-grid-col-2">
                              <div className="input-group">
                                 <label htmlFor="action-startDate">تاریخ شروع</label>
                                 <input type="date" name="startDate" id="action-startDate" value={action.startDate} onChange={handleChange} required />
@@ -93,44 +91,44 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                                 <label htmlFor="action-endDate">تاریخ پایان</label>
                                 <input type="date" name="endDate" id="action-endDate" value={action.endDate} onChange={handleChange} required />
                             </div>
-                        </div>
-                         <div className="input-group">
-                            <label htmlFor="action-unit">بخش</label>
-                            <select name="unit" id="action-unit" value={action.unit} onChange={handleChange} required>
-                                <option value="" disabled>یک بخش انتخاب کنید</option>
-                                {sections.map(section => <option key={section} value={section}>{section}</option>)}
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label htmlFor="action-priority">درجه اهمیت</label>
-                            <select name="priority" id="action-priority" value={action.priority} onChange={handleChange} required>
-                                <option value="کم">کم</option>
-                                <option value="متوسط">متوسط</option>
-                                <option value="زیاد">زیاد</option>
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label htmlFor="action-status">وضعیت</label>
-                            <select name="status" id="action-status" value={displayStatus} onChange={handleChange} disabled>
-                                <option value="شروع نشده">شروع نشده</option>
-                                <option value="در حال اجرا">در حال اجرا</option>
-                                <option value="ارسال برای تایید">ارسال برای تایید</option>
-                                <option value="خاتمه یافته">خاتمه یافته</option>
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label htmlFor="action-responsible">مسئول انجام</label>
-                            <select name="responsible" id="action-responsible" value={action.responsible} onChange={handleChange} required>
-                                <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
-                            </select>
-                        </div>
-                        <div className="input-group">
-                            <label htmlFor="action-approver">تایید کننده</label>
-                            <select name="approver" id="action-approver" value={action.approver} onChange={handleChange} required>
-                                <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
-                            </select>
+                            <div className="input-group">
+                                <label htmlFor="action-unit">بخش</label>
+                                <select name="unit" id="action-unit" value={action.unit} onChange={handleChange} required>
+                                    <option value="" disabled>یک بخش انتخاب کنید</option>
+                                    {sections.map(section => <option key={section} value={section}>{section}</option>)}
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="action-priority">درجه اهمیت</label>
+                                <select name="priority" id="action-priority" value={action.priority} onChange={handleChange} required>
+                                    <option value="کم">کم</option>
+                                    <option value="متوسط">متوسط</option>
+                                    <option value="زیاد">زیاد</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="action-responsible">مسئول انجام</label>
+                                <select name="responsible" id="action-responsible" value={action.responsible} onChange={handleChange} required>
+                                    <option value="" disabled>یک کاربر انتخاب کنید</option>
+                                    {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="action-approver">تایید کننده</label>
+                                <select name="approver" id="action-approver" value={action.approver} onChange={handleChange} required>
+                                    <option value="" disabled>یک کاربر انتخاب کنید</option>
+                                    {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
+                                </select>
+                            </div>
+                             <div className="input-group">
+                                <label htmlFor="action-status">وضعیت</label>
+                                <select name="status" id="action-status" value={displayStatus} onChange={handleChange} disabled>
+                                    <option value="شروع نشده">شروع نشده</option>
+                                    <option value="در حال اجرا">در حال اجرا</option>
+                                    <option value="ارسال برای تایید">ارسال برای تایید</option>
+                                    <option value="خاتمه یافته">خاتمه یافته</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div className="modal-footer">

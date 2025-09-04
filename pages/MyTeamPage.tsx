@@ -57,50 +57,52 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                 </div>
                 <button className="add-user-button" onClick={handleAddClick} disabled={!userToAdd}>افزودن</button>
             </div>
-            <table className="user-list-table">
-                <thead>
-                    <tr>
-                        <th>نام و نام خانوادگی</th>
-                        <th>نام کاربری</th>
-                        <th>نقش در تیم</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {teamMembers.map(member => {
-                        const userDetails = allUsers.find(u => u.username === member.username);
-                        const isCurrentUser = member.username === currentUser.username;
-                        return (
-                            <tr key={member.username}>
-                                <td>{userDetails?.full_name}</td>
-                                <td>{member.username}</td>
-                                <td>
-                                    <select 
-                                        className="status-select"
-                                        value={member.role} 
-                                        onChange={e => onUpdateRole(member.username, e.target.value as TeamMemberRole)}
-                                        disabled={isCurrentUser}
-                                    >
-                                        <option value="ادمین">ادمین</option>
-                                        <option value="مدیر">مدیر</option>
-                                        <option value="عضو تیم">عضو تیم</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <button 
-                                        className="icon-btn delete-btn" 
-                                        title={isCurrentUser ? "امکان حذف کاربر جاری از تیم وجود ندارد" : "حذف از تیم"} 
-                                        onClick={() => onRemoveMember(member.username)}
-                                        disabled={isCurrentUser}
-                                    >
-                                        <DeleteIcon />
-                                    </button>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+            <div className="table-wrapper">
+                <table className="user-list-table">
+                    <thead>
+                        <tr>
+                            <th>نام و نام خانوادگی</th>
+                            <th>نام کاربری</th>
+                            <th>نقش در تیم</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {teamMembers.map(member => {
+                            const userDetails = allUsers.find(u => u.username === member.username);
+                            const isCurrentUser = member.username === currentUser.username;
+                            return (
+                                <tr key={member.username}>
+                                    <td>{userDetails?.full_name}</td>
+                                    <td>{member.username}</td>
+                                    <td>
+                                        <select 
+                                            className="status-select"
+                                            value={member.role} 
+                                            onChange={e => onUpdateRole(member.username, e.target.value as TeamMemberRole)}
+                                            disabled={isCurrentUser}
+                                        >
+                                            <option value="ادمین">ادمین</option>
+                                            <option value="مدیر">مدیر</option>
+                                            <option value="عضو تیم">عضو تیم</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button 
+                                            className="icon-btn delete-btn" 
+                                            title={isCurrentUser ? "امکان حذف کاربر جاری از تیم وجود ندارد" : "حذف از تیم"} 
+                                            onClick={() => onRemoveMember(member.username)}
+                                            disabled={isCurrentUser}
+                                        >
+                                            <DeleteIcon />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

@@ -8,6 +8,7 @@ import moment from 'moment-jalaali';
 import { User, TeamMember, TeamMemberRole } from './types';
 import { menuItems } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
+import { PlusIcon } from './icons';
 
 // FIX: Corrected import path to avoid conflict with empty pages.tsx file.
 import { 
@@ -1111,6 +1112,15 @@ const supabaseAnonKey = '...';`}
                         );
                     })}
             </nav>
+
+            <button
+                className="fab"
+                title="تعریف پروژه و اقدام"
+                onClick={() => handleMenuClick('define_new', 'تعریف پروژه و اقدام')}
+                aria-label="تعریف پروژه و اقدام جدید"
+            >
+                <PlusIcon />
+            </button>
 
             <ProjectDefinitionPage
                 isOpen={isProjectModalOpen}

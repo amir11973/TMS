@@ -58,47 +58,49 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
                 </div>
                 <button type="submit" className="add-user-button">افزودن</button>
             </form>
-            <table className="user-list-table">
-                <thead>
-                    <tr>
-                        <th>نام و نام خانوادگی</th>
-                        <th>نام کاربری</th>
-                        <th>وضعیت</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map(user => (
-                        <tr key={user.id}>
-                            <td>{user.full_name}</td>
-                            <td>{user.username}</td>
-                            <td>
-                                <span className={user.is_active ? 'status-active' : 'status-inactive'}>
-                                    {user.is_active ? 'فعال' : 'غیرفعال'}
-                                </span>
-                            </td>
-                            <td>
-                                <div className="action-buttons">
-                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditUser(user.id)}>
-                                        <EditIcon />
-                                    </button>
-                                    <button
-                                        className="icon-btn"
-                                        title={user.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
-                                        onClick={() => onToggleUserActive(user.id)}
-                                        style={{ color: user.is_active ? 'var(--c-warning)' : 'var(--c-success)' }}
-                                    >
-                                        <PowerIcon />
-                                    </button>
-                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteUser(user.id)} disabled={user.username === 'mahmoudi.pars@gmail.com'}>
-                                        <DeleteIcon />
-                                    </button>
-                                </div>
-                            </td>
+            <div className="table-wrapper">
+                <table className="user-list-table">
+                    <thead>
+                        <tr>
+                            <th>نام و نام خانوادگی</th>
+                            <th>نام کاربری</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {users.map(user => (
+                            <tr key={user.id}>
+                                <td>{user.full_name}</td>
+                                <td>{user.username}</td>
+                                <td>
+                                    <span className={user.is_active ? 'status-active' : 'status-inactive'}>
+                                        {user.is_active ? 'فعال' : 'غیرفعال'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div className="action-buttons">
+                                        <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditUser(user.id)}>
+                                            <EditIcon />
+                                        </button>
+                                        <button
+                                            className="icon-btn"
+                                            title={user.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
+                                            onClick={() => onToggleUserActive(user.id)}
+                                            style={{ color: user.is_active ? 'var(--c-warning)' : 'var(--c-success)' }}
+                                        >
+                                            <PowerIcon />
+                                        </button>
+                                        <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteUser(user.id)} disabled={user.username === 'mahmoudi.pars@gmail.com'}>
+                                            <DeleteIcon />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

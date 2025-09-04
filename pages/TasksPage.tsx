@@ -82,70 +82,72 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
             </div>
             <section>
                 <h3 className="list-section-header">وظایف جاری ({openTasks.length})</h3>
-                <table className="user-list-table">
-                    <thead>
-                        <tr>
-                            <th>عنوان</th>
-                            <th>وضعیت تائید</th>
-                            <th>وضعیت</th>
-                            <th>عملیات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.keys(groupedOpenTasks).length > 0 ? (
-                            // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
-                            Object.entries(groupedOpenTasks).map(([groupName, tasks]: [string, any[]]) => (
-                                <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
-                                    {tasks.map(item => {
-                                        let approvalStatusText = '—';
-                                        if (item.status === 'ارسال برای تایید') {
-                                            approvalStatusText = `منتظر تایید (${item.requestedStatus})`;
-                                        } else if (item.approvalStatus === 'approved') {
-                                            approvalStatusText = 'تایید شده';
-                                        } else if (item.approvalStatus === 'rejected') {
-                                            approvalStatusText = 'رد شده';
-                                        }
-
-                                        const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
-
-                                        return (
-                                            <tr key={item.id}>
-                                                <td>{item.title}</td>
-                                                <td>{approvalStatusText}</td>
-                                                <td>{displayStatus}</td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
-                                                            <DetailsIcon />
-                                                        </button>
-                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                            <HistoryIcon />
-                                                        </button>
-                                                        <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
-                                                            <DelegateIcon />
-                                                        </button>
-                                                        {item.status === 'شروع نشده' && (
-                                                            <button className="send-approval-btn" onClick={() => handleSendForApproval(item, 'در حال اجرا')}>ارسال برای تایید شروع</button>
-                                                        )}
-                                                        {item.status === 'در حال اجرا' && (
-                                                            <button className="send-approval-btn" onClick={() => handleSendForApproval(item, 'خاتمه یافته')}>ارسال برای تایید خاتمه</button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </CollapsibleTableSection>
-                            ))
-                        ) : (
+                <div className="table-wrapper">
+                    <table className="user-list-table">
+                        <thead>
                             <tr>
-                                <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
-                                    هیچ وظیفه جاری برای شما ثبت نشده است.
-                                </td>
+                                <th>عنوان</th>
+                                <th>وضعیت تائید</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {Object.keys(groupedOpenTasks).length > 0 ? (
+                                // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
+                                Object.entries(groupedOpenTasks).map(([groupName, tasks]: [string, any[]]) => (
+                                    <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
+                                        {tasks.map(item => {
+                                            let approvalStatusText = '—';
+                                            if (item.status === 'ارسال برای تایید') {
+                                                approvalStatusText = `منتظر تایید (${item.requestedStatus})`;
+                                            } else if (item.approvalStatus === 'approved') {
+                                                approvalStatusText = 'تایید شده';
+                                            } else if (item.approvalStatus === 'rejected') {
+                                                approvalStatusText = 'رد شده';
+                                            }
+
+                                            const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+
+                                            return (
+                                                <tr key={item.id}>
+                                                    <td>{item.title}</td>
+                                                    <td>{approvalStatusText}</td>
+                                                    <td>{displayStatus}</td>
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
+                                                                <DetailsIcon />
+                                                            </button>
+                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                <HistoryIcon />
+                                                            </button>
+                                                            <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
+                                                                <DelegateIcon />
+                                                            </button>
+                                                            {item.status === 'شروع نشده' && (
+                                                                <button className="send-approval-btn" onClick={() => handleSendForApproval(item, 'در حال اجرا')}>ارسال برای تایید شروع</button>
+                                                            )}
+                                                            {item.status === 'در حال اجرا' && (
+                                                                <button className="send-approval-btn" onClick={() => handleSendForApproval(item, 'خاتمه یافته')}>ارسال برای تایید خاتمه</button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </CollapsibleTableSection>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                                        هیچ وظیفه جاری برای شما ثبت نشده است.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </section>
             <SendApprovalModal 
                 isOpen={sendApprovalModal.isOpen}

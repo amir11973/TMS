@@ -112,49 +112,54 @@ export const DetailsModal = ({ isOpen, onClose, item, users }: { isOpen: boolean
                                     </div>
                                 )}
                             </div>
-                            {isProject && item.activities && (
+                            {isProject && item.activities && item.activities.length > 0 && (
                                 <>
                                     <h4 className="list-section-header">فعالیت‌های پروژه</h4>
-                                    <table className="user-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>عنوان</th>
-                                                <th>مسئول</th>
-                                                <th>تایید کننده</th>
-                                                <th>وضعیت</th>
-                                                <th>وضعیت تائید</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {item.activities.map((act: any) => {
-                                                const isPendingApproval = act.status === 'ارسال برای تایید';
-                                                const effectiveStatus = isPendingApproval ? act.underlyingStatus : act.status;
-                                                
-                                                let approvalWorkflowStatus = '—';
-                                                if (isPendingApproval) {
-                                                    approvalWorkflowStatus = `منتظر تائید (${act.requestedStatus})`;
-                                                } else if (act.approvalStatus === 'approved') {
-                                                    approvalWorkflowStatus = 'تایید شده';
-                                                } else if (act.approvalStatus === 'rejected') {
-                                                    approvalWorkflowStatus = 'رد شده';
-                                                }
+                                    <div className="table-container">
+                                        <table className="user-list-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>عنوان</th>
+                                                    <th>مسئول</th>
+                                                    <th>تایید کننده</th>
+                                                    <th>وضعیت</th>
+                                                    <th>وضعیت تائید</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {item.activities.map((act: any) => {
+                                                    const isPendingApproval = act.status === 'ارسال برای تایید';
+                                                    const effectiveStatus = isPendingApproval ? act.underlyingStatus : act.status;
+                                                    
+                                                    let approvalWorkflowStatus = '—';
+                                                    if (isPendingApproval) {
+                                                        approvalWorkflowStatus = `منتظر تائید (${act.requestedStatus})`;
+                                                    } else if (act.approvalStatus === 'approved') {
+                                                        approvalWorkflowStatus = 'تایید شده';
+                                                    } else if (act.approvalStatus === 'rejected') {
+                                                        approvalWorkflowStatus = 'رد شده';
+                                                    }
 
-                                                return (
-                                                    <tr key={act.id}>
-                                                        <td>{act.title}</td>
-                                                        <td>{userMap.get(act.responsible) || act.responsible}</td>
-                                                        <td>{userMap.get(act.approver) || act.approver}</td>
-                                                        <td>{effectiveStatus}</td>
-                                                        <td>{approvalWorkflowStatus}</td>
-                                                    </tr>
-                                                )
-                                            })}
-                                        </tbody>
-                                    </table>
+                                                    return (
+                                                        <tr key={act.id}>
+                                                            <td>{act.title}</td>
+                                                            <td>{userMap.get(act.responsible) || act.responsible}</td>
+                                                            <td>{userMap.get(act.approver) || act.approver}</td>
+                                                            <td>{effectiveStatus}</td>
+                                                            <td>{approvalWorkflowStatus}</td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </>
                             )}
                         </>
                     )}
+                </div>
+                <div className="modal-footer">
+                    <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>
                 </div>
             </div>
         </div>

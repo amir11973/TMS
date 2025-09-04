@@ -92,98 +92,100 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                 </div>
             </div>
             
-            <table className="user-list-table">
-                <thead>
-                    <tr>
-                        <th>عنوان</th>
-                        <th>اهمیت</th>
-                        <th>وضعیت</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredItems.length > 0 && currentUser ? (
-                        <>
-                            {projectItems.length > 0 && (
-                                <CollapsibleTableSection title="پروژه‌ها" count={projectItems.length} defaultOpen>
-                                    {projectItems.map(item => {
-                                        const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                        const canEdit = isAdmin || currentUser.username === item.owner || currentUser.username === item.responsible;
-                                        const canDelete = isAdmin || currentUser.username === item.owner;
-                                        return (
-                                            <tr key={`project-${item.id}`}>
-                                                <td>{item.title}</td>
-                                                <td>{renderPriorityBadge(item.priority)}</td>
-                                                <td>{item.status}</td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                            <DetailsIcon />
-                                                        </button>
-                                                        {canEdit && (
-                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
-                                                                <EditIcon />
-                                                            </button>
-                                                        )}
-                                                        {canDelete && (
-                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
-                                                                <DeleteIcon />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </CollapsibleTableSection>
-                            )}
-                             {actionItems.length > 0 && (
-                                <CollapsibleTableSection title="اقدامات" count={actionItems.length} defaultOpen>
-                                    {actionItems.map(item => {
-                                        const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                        const canEdit = isAdmin || currentUser.username === item.owner || currentUser.username === item.responsible;
-                                        const canDelete = isAdmin || currentUser.username === item.owner;
-                                        const displayStatus = item.status === 'ارسال برای تایید' ? (item.underlyingStatus || item.status) : item.status;
-                                        return (
-                                            <tr key={`action-${item.id}`}>
-                                                <td>{item.title}</td>
-                                                <td>{renderPriorityBadge(item.priority)}</td>
-                                                <td>{displayStatus}</td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                            <DetailsIcon />
-                                                        </button>
-                                                        {canEdit && (
-                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
-                                                                <EditIcon />
-                                                            </button>
-                                                        )}
-                                                        {canDelete && (
-                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
-                                                                <DeleteIcon />
-                                                            </button>
-                                                        )}
-                                                        {item.history && (
-                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                                <HistoryIcon />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </CollapsibleTableSection>
-                            )}
-                        </>
-                    ) : (
+            <div className="table-wrapper">
+                <table className="user-list-table">
+                    <thead>
                         <tr>
-                            <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>موردی برای نمایش یافت نشد.</td>
+                            <th>عنوان</th>
+                            <th>اهمیت</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {filteredItems.length > 0 && currentUser ? (
+                            <>
+                                {projectItems.length > 0 && (
+                                    <CollapsibleTableSection title="پروژه‌ها" count={projectItems.length} defaultOpen>
+                                        {projectItems.map(item => {
+                                            const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+                                            const canEdit = isAdmin || currentUser.username === item.owner || currentUser.username === item.responsible;
+                                            const canDelete = isAdmin || currentUser.username === item.owner;
+                                            return (
+                                                <tr key={`project-${item.id}`}>
+                                                    <td>{item.title}</td>
+                                                    <td>{renderPriorityBadge(item.priority)}</td>
+                                                    <td>{item.status}</td>
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                <DetailsIcon />
+                                                            </button>
+                                                            {canEdit && (
+                                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
+                                                                    <EditIcon />
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
+                                                                    <DeleteIcon />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </CollapsibleTableSection>
+                                )}
+                                 {actionItems.length > 0 && (
+                                    <CollapsibleTableSection title="اقدامات" count={actionItems.length} defaultOpen>
+                                        {actionItems.map(item => {
+                                            const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+                                            const canEdit = isAdmin || currentUser.username === item.owner || currentUser.username === item.responsible;
+                                            const canDelete = isAdmin || currentUser.username === item.owner;
+                                            const displayStatus = item.status === 'ارسال برای تایید' ? (item.underlyingStatus || item.status) : item.status;
+                                            return (
+                                                <tr key={`action-${item.id}`}>
+                                                    <td>{item.title}</td>
+                                                    <td>{renderPriorityBadge(item.priority)}</td>
+                                                    <td>{displayStatus}</td>
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                <DetailsIcon />
+                                                            </button>
+                                                            {canEdit && (
+                                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
+                                                                    <EditIcon />
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
+                                                                    <DeleteIcon />
+                                                                </button>
+                                                            )}
+                                                            {item.history && (
+                                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                    <HistoryIcon />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </CollapsibleTableSection>
+                                )}
+                            </>
+                        ) : (
+                            <tr>
+                                <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>موردی برای نمایش یافت نشد.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

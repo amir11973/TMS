@@ -88,31 +88,33 @@ export const SettingsPage = ({ theme, onThemeChange, sections, onAddSection, onU
                             </button>
                             {editingSection && <button className="cancel-btn" onClick={() => setEditingSection(null)}>انصراف</button>}
                         </div>
-                        <table className="user-list-table">
-                            <thead>
-                                <tr>
-                                    <th>نام بخش</th>
-                                    <th>عملیات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sections.map(section => (
-                                    <tr key={section}>
-                                        <td>{section}</td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => startEditing(section)}>
-                                                    <EditIcon />
-                                                </button>
-                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteSection(section)}>
-                                                    <DeleteIcon />
-                                                </button>
-                                            </div>
-                                        </td>
+                        <div className="table-wrapper">
+                            <table className="user-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>نام بخش</th>
+                                        <th>عملیات</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {sections.map(section => (
+                                        <tr key={section}>
+                                            <td>{section}</td>
+                                            <td>
+                                                <div className="action-buttons">
+                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => startEditing(section)}>
+                                                        <EditIcon />
+                                                    </button>
+                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteSection(section)}>
+                                                        <DeleteIcon />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </>
                 )}
             </div>

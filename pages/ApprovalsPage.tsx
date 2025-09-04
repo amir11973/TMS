@@ -48,53 +48,55 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
             </div>
             <section>
                 <h3 className="list-section-header">موارد در انتظار تایید ({pendingApprovals.length})</h3>
-                <table className="user-list-table">
-                    <thead>
-                        <tr>
-                            <th>عنوان</th>
-                            <th>مسئول</th>
-                            <th>درخواست برای</th>
-                            <th>عملیات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.keys(groupedPendingApprovals).length > 0 ? (
-                             // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
-                             Object.entries(groupedPendingApprovals).map(([groupName, tasks]: [string, any[]]) => (
-                                <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
-                                    {tasks.map(item => (
-                                        <tr key={item.id}>
-                                            <td>{item.title}</td>
-                                            <td>{userMap.get(item.responsible) || item.responsible}</td>
-                                            <td>{item.requestedStatus}</td>
-                                            <td>
-                                                <div className="action-buttons">
-                                                    <button className="icon-btn" style={{color: 'var(--c-info)'}} title="اطلاعات ارسال" onClick={() => onShowInfo(item)}>
-                                                        <DocumentIcon />
-                                                    </button>
-                                                    <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
-                                                        <DetailsIcon />
-                                                    </button>
-                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                        <HistoryIcon />
-                                                    </button>
-                                                    <button className="approve-btn" onClick={() => onApprovalDecision(item, 'approved')}>تایید</button>
-                                                    <button className="reject-btn" onClick={() => onApprovalDecision(item, 'rejected')}>رد</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </CollapsibleTableSection>
-                             ))
-                        ) : (
+                <div className="table-wrapper">
+                    <table className="user-list-table">
+                        <thead>
                             <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
-                                    هیچ موردی در انتظار تایید شما نیست.
-                                </td>
+                                <th>عنوان</th>
+                                <th>مسئول</th>
+                                <th>درخواست برای</th>
+                                <th>عملیات</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {Object.keys(groupedPendingApprovals).length > 0 ? (
+                                 // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
+                                 Object.entries(groupedPendingApprovals).map(([groupName, tasks]: [string, any[]]) => (
+                                    <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
+                                        {tasks.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{item.title}</td>
+                                                <td>{userMap.get(item.responsible) || item.responsible}</td>
+                                                <td>{item.requestedStatus}</td>
+                                                <td>
+                                                    <div className="action-buttons">
+                                                        <button className="icon-btn" style={{color: 'var(--c-info)'}} title="اطلاعات ارسال" onClick={() => onShowInfo(item)}>
+                                                            <DocumentIcon />
+                                                        </button>
+                                                        <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
+                                                            <DetailsIcon />
+                                                        </button>
+                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                            <HistoryIcon />
+                                                        </button>
+                                                        <button className="approve-btn" onClick={() => onApprovalDecision(item, 'approved')}>تایید</button>
+                                                        <button className="reject-btn" onClick={() => onApprovalDecision(item, 'rejected')}>رد</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </CollapsibleTableSection>
+                                 ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
+                                        هیچ موردی در انتظار تایید شما نیست.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </div>
     );
