@@ -11,10 +11,12 @@ export const UserEditModal = ({ isOpen, onClose, onSave, userToEdit }: {
     onSave: (user: any) => void;
     userToEdit: User | null;
 }) => {
+    const [fullName, setFullName] = useState('');
     const [password, setPassword] = useState('');
 
     useEffect(() => {
         if (userToEdit) {
+            setFullName(userToEdit.full_name || '');
             setPassword(''); // Reset password on open
         }
     }, [userToEdit]);
@@ -23,7 +25,7 @@ export const UserEditModal = ({ isOpen, onClose, onSave, userToEdit }: {
 
     const handleSave = (e: FormEvent) => {
         e.preventDefault();
-        const updatedData: any = { ...userToEdit };
+        const updatedData: any = { ...userToEdit, full_name: fullName };
         if (password) {
             updatedData.new_password = password;
         }
@@ -39,6 +41,14 @@ export const UserEditModal = ({ isOpen, onClose, onSave, userToEdit }: {
                         <button type="button" className="close-button" onClick={onClose}>&times;</button>
                     </div>
                     <div className="modal-body">
+                        <div className="input-group">
+                            <label htmlFor="edit-fullname">نام و نام خانوادگی</label>
+                            <input 
+                                id="edit-fullname" 
+                                value={fullName} 
+                                onChange={e => setFullName(e.target.value)}
+                            />
+                        </div>
                         <div className="input-group">
                             <label htmlFor="edit-username">نام کاربری</label>
                             <input id="edit-username" value={userToEdit.username} disabled />

@@ -2,27 +2,31 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
-import { TeamMember } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { TeamMember, User } from '../types';
 import { getTodayString } from '../constants';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers, users }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
     activityToEdit: any;
     teamMembers: TeamMember[];
+    users: User[];
 }) => {
-    const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '' };
+    const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط' };
     
     const [activity, setActivity] = useState(initialActivityState);
+    
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
+
     const responsibleUsers = teamMembers;
     const approverUsers = teamMembers.filter(m => m.role === 'مدیر' || m.role === 'ادمین');
 
     useEffect(() => {
         if (isOpen) {
             if (activityToEdit) {
-                setActivity(activityToEdit);
+                setActivity({ ...initialActivityState, ...activityToEdit });
             } else {
                 setActivity(initialActivityState);
             }
@@ -52,9 +56,19 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
                         <button type="button" className="close-button" onClick={onClose}>&times;</button>
                     </div>
                     <div className="modal-body">
-                        <div className="input-group">
-                            <label htmlFor="title">عنوان فعالیت</label>
-                            <input name="title" id="title" value={activity.title} onChange={handleChange} required />
+                         <div className="input-grid-col-2">
+                            <div className="input-group">
+                                <label htmlFor="title">عنوان فعالیت</label>
+                                <input name="title" id="title" value={activity.title} onChange={handleChange} required />
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="activity-priority">درجه اهمیت</label>
+                                <select name="priority" id="activity-priority" value={activity.priority || 'متوسط'} onChange={handleChange} required>
+                                    <option value="کم">کم</option>
+                                    <option value="متوسط">متوسط</option>
+                                    <option value="زیاد">زیاد</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="input-grid-col-2">
                              <div className="input-group">
@@ -70,14 +84,14 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
                             <label htmlFor="responsible">مسئول انجام</label>
                             <select name="responsible" id="responsible" value={activity.responsible} onChange={handleChange} required>
                                 <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{user.username}</option>)}
+                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                             </select>
                         </div>
                         <div className="input-group">
                             <label htmlFor="approver">تایید کننده</label>
                             <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required>
                                 <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {approverUsers.map(user => <option key={user.username} value={user.username}>{user.username}</option>)}
+                                {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                             </select>
                         </div>
                     </div>

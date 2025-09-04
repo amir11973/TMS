@@ -6,16 +6,15 @@ import React, { useState, useMemo } from 'react';
 import { User } from '../types';
 import { PieChart, BarChart, StatCard, AnimatedNumber, DashboardDataTable } from '../components/dashboard';
 
-export const DashboardPage = ({ projects, actions, currentUser, users, sections }: {
+export const DashboardPage = ({ projects, actions, currentUser, users, onViewDetails }: {
     projects: any[];
     actions: any[];
     currentUser: User | null;
     users: User[];
-    sections: string[];
+    onViewDetails: (item: any) => void;
 }) => {
     const [filters, setFilters] = useState({
         type: 'all',
-        unit: 'all',
         responsible: 'all',
         status: 'all',
     });
@@ -25,10 +24,12 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
+
     const combinedItems = useMemo(() => {
         const projectItems = projects.map(p => ({
             id: `p-${p.id}`,
-            name: p.projectName,
+            name: p.title,
             type: 'پروژه',
             unit: p.unit,
             responsible: p.projectManager,
@@ -75,7 +76,6 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
         return userVisibleItems.filter(item => {
             return (
                 (filters.type === 'all' || item.type === filters.type) &&
-                (filters.unit === 'all' || item.unit === filters.unit) &&
                 (filters.responsible === 'all' || item.responsible === filters.responsible) &&
                 (filters.status === 'all' || item.status === filters.status)
             );
@@ -110,15 +110,6 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
         ];
     }, [filteredItems]);
 
-    const unitData = useMemo(() => {
-        const counts = filteredItems.reduce<Record<string, number>>((acc, item) => {
-            const unit = item.unit || 'نامشخص';
-            acc[unit] = (acc[unit] || 0) + 1;
-            return acc;
-        }, {});
-        return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
-    }, [filteredItems]);
-
     const responsibleData = useMemo(() => {
         const counts = filteredItems.reduce<Record<string, number>>((acc, item) => {
             if(item.responsible) {
@@ -126,10 +117,38 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
             }
             return acc;
         }, {});
-        return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+        return Object.entries(counts).map(([name, value]) => ({ name: userMap.get(name) || name, value })).sort((a,b) => b.value - a.value);
+    }, [filteredItems, userMap]);
+
+    const delayData = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Compare dates only
+
+        let delayedCount = 0;
+        let notDelayedCount = 0;
+
+        filteredItems.forEach(item => {
+            const endDate = new Date(item.endDate);
+            if (item.status !== 'خاتمه یافته' && endDate < today) {
+                delayedCount++;
+            } else {
+                notDelayedCount++;
+            }
+        });
+        
+        return [
+            { name: 'دارای تاخیر', value: delayedCount, color: '#dc3545' },
+            { name: 'فاقد تاخیر', value: notDelayedCount, color: '#28a745' },
+        ];
     }, [filteredItems]);
 
+
     const filterStatusOptions = ['شروع نشده', 'در حال اجرا', 'خاتمه یافته'];
+    const responsibleOptions = useMemo(() => {
+        const responsibles = [...new Set(userVisibleItems.map(item => item.responsible).filter(Boolean))];
+        return responsibles.map(r => ({ value: r, label: userMap.get(r) || r }));
+    }, [userVisibleItems, userMap]);
+
 
     return (
         <div className="dashboard-page-container">
@@ -143,17 +162,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
                     </select>
                 </div>
                 <div className="filter-group">
-                    <label htmlFor="unit-filter">بخش</label>
-                    <select id="unit-filter" name="unit" value={filters.unit} onChange={handleFilterChange}>
-                        <option value="all">همه</option>
-                        {sections.map(section => <option key={section} value={section}>{section}</option>)}
-                    </select>
-                </div>
-                <div className="filter-group">
                     <label htmlFor="responsible-filter">مسئول</label>
                     <select id="responsible-filter" name="responsible" value={filters.responsible} onChange={handleFilterChange}>
                         <option value="all">همه</option>
-                        {users.map(user => <option key={user.id} value={user.username}>{user.username}</option>)}
+                        {responsibleOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                 </div>
                 <div className="filter-group">
@@ -165,8 +177,6 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
                 </div>
             </div>
             <div className="dashboard-grid">
-                <PieChart data={typeData} title="تفکیک بر اساس نوع" />
-                <PieChart data={statusData} isDonut={true} title="تفکیک بر اساس وضعیت" />
                 <StatCard title="خلاصه وضعیت">
                     <div className="stat-split-container">
                         <div className="stat-split-item">
@@ -180,10 +190,12 @@ export const DashboardPage = ({ projects, actions, currentUser, users, sections 
                         </div>
                     </div>
                 </StatCard>
-                <BarChart data={unitData} title="تفکیک بر اساس بخش" color="#e94560" />
+                <PieChart data={statusData} isDonut={true} title="تفکیک بر اساس وضعیت" />
+                <PieChart data={typeData} title="تفکیک بر اساس نوع" />
+                <PieChart data={delayData} title="نمودار تاخیرات" />
                 <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" orientation="horizontal" />
             </div>
-            <DashboardDataTable items={filteredItems} />
+            <DashboardDataTable items={filteredItems} onViewDetails={onViewDetails} projects={projects} actions={actions}/>
         </div>
     );
 };

@@ -57,6 +57,7 @@ const App = () => {
     const [editingProject, setEditingProject] = useState<any | null>(null);
     const [editingAction, setEditingAction] = useState<any | null>(null);
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     
     const [detailsItem, setDetailsItem] = useState<any | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -219,7 +220,7 @@ const App = () => {
         setContentTitle('ورود به سامانه');
     };
 
-    const handleSignUp = async ({ username, password }) => {
+    const handleSignUp = async ({ username, password, fullName }) => {
         setIsActionLoading(true);
         try {
             const { data: existingUser } = await supabase
@@ -238,7 +239,7 @@ const App = () => {
 
             const { data, error } = await supabase
                 .from('users')
-                .insert([{ username, password_hash: password, role: 'تیم پروژه', is_active: true, theme: 'dark' }])
+                .insert([{ username, password_hash: password, full_name: fullName, role: 'تیم پروژه', is_active: true, theme: 'dark' }])
                 .select()
                 .single();
 
@@ -265,10 +266,10 @@ const App = () => {
         }
     };
     
-    const handleAddUser = async ({ username, password }) => {
+    const handleAddUser = async ({ username, password, fullName }) => {
         setIsActionLoading(true);
         try {
-            const { data, error } = await supabase.from('users').insert([{ username, password_hash: password, role: 'تیم پروژه', is_active: true }]).select().single();
+            const { data, error } = await supabase.from('users').insert([{ username, password_hash: password, full_name: fullName, role: 'تیم پروژه', is_active: true }]).select().single();
             handleSupabaseError(error, 'adding user');
             if (data) {
                 setUsers(prev => [...prev, data]);
@@ -329,7 +330,9 @@ const App = () => {
     const handleUpdateUser = async (updatedUser: User & { new_password?: string }) => {
         setIsActionLoading(true);
         try {
-            const payload: { password_hash?: string } = {};
+            const payload: { password_hash?: string, full_name: string } = {
+                full_name: updatedUser.full_name
+            };
             if (updatedUser.new_password && updatedUser.new_password.length > 0) {
                 payload.password_hash = updatedUser.new_password;
             }
@@ -368,8 +371,7 @@ const App = () => {
 
     const handleChooseProject = () => {
         setEditingProject({ isNew: true, activities: [] });
-        setView('define_project');
-        setContentTitle('تعریف پروژه جدید');
+        setIsProjectModalOpen(true);
         setIsChoiceModalOpen(false);
     };
 
@@ -392,8 +394,6 @@ const App = () => {
                     const newProject = { ...data, activities: [] };
                     setProjects(prev => [...prev, newProject]);
                     setEditingProject({ ...newProject, initialTab: 'activities' });
-                    setView('define_project');
-                    setContentTitle(`ویرایش پروژه: ${newProject.projectName}`);
                 }
             } else {
                 const { activities, type, readOnly, initialTab, isNew, ...updatePayload } = projectToSave;
@@ -402,8 +402,7 @@ const App = () => {
                 if (data) {
                     const updatedProject = { ...data, activities: projectToSave.activities };
                     setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-                    setView('projects_actions_list');
-                    setContentTitle('لیست پروژه ها و اقدامات');
+                    setIsProjectModalOpen(false);
                     setEditingProject(null);
                 }
             }
@@ -435,23 +434,19 @@ const App = () => {
             setIsActionLoading(false);
             setIsActionModalOpen(false);
             setEditingAction(null);
-            setView('projects_actions_list');
-            setContentTitle('لیست پروژه ها و اقدامات');
         }
     };
     
     const handleEditProject = (project, isReadOnly = false) => {
         setEditingProject({ ...project, readOnly: isReadOnly });
-        setView('define_project');
-        const title = `ویرایش پروژه: ${project.projectName}`;
-        setContentTitle(isReadOnly ? `${title} (نمایش)` : title);
+        setIsProjectModalOpen(true);
     }
 
     const handleDeleteProject = (projectId) => {
         const projectToDelete = projects.find(p => p.id === projectId);
         handleRequestConfirmation({
             title: 'حذف پروژه',
-            message: `آیا از حذف پروژه "${projectToDelete?.projectName}" اطمینان دارید؟ این عمل تمام فعالیت‌های آن را نیز حذف خواهد کرد.`,
+            message: `آیا از حذف پروژه "${projectToDelete?.title}" اطمینان دارید؟ این عمل تمام فعالیت‌های آن را نیز حذف خواهد کرد.`,
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
@@ -685,7 +680,7 @@ const App = () => {
         if (!loggedInUser) return [];
 
         const allItems = [
-            ...projects.flatMap(p => p.activities.map(a => ({...a, parentTitle: `${p.projectName} / ${a.title}`}))),
+            ...projects.flatMap(p => p.activities.map(a => ({...a, parentTitle: `${p.title} / ${a.title}`}))),
             ...actions.map(a => ({...a, parentTitle: a.title}))
         ];
 
@@ -892,12 +887,12 @@ const App = () => {
     };
 
     const taskItems = [
-        ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.projectName}))),
+        ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title}))),
         ...actions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
     ].filter(item => item.responsible === loggedInUser?.username);
 
     const approvalItems = [
-         ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.projectName}))),
+         ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title}))),
         ...actions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
     ].filter(item => item.approver === loggedInUser?.username && item.status === 'ارسال برای تایید');
 
@@ -944,13 +939,14 @@ const App = () => {
         const isAdmin = loggedInUser?.username === 'mahmoudi.pars@gmail.com';
 
         switch(view) {
+            // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
             case 'dashboard':
                  return <DashboardPage
                             projects={projects}
                             actions={actions}
                             currentUser={loggedInUser}
                             users={users}
-                            sections={sections}
+                            onViewDetails={handleViewDetails}
                         />;
             case 'my_team':
                 return <MyTeamPage
@@ -961,12 +957,11 @@ const App = () => {
                             onRemoveMember={handleRemoveTeamMember}
                             onUpdateRole={handleUpdateTeamMemberRole}
                         />;
+            // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
             case 'users':
-                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} sections={sections} />;
-            case 'define_project':
-                return <ProjectDefinitionPage users={users} sections={sections} onSave={handleSaveProject} projectToEdit={editingProject} projects={projects} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} />;
+                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} onViewDetails={handleViewDetails} />;
             case 'projects_actions_list':
-                return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} />;
+                return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} users={users} />;
             case 'tasks':
                 return <TasksPage 
                             items={taskItems} 
@@ -990,6 +985,7 @@ const App = () => {
                             onShowGlobalHistory={handleShowGlobalApprovalsHistory}
                             onViewDetails={handleViewDetails}
                             onShowInfo={handleShowInfo}
+                            users={users}
                         />;
             case 'settings':
                 return <SettingsPage 
@@ -1053,7 +1049,7 @@ const supabaseAnonKey = '...';`}
                 </div>
                 <h1>سامانه مدیریت وظایف (TMS)</h1>
                 <div className="header-user-info">
-                   <span>{loggedInUser.username}</span>
+                   <span>{loggedInUser.full_name}</span>
                    <button onClick={handleLogout} className="logout-button">خروج</button>
                 </div>
             </header>
@@ -1116,6 +1112,20 @@ const supabaseAnonKey = '...';`}
                     })}
             </nav>
 
+            <ProjectDefinitionPage
+                isOpen={isProjectModalOpen}
+                onClose={() => { setIsProjectModalOpen(false); setEditingProject(null); }}
+                onSave={handleSaveProject}
+                projectToEdit={editingProject}
+                users={users}
+                sections={sections}
+                onRequestConfirmation={handleRequestConfirmation}
+                onShowHistory={handleShowHistory}
+                currentUser={loggedInUser}
+                teamMembers={currentUserTeam}
+                onUpdateProject={handleUpdateProjectState}
+                onViewDetails={handleViewDetails}
+            />
             <ActionModal 
                 isOpen={isActionModalOpen}
                 onClose={() => setIsActionModalOpen(false)}
@@ -1130,6 +1140,7 @@ const supabaseAnonKey = '...';`}
                 isOpen={isDetailsModalOpen}
                 onClose={() => setIsDetailsModalOpen(false)}
                 item={detailsItem}
+                users={users}
             />
              <ApprovalInfoModal
                 isOpen={isInfoModalOpen}

@@ -60,6 +60,7 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
             <table className="user-list-table">
                 <thead>
                     <tr>
+                        <th>نام و نام خانوادگی</th>
                         <th>نام کاربری</th>
                         <th>نقش در تیم</th>
                         <th>عملیات</th>
@@ -67,9 +68,11 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                 </thead>
                 <tbody>
                     {teamMembers.map(member => {
+                        const userDetails = allUsers.find(u => u.username === member.username);
                         const isCurrentUser = member.username === currentUser.username;
                         return (
                             <tr key={member.username}>
+                                <td>{userDetails?.full_name}</td>
                                 <td>{member.username}</td>
                                 <td>
                                     <select 

@@ -86,7 +86,6 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                     <thead>
                         <tr>
                             <th>عنوان</th>
-                            <th>تایید کننده</th>
                             <th>وضعیت تائید</th>
                             <th>وضعیت</th>
                             <th>عملیات</th>
@@ -107,12 +106,13 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                             approvalStatusText = 'رد شده';
                                         }
 
+                                        const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+
                                         return (
                                             <tr key={item.id}>
                                                 <td>{item.title}</td>
-                                                <td>{item.approver}</td>
                                                 <td>{approvalStatusText}</td>
-                                                <td>{item.status}</td>
+                                                <td>{displayStatus}</td>
                                                 <td>
                                                     <div className="action-buttons">
                                                         <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>

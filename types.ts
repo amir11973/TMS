@@ -10,6 +10,7 @@ export type UserRole = 'ادمین' | 'مدیر پروژه' | 'تیم پروژه
 export type User = {
     id: number;
     username: string;
+    full_name: string;
     password_hash?: string; // Optional for security when passing around
     role: UserRole;
     is_active: boolean;

@@ -5,8 +5,9 @@
 import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../components';
 import { DetailsIcon, HistoryIcon, DocumentIcon } from '../icons';
+import { User } from '../types';
 
-export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo }: {
+export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo, users }: {
     items: any[];
     currentUser: any;
     onApprovalDecision: (item: any, decision: string) => void;
@@ -14,11 +15,14 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
     onShowGlobalHistory: () => void;
     onViewDetails: (item: any) => void;
     onShowInfo: (item: any) => void;
+    users: User[];
 }) => {
     
     if (!Array.isArray(items)) {
         return <p>خطا: داده‌های تاییدات نامعتبر است.</p>;
     }
+
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     
     const pendingApprovals = items.filter(item => item.status === 'ارسال برای تایید');
 
@@ -61,7 +65,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                     {tasks.map(item => (
                                         <tr key={item.id}>
                                             <td>{item.title}</td>
-                                            <td>{item.responsible}</td>
+                                            <td>{userMap.get(item.responsible) || item.responsible}</td>
                                             <td>{item.requestedStatus}</td>
                                             <td>
                                                 <div className="action-buttons">

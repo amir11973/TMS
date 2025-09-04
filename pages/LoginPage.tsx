@@ -8,9 +8,10 @@ import { supabase } from '../supabaseClient';
 
 export const LoginPage = ({ onLogin, onSignUp }: {
     onLogin: (user: Omit<User, 'password_hash'>) => void;
-    onSignUp: (credentials: { username: string, password: string }) => Promise<{ data?: any; error?: any; }>;
+    onSignUp: (credentials: { username: string, password: string, fullName: string }) => Promise<{ data?: any; error?: any; }>;
 }) => {
     const [isLoginView, setIsLoginView] = useState(true);
+    const [fullName, setFullName] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,7 +50,7 @@ export const LoginPage = ({ onLogin, onSignUp }: {
                     setError('رمز عبور و تکرار آن یکسان نیستند.');
                     return;
                 }
-                const { error: signUpError } = await onSignUp({ username, password });
+                const { error: signUpError } = await onSignUp({ username, password, fullName });
                 if (signUpError) {
                     setError(signUpError.message || 'خطا در ایجاد حساب کاربری.');
                 } else {
@@ -63,14 +64,18 @@ export const LoginPage = ({ onLogin, onSignUp }: {
             setIsLoading(false);
         }
     };
-
-    const toggleView = () => {
-        setIsLoginView(!isLoginView);
-        setError('');
-        setSuccessMessage('');
-        setUsername('');
-        setPassword('');
-        setConfirmPassword('');
+    
+    // This function resets state when switching views
+    const handleViewChange = (newViewIsLogin: boolean) => {
+        if (isLoginView !== newViewIsLogin) {
+            setIsLoginView(newViewIsLogin);
+            setError('');
+            setSuccessMessage('');
+            setFullName('');
+            setUsername('');
+            setPassword('');
+            setConfirmPassword('');
+        }
     };
 
     return (
@@ -85,8 +90,35 @@ export const LoginPage = ({ onLogin, onSignUp }: {
             )}
             <form className="login-form" onSubmit={handleSubmit}>
                 <img src="https://parspmi.ir/uploads/c140d7143d9b4d7abbe80a36585770bc.png" alt="ParsPMI Logo" className="login-logo" />
-                <h2>{isLoginView ? 'ورود به سامانه' : 'ایجاد حساب کاربری'}</h2>
+                <div className="login-toggle-buttons">
+                    <button 
+                        type="button" 
+                        className={`toggle-btn ${isLoginView ? 'active' : ''}`} 
+                        onClick={() => handleViewChange(true)}
+                    >
+                        ورود
+                    </button>
+                    <button 
+                        type="button" 
+                        className={`toggle-btn ${!isLoginView ? 'active' : ''}`} 
+                        onClick={() => handleViewChange(false)}
+                    >
+                        ثبت نام
+                    </button>
+                </div>
                 {successMessage && <p className="success-message">{successMessage}</p>}
+                {!isLoginView && (
+                     <div className="input-group">
+                        <label htmlFor="full-name">نام و نام خانوادگی</label>
+                        <input 
+                            type="text" 
+                            id="full-name" 
+                            value={fullName} 
+                            onChange={e => setFullName(e.target.value)} 
+                            required 
+                        />
+                    </div>
+                )}
                 <div className="input-group">
                     <label htmlFor="username">{isLoginView ? 'نام کاربری' : 'ایمیل'}</label>
                     <input 
@@ -124,11 +156,6 @@ export const LoginPage = ({ onLogin, onSignUp }: {
                 )}
                 <button type="submit" className="login-button">{isLoginView ? 'ورود' : 'ایجاد حساب'}</button>
                 {error && <p className="error-message">{error}</p>}
-                <div className="toggle-view">
-                    <button type="button" onClick={toggleView}>
-                        {isLoginView ? 'حساب کاربری ندارید؟ ثبت نام کنید' : 'حساب کاربری دارید؟ وارد شوید'}
-                    </button>
-                </div>
             </form>
         </div>
     );

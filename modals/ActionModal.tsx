@@ -2,11 +2,11 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
 
-export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, currentUser, teamMembers }: {
+export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionToEdit, currentUser, teamMembers }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (action: any) => void;
@@ -16,8 +16,11 @@ export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, c
     currentUser: User;
     teamMembers: TeamMember[];
 }) => {
-    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
+    // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
+    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null };
     const [action, setAction] = useState(initialActionState);
+    
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     const possibleOwners = React.useMemo(() => {
         if (!currentUser) return [];
@@ -32,7 +35,8 @@ export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, c
 
     useEffect(() => {
         if (isOpen) {
-            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط' };
+            // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
+            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null };
             if (actionToEdit) {
                 setAction({ ...freshInitialState, ...actionToEdit, owner: actionToEdit.owner || currentUser.username });
             } else {
@@ -54,6 +58,9 @@ export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, c
     };
 
     const modalTitle = actionToEdit ? "ویرایش اقدام" : "تعریف اقدام جدید";
+    const displayStatus = (action.status === 'ارسال برای تایید' && action.underlyingStatus) 
+        ? action.underlyingStatus 
+        : (action.status || 'شروع نشده');
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
@@ -73,7 +80,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, c
                                 <label htmlFor="action-owner">مالک</label>
                                 <select name="owner" id="action-owner" value={action.owner} onChange={handleChange} required>
                                     <option value="" disabled>یک مالک انتخاب کنید</option>
-                                    {possibleOwners.map(u => <option key={u.username} value={u.username}>{u.username}</option>)}
+                                    {possibleOwners.map(u => <option key={u.username} value={u.username}>{userMap.get(u.username) || u.username}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -104,7 +111,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, c
                         </div>
                         <div className="input-group">
                             <label htmlFor="action-status">وضعیت</label>
-                            <select name="status" id="action-status" value={action.status || 'شروع نشده'} onChange={handleChange} disabled>
+                            <select name="status" id="action-status" value={displayStatus} onChange={handleChange} disabled>
                                 <option value="شروع نشده">شروع نشده</option>
                                 <option value="در حال اجرا">در حال اجرا</option>
                                 <option value="ارسال برای تایید">ارسال برای تایید</option>
@@ -115,14 +122,14 @@ export const ActionModal = ({ isOpen, onClose, onSave, sections, actionToEdit, c
                             <label htmlFor="action-responsible">مسئول انجام</label>
                             <select name="responsible" id="action-responsible" value={action.responsible} onChange={handleChange} required>
                                 <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{user.username}</option>)}
+                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                             </select>
                         </div>
                         <div className="input-group">
                             <label htmlFor="action-approver">تایید کننده</label>
                             <select name="approver" id="action-approver" value={action.approver} onChange={handleChange} required>
                                 <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {approverUsers.map(user => <option key={user.username} value={user.username}>{user.username}</option>)}
+                                {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                             </select>
                         </div>
                     </div>

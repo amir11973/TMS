@@ -8,11 +8,12 @@ import { EditIcon, DeleteIcon, PowerIcon } from '../icons';
 
 export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUserActive, onEditUser }: {
     users: User[];
-    onAddUser: (details: { username: string, password: string }) => void;
+    onAddUser: (details: { username: string, password: string, fullName: string }) => void;
     onDeleteUser: (id: number) => void;
     onToggleUserActive: (id: number) => void;
     onEditUser: (id: number) => void;
 }) => {
+    const [fullName, setFullName] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,7 +29,8 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
             alert('رمز عبور و تکرار آن یکسان نیستند.');
             return;
         }
-        onAddUser({ username, password });
+        onAddUser({ username, password, fullName });
+        setFullName('');
         setUsername('');
         setPassword('');
         setConfirmPassword('');
@@ -38,6 +40,10 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
         <div className="user-management-page">
             <form className="add-user-form" onSubmit={handleAddUser}>
                 <h3>افزودن کاربر جدید</h3>
+                <div className="input-group">
+                    <label htmlFor="new-fullname">نام و نام خانوادگی</label>
+                    <input type="text" id="new-fullname" value={fullName} onChange={e => setFullName(e.target.value)} required />
+                </div>
                 <div className="input-group">
                     <label htmlFor="new-username">نام کاربری (ایمیل)</label>
                     <input type="email" id="new-username" value={username} onChange={e => setUsername(e.target.value)} required />
@@ -55,6 +61,7 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
             <table className="user-list-table">
                 <thead>
                     <tr>
+                        <th>نام و نام خانوادگی</th>
                         <th>نام کاربری</th>
                         <th>وضعیت</th>
                         <th>عملیات</th>
@@ -63,6 +70,7 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
                 <tbody>
                     {users.map(user => (
                         <tr key={user.id}>
+                            <td>{user.full_name}</td>
                             <td>{user.username}</td>
                             <td>
                                 <span className={user.is_active ? 'status-active' : 'status-inactive'}>
