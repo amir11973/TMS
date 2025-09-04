@@ -5,8 +5,16 @@
 import React, { useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { User } from '../types';
+import { renderPriorityBadge } from '../components';
+import { DetailsIcon } from '../icons';
 
-export const DetailsModal = ({ isOpen, onClose, item, users }: { isOpen: boolean; onClose: () => void; item: any; users: User[] }) => {
+export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails }: { 
+    isOpen: boolean; 
+    onClose: () => void; 
+    item: any; 
+    users: User[];
+    onViewDetails: (item: any) => void;
+}) => {
     if (!isOpen) return null;
 
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
@@ -59,6 +67,14 @@ export const DetailsModal = ({ isOpen, onClose, item, users }: { isOpen: boolean
             </div>
         </div>
     );
+
+    const handleViewActivityDetails = (activity: any) => {
+        onViewDetails({
+            ...activity,
+            type: 'activity',
+            parentName: item.title
+        });
+    };
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
@@ -115,15 +131,14 @@ export const DetailsModal = ({ isOpen, onClose, item, users }: { isOpen: boolean
                             {isProject && item.activities && item.activities.length > 0 && (
                                 <>
                                     <h4 className="list-section-header">فعالیت‌های پروژه</h4>
-                                    <div className="table-container">
+                                    <div className="table-wrapper">
                                         <table className="user-list-table">
                                             <thead>
                                                 <tr>
                                                     <th>عنوان</th>
-                                                    <th>تاریخ شروع</th>
-                                                    <th>تاریخ پایان</th>
-                                                    <th>مسئول</th>
                                                     <th>وضعیت</th>
+                                                    <th>اهمیت</th>
+                                                    <th>عملیات</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -134,10 +149,17 @@ export const DetailsModal = ({ isOpen, onClose, item, users }: { isOpen: boolean
                                                     return (
                                                         <tr key={act.id}>
                                                             <td>{act.title}</td>
-                                                            <td>{moment(act.startDate).format('jYYYY/jMM/jDD')}</td>
-                                                            <td>{moment(act.endDate).format('jYYYY/jMM/jDD')}</td>
-                                                            <td>{userMap.get(act.responsible) || act.responsible}</td>
                                                             <td>{effectiveStatus}</td>
+                                                            <td>{renderPriorityBadge(act.priority)}</td>
+                                                            <td>
+                                                                <button 
+                                                                    className="icon-btn details-btn" 
+                                                                    title="مشاهده جزئیات فعالیت"
+                                                                    onClick={() => handleViewActivityDetails(act)}
+                                                                >
+                                                                    <DetailsIcon />
+                                                                </button>
+                                                            </td>
                                                         </tr>
                                                     )
                                                 })}

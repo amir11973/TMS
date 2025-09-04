@@ -1151,6 +1151,7 @@ const supabaseAnonKey = '...';`}
                 onClose={() => setIsDetailsModalOpen(false)}
                 item={detailsItem}
                 users={users}
+                onViewDetails={handleViewDetails}
             />
              <ApprovalInfoModal
                 isOpen={isInfoModalOpen}

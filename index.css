@@ -720,8 +720,8 @@ body {
 }
 
 .project-form {
-    display: flex; /* Mobile-first */
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 1.25rem;
 }
 
@@ -800,7 +800,7 @@ body {
     max-height: 90vh; /* Ensure modal fits on screen */
 }
 
-.modal-content > form {
+.modal-content form {
     display: flex;
     flex-direction: column;
     flex-grow: 1; /* Make form fill the modal content for proper scrolling */
@@ -1791,9 +1791,8 @@ body.theme-light .group-header-row:hover {
         padding: 1.5rem;
     }
 
-    .project-form {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
+    .project-modal-content .project-form {
+        grid-template-columns: 1fr 1fr;
     }
 
     .detail-grid {
