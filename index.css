@@ -800,6 +800,12 @@ body {
     max-height: 90vh; /* Ensure modal fits on screen */
 }
 
+.modal-content > form {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Make form fill the modal content for proper scrolling */
+}
+
 .modal-content.action-modal-content {
     width: 90%;
     max-width: 34rem; /* 544px */
@@ -956,16 +962,6 @@ body {
 .details-modal-content {
     max-width: 50rem;
     max-height: 90vh;
-}
-.details-modal-content .modal-body {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Important: Prevents this element from scrolling */
-}
-.details-modal-content .table-container {
-    flex-grow: 1;
-    overflow-y: auto;
-    min-height: 0; /* Crucial for nested scrolling in flexbox */
 }
 
 .detail-grid {

@@ -33,7 +33,7 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
         
         if (originalItem) {
             // Re-add type for DetailsModal logic
-            onViewDetails({ ...originalItem, type: originalItem.projectName ? 'project' : 'action' });
+            onViewDetails({ ...originalItem, type: originalItem.projectManager !== undefined ? 'project' : 'action' });
         }
     };
 
