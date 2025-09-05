@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, FormEvent, useEffect } from 'react';
+import React, { useState, FormEvent, useEffect, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import moment from 'moment-jalaali';
 import { User, TeamMember, TeamMemberRole } from './types';
@@ -77,54 +77,76 @@ const App = () => {
     const [isUserEditModalOpen, setIsUserEditModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
+    const isInitialRenderRef = useRef(true);
+
+    const fetchData = useCallback(async () => {
+        try {
+            const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes] = await Promise.all([
+                supabase.from('users').select('*'),
+                supabase.from('projects').select('*, activities(*)').order('id', { foreignTable: 'activities' }),
+                supabase.from('actions').select('*'),
+                supabase.from('units').select('name'),
+                supabase.from('teams').select('*')
+            ]);
+
+            handleSupabaseError(usersRes.error, 'fetching users');
+            setUsers(usersRes.data || []);
+
+            handleSupabaseError(projectsRes.error, 'fetching projects');
+            setProjects(projectsRes.data || []);
+
+            handleSupabaseError(actionsRes.error, 'fetching actions');
+            setActions(actionsRes.data || []);
+
+            handleSupabaseError(sectionsRes.error, 'fetching sections');
+            setSections((sectionsRes.data || []).map(u => u.name));
+
+            handleSupabaseError(teamsRes.error, 'fetching teams');
+            const teamsData = teamsRes.data || [];
+            const reconstructedTeams = teamsData.reduce((acc, team) => {
+                if (!acc[team.manager_username]) {
+                    acc[team.manager_username] = [];
+                }
+                acc[team.manager_username].push({ username: team.member_username, role: team.role });
+                return acc;
+            }, {});
+            setTeams(reconstructedTeams);
+
+        } catch (e: any) {
+            setError(`Failed to load application data: ${e.message}. Please check your network connection and Supabase configuration in supabaseClient.ts.`);
+        }
+    }, []);
+
     useEffect(() => {
-        const fetchData = async () => {
+        const performInitialFetch = async () => {
             if (!isSupabaseConfigured) {
                 setError('پیکربندی Supabase انجام نشده است. لطفاً فایل supabaseClient.ts را با اطلاعات پروژه خود به‌روزرسانی کنید.');
                 setIsLoading(false);
                 return;
             }
-
-            try {
-                const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes] = await Promise.all([
-                    supabase.from('users').select('*'),
-                    supabase.from('projects').select('*, activities(*)').order('id', { foreignTable: 'activities' }),
-                    supabase.from('actions').select('*'),
-                    supabase.from('units').select('name'),
-                    supabase.from('teams').select('*')
-                ]);
-
-                handleSupabaseError(usersRes.error, 'fetching users');
-                setUsers(usersRes.data || []);
-
-                handleSupabaseError(projectsRes.error, 'fetching projects');
-                setProjects(projectsRes.data || []);
-
-                handleSupabaseError(actionsRes.error, 'fetching actions');
-                setActions(actionsRes.data || []);
-
-                handleSupabaseError(sectionsRes.error, 'fetching sections');
-                setSections((sectionsRes.data || []).map(u => u.name));
-
-                handleSupabaseError(teamsRes.error, 'fetching teams');
-                const teamsData = teamsRes.data || [];
-                const reconstructedTeams = teamsData.reduce((acc, team) => {
-                    if (!acc[team.manager_username]) {
-                        acc[team.manager_username] = [];
-                    }
-                    acc[team.manager_username].push({ username: team.member_username, role: team.role });
-                    return acc;
-                }, {});
-                setTeams(reconstructedTeams);
-
-            } catch (e: any) {
-                setError(`Failed to load application data: ${e.message}. Please check your network connection and Supabase configuration in supabaseClient.ts.`);
-            } finally {
-                setIsLoading(false);
-            }
+            await fetchData();
+            setIsLoading(false);
         };
-        fetchData();
-    }, []);
+        performInitialFetch();
+    }, [fetchData]);
+    
+    useEffect(() => {
+        const performRefetch = async () => {
+            setIsActionLoading(true);
+            await fetchData();
+            setIsActionLoading(false);
+        };
+    
+        if (isInitialRenderRef.current) {
+            isInitialRenderRef.current = false;
+            return;
+        }
+    
+        if (loggedInUser) {
+            performRefetch();
+        }
+    }, [view, loggedInUser, fetchData]);
+
 
     useEffect(() => {
         document.body.className = theme === 'light' ? 'theme-light' : '';
