@@ -1863,15 +1863,15 @@ body.theme-light .group-header-row:hover {
     word-wrap: break-word; /* Ensure content wrapping */
 }
 
-/* --- Projects & Actions Page Grid Widths (75/10/15) --- */
+/* --- Projects & Actions Page Grid Widths (70/10/20) --- */
 .projects-actions-list-page .user-list-table th:first-child {
-    width: 75%;
+    width: 70%;
 }
 .projects-actions-list-page .user-list-table th:nth-child(2) {
     width: 10%;
 }
 .projects-actions-list-page .user-list-table th:nth-child(3) {
-    width: 15%;
+    width: 20%;
 }
 
 /* --- Dashboard Page Grid Widths (80/10/10) --- */
