@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, TeamMember } from '../types';
 
-export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, teamMembers, currentUser }: {
+export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, teamMembers, currentUser, users }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (updates: any[]) => void;
@@ -13,22 +13,32 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
     actions: any[];
     teamMembers: TeamMember[];
     currentUser: User | null;
+    users: User[];
 }) => {
     const [changes, setChanges] = useState<Record<string, string>>({});
+    
+    const userMap = React.useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     const delegatableItems = React.useMemo(() => {
         if (!currentUser) return [];
+        
+        const filterByStatus = (item: any) => {
+            const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+            return displayStatus === 'شروع نشده' || displayStatus === 'در حال اجرا';
+        };
+
         const projectActivities = projects
             .filter(p => p.projectManager === currentUser.username)
-            .flatMap(p => p.activities.map((a:any) => ({ 
+            .flatMap(p => p.activities.filter(filterByStatus).map((a:any) => ({ 
                 ...a, 
                 type: 'activity', 
-                parentName: p.projectName,
+                parentName: p.title,
                 itemName: a.title,
             })));
 
         const manageableActions = actions
             .filter(a => a.approver === currentUser.username)
+            .filter(filterByStatus)
             .map(a => ({
                 ...a,
                 type: 'action',
@@ -93,7 +103,7 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
                                         <tr key={`${item.type}-${item.id}`}>
                                             <td>{item.parentName}</td>
                                             <td>{item.itemName}</td>
-                                            <td>{item.responsible}</td>
+                                            <td>{userMap.get(item.responsible) || item.responsible}</td>
                                             <td>
                                                 <select
                                                     className="status-select"
@@ -102,11 +112,11 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
                                                     disabled={isPendingApproval}
                                                     title={isPendingApproval ? "امکان تغییر واگذاری در وضعیت منتظر تایید وجود ندارد" : ""}
                                                 >
-                                                    <option value={item.responsible}>{item.responsible}</option>
+                                                    <option value={item.responsible}>{userMap.get(item.responsible) || item.responsible}</option>
                                                     {assignableUsers
                                                         .filter(u => u.username !== item.responsible)
                                                         .map(user => (
-                                                            <option key={user.username} value={user.username}>{user.username}</option>
+                                                            <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>
                                                         ))}
                                                 </select>
                                             </td>

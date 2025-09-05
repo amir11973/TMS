@@ -32,7 +32,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         owner: '',
         isNew: false,
         status: 'شروع نشده',
-        id: null
+        id: null,
+        use_workflow: true
     };
     const [project, setProject] = useState(initialProjectState);
     const [activeTab, setActiveTab] = useState('main'); // main or activities
@@ -101,6 +102,33 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
             type: 'activity',
             parentName: project.title
         });
+    };
+
+    const handleDirectActivityStatusChange = async (activityId: number, newStatus: string) => {
+        const activityToUpdate = project.activities.find((a: any) => a.id === activityId);
+        if (!activityToUpdate || !currentUser) return;
+
+        const historyEntry = {
+            status: newStatus,
+            user: currentUser.username,
+            date: new Date().toISOString(),
+            details: `وضعیت به صورت دستی به "${newStatus}" تغییر یافت.`
+        };
+
+        const updatePayload = {
+            status: newStatus,
+            history: [...(activityToUpdate.history || []), historyEntry]
+        };
+
+        const { data, error } = await supabase.from('activities').update(updatePayload).eq('id', activityId).select().single();
+        handleSupabaseError(error, 'updating activity status directly');
+
+        if (data) {
+            const updatedActivities = project.activities.map((act: any) => act.id === activityId ? data : act);
+            const updatedProject = { ...project, activities: updatedActivities };
+            setProject(updatedProject); // Update local state for the modal
+            onUpdateProject(updatedProject); // Update global state in App
+        }
     };
 
     const handleDeleteActivity = (activityId: number) => {
@@ -234,6 +262,18 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                     <label htmlFor="projectGoal">هدف پروژه</label>
                                     <textarea name="projectGoal" id="projectGoal" rows={4} value={project.projectGoal} onChange={handleChange} disabled={readOnly} />
                                 </div>
+                                <div className="input-group full-width" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <input 
+                                        type="checkbox" 
+                                        name="use_workflow" 
+                                        id="project-use_workflow" 
+                                        checked={project.use_workflow} 
+                                        onChange={e => setProject(prev => ({ ...prev, use_workflow: e.target.checked }))}
+                                        disabled={readOnly} 
+                                        style={{ width: 'auto' }}
+                                    />
+                                    <label htmlFor="project-use_workflow" style={{ marginBottom: 0, userSelect: 'none' }}>استفاده از گردش کار تاییدات</label>
+                                </div>
                             </form>
                         </div>
                     )}
@@ -263,7 +303,22 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                            <tr key={activity.id}>
                                                <td>{activity.title}</td>
                                                <td>{renderPriorityBadge(activity.priority)}</td>
-                                               <td>{activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status}</td>
+                                               <td>
+                                                    {project.use_workflow === false ? (
+                                                        <select
+                                                            className="status-select"
+                                                            value={activity.status}
+                                                            onChange={(e) => handleDirectActivityStatusChange(activity.id, e.target.value)}
+                                                            disabled={readOnly}
+                                                        >
+                                                            <option value="شروع نشده">شروع نشده</option>
+                                                            <option value="در حال اجرا">در حال اجرا</option>
+                                                            <option value="خاتمه یافته">خاتمه یافته</option>
+                                                        </select>
+                                                    ) : (
+                                                        activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status
+                                                    )}
+                                                </td>
                                                <td>
                                                     <div className="action-buttons">
                                                         <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>

@@ -20,6 +20,20 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
     const projectItems = items.filter(item => item.type === 'پروژه');
     const actionItems = items.filter(item => item.type === 'اقدام');
 
+    const groupItemsByStatus = (itemsToGroup: any[]) => {
+        return itemsToGroup.reduce((acc, item) => {
+            const status = item.status || 'نامشخص';
+            if (!acc[status]) {
+                acc[status] = [];
+            }
+            acc[status].push(item);
+            return acc;
+        }, {} as Record<string, any[]>);
+    };
+
+    const groupedProjects = groupItemsByStatus(projectItems);
+    const groupedActions = groupItemsByStatus(actionItems);
+
     const handleDetailsClick = (item: any) => {
         const [type, originalIdStr] = item.id.split('-');
         const originalId = parseInt(originalIdStr, 10);
@@ -46,41 +60,48 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                     <thead>
                         <tr>
                             <th>عنوان</th>
-                            <th>وضعیت</th>
                             <th>اهمیت</th>
                             <th>جزئیات</th>
                         </tr>
                     </thead>
                     <tbody>
                         {projectItems.length > 0 && (
-                            <CollapsibleTableSection title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
-                                {projectItems.map(item => (
-                                    <tr key={item.id}>
-                                        <td>{item.name}</td>
-                                        <td>{item.status}</td>
-                                        <td>{renderPriorityBadge(item.priority)}</td>
-                                        <td>
-                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
-                                                <DetailsIcon />
-                                            </button>
-                                        </td>
-                                    </tr>
+                            <CollapsibleTableSection key="dashboard-projects" title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
+                                {/* FIX: Explicitly type array from Object.entries to resolve 'unknown' type error. */}
+                                {Object.entries(groupedProjects).map(([status, itemsInStatus]: [string, any[]]) => (
+                                    <CollapsibleTableSection key={`dashboard-project-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen={true} level={1}>
+                                        {itemsInStatus.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{item.name}</td>
+                                                <td>{renderPriorityBadge(item.priority)}</td>
+                                                <td>
+                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
+                                                        <DetailsIcon />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </CollapsibleTableSection>
                                 ))}
                             </CollapsibleTableSection>
                         )}
                         {actionItems.length > 0 && (
-                             <CollapsibleTableSection title="اقدامات" count={actionItems.length} defaultOpen={true}>
-                                {actionItems.map(item => (
-                                    <tr key={item.id}>
-                                        <td>{item.name}</td>
-                                        <td>{item.status}</td>
-                                        <td>{renderPriorityBadge(item.priority)}</td>
-                                        <td>
-                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
-                                                <DetailsIcon />
-                                            </button>
-                                        </td>
-                                    </tr>
+                             <CollapsibleTableSection key="dashboard-actions" title="اقدامات" count={actionItems.length} defaultOpen={true}>
+                                {/* FIX: Explicitly type array from Object.entries to resolve 'unknown' type error. */}
+                                {Object.entries(groupedActions).map(([status, itemsInStatus]: [string, any[]]) => (
+                                     <CollapsibleTableSection key={`dashboard-action-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen={true} level={1}>
+                                        {itemsInStatus.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{item.name}</td>
+                                                <td>{renderPriorityBadge(item.priority)}</td>
+                                                <td>
+                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
+                                                        <DetailsIcon />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </CollapsibleTableSection>
                                 ))}
                             </CollapsibleTableSection>
                         )}

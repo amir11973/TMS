@@ -96,7 +96,7 @@ export const DarkModeIcon = () => (
 );
 
 export const PlusIcon = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
     </svg>
 );
@@ -128,4 +128,9 @@ export const DocumentIcon = () => (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
     </svg>
+);
+export const SendIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
+    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+  </svg>
 );

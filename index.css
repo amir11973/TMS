@@ -1106,6 +1106,28 @@ body {
 }
 
 /* New Dashboard Styles */
+@property --p {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes drawPie {
+    from { --p: 0deg; }
+    to { --p: 360deg; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(2rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .dashboard-page-container {
     display: flex;
     flex-direction: column;
@@ -1146,7 +1168,17 @@ body {
 
 .dashboard-grid > .dashboard-card {
     grid-column: 1 / -1; /* Mobile-first: Full width */
+    opacity: 0;
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+.dashboard-grid > .dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-grid > .dashboard-card:nth-child(2) { animation-delay: 0.2s; }
+.dashboard-grid > .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
+.dashboard-grid > .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
+.dashboard-grid > .dashboard-card:nth-child(5) { animation-delay: 0.5s; }
+.dashboard-grid > .dashboard-card:nth-child(6) { animation-delay: 0.6s; }
+
 
 .dashboard-card {
     background-color: var(--c-surface);
@@ -1178,7 +1210,6 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    animation: fadeInScaleUp 0.5s ease-out;
 }
 .stat-card-value {
     font-size: 4rem;
@@ -1218,17 +1249,6 @@ body {
 
 
 /* Pie Chart */
-@keyframes fadeInScaleUp {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 .pie-chart-container {
     display: flex;
     align-items: center;
@@ -1236,7 +1256,6 @@ body {
     gap: 1.5rem;
     flex-grow: 1;
     flex-wrap: wrap;
-    animation: fadeInScaleUp 0.5s ease-out;
 }
 
 .pie-chart {
@@ -1246,6 +1265,8 @@ body {
     position: relative;
     flex-shrink: 0;
     transition: transform 0.3s;
+    animation: drawPie 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    mask: conic-gradient(#000 var(--p), transparent var(--p));
 }
 .pie-chart:hover {
     transform: scale(1.05);
@@ -1321,19 +1342,20 @@ body {
 }
 
 @keyframes growUp {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
+  from { transform: scaleY(0); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
 }
 
 .bar-chart-container.vertical .bar {
     width: 100%;
-    transition: height 0.4s ease-out, filter 0.2s;
+    transition: filter 0.2s;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     transform-origin: bottom;
-    animation: growUp 0.5s ease-out;
+    animation: growUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
 }
 
 .bar-chart-container.vertical .bar-item:hover .bar {
@@ -1406,8 +1428,8 @@ body {
 }
 
 @keyframes growRight {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+  from { transform: scaleX(0); opacity: 0;}
+  to { transform: scaleX(1); opacity: 1;}
 }
 
 .bar-chart-container.horizontal .bar {
@@ -1417,8 +1439,9 @@ body {
     justify-content: flex-end;
     padding-right: 0.5rem;
     transform-origin: left;
-    animation: growRight 0.5s ease-out;
+    animation: growRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     transition: filter 0.2s;
+    opacity: 0;
 }
 
 .bar-chart-container.horizontal .bar-value {
@@ -1827,4 +1850,37 @@ body.theme-light .group-header-row:hover {
     .dashboard-grid > .dashboard-card.bar-chart-card.horizontal {
         grid-column: span 3;
     }
+}
+
+/* Custom Column Widths for Dashboard and Projects/Actions Grids */
+.dashboard-data-table,
+.projects-actions-list-page .user-list-table {
+    table-layout: fixed;
+}
+
+.dashboard-data-table td,
+.projects-actions-list-page .user-list-table td {
+    word-wrap: break-word; /* Ensure content wrapping */
+}
+
+/* --- Projects & Actions Page Grid Widths (75/10/15) --- */
+.projects-actions-list-page .user-list-table th:first-child {
+    width: 75%;
+}
+.projects-actions-list-page .user-list-table th:nth-child(2) {
+    width: 10%;
+}
+.projects-actions-list-page .user-list-table th:nth-child(3) {
+    width: 15%;
+}
+
+/* --- Dashboard Page Grid Widths (80/10/10) --- */
+.dashboard-data-table th:first-child {
+    width: 80%; /* Title column */
+}
+.dashboard-data-table th:nth-child(2) {
+    width: 10%; /* Importance column */
+}
+.dashboard-data-table th:nth-child(3) {
+    width: 10%; /* Details column */
 }

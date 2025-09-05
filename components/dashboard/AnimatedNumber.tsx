@@ -14,18 +14,24 @@ export const AnimatedNumber = ({ value }: { value: number }) => {
         valueRef.current = endValue;
         
         let startTime: number | null = null;
-        const duration = 500; // ms
+        const duration = 700; // ms
 
         const animate = (timestamp: number) => {
             if (!startTime) startTime = timestamp;
             const progress = timestamp - startTime;
-            const percentage = Math.min(progress / duration, 1);
+            let percentage = Math.min(progress / duration, 1);
             
-            const animatedValue = Math.floor(startValue + (endValue - startValue) * percentage);
-            setDisplayValue(animatedValue);
+            // Ease-out cubic function for a smoother, more professional animation
+            percentage = 1 - Math.pow(1 - percentage, 3);
 
+            const animatedValue = Math.floor(startValue + (endValue - startValue) * percentage);
+            
             if (progress < duration) {
+                setDisplayValue(animatedValue);
                 requestAnimationFrame(animate);
+            } else {
+                // Ensure the final value is exact
+                setDisplayValue(endValue);
             }
         };
 

@@ -14,14 +14,15 @@ export const BarChart = ({ data, title, color, orientation = 'vertical' }: { dat
         <div className={`dashboard-card bar-chart-card ${orientation}`}>
             <h4 className="chart-title">{title}</h4>
             <div className={`bar-chart-container ${orientation}`}>
-                {data.map(item => (
+                {data.map((item, index) => (
                     <div key={item.name} className="bar-item">
                         <div className="bar-wrapper">
                             <div 
                                 className="bar" 
                                 style={{ 
                                     [orientation === 'vertical' ? 'height' : 'width']: maxValue > 0 ? `${(item.value / maxValue) * 100}%` : '0%',
-                                    backgroundColor: color 
+                                    backgroundColor: color,
+                                    animationDelay: `${index * 75}ms`
                                 }}
                                 title={`${item.name}: ${item.value}`}
                             >

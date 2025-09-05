@@ -5,11 +5,11 @@
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { CollapsibleTableSection } from '../components';
-import { DetailsIcon, HistoryIcon, DelegateIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon } from '../icons';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { SendApprovalModal, DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
 
-export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails }: {
+export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate }: {
     items: any[];
     currentUser: User | null;
     onSendForApproval: (item: any, status: string, data: any) => void;
@@ -21,18 +21,23 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
     teamMembers: TeamMember[];
     onMassDelegate: (updates: any[]) => void;
     onViewDetails: (item: any) => void;
+    onDirectStatusUpdate: (itemId: number, itemType: string, newStatus: string) => void;
 }) => {
     const [sendApprovalModal, setSendApprovalModal] = useState({ isOpen: false, item: null as any, requestedStatus: '' });
     const [delegateModal, setDelegateModal] = useState({ isOpen: false, item: null as any });
     const [isMassDelegateModalOpen, setIsMassDelegateModalOpen] = useState(false);
     const [isCompletedTasksModalOpen, setIsCompletedTasksModalOpen] = useState(false);
+    const [nextStatus, setNextStatus] = useState<Record<string, string>>({});
     
     if (!Array.isArray(items)) {
         return <p>خطا: داده‌های وظایف نامعتبر است.</p>;
     }
     
-    const openTasks = items.filter(item => !(item.status === 'خاتمه یافته' && item.approvalStatus === 'approved'));
-    const completedTasks = items.filter(item => item.status === 'خاتمه یافته' && item.approvalStatus === 'approved');
+    const openTasks = items.filter(item => {
+        const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+        return displayStatus === 'شروع نشده' || displayStatus === 'در حال اجرا';
+    });
+    const completedTasks = items.filter(item => item.status === 'خاتمه یافته' && (item.approvalStatus === 'approved' || item.use_workflow === false));
 
     const groupedOpenTasks = useMemo(() => {
         return openTasks.reduce((acc, task) => {
@@ -44,6 +49,10 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
             return acc;
         }, {} as Record<string, any[]>);
     }, [openTasks]);
+
+    const handleNextStatusChange = (itemId: number, newStatus: string) => {
+        setNextStatus(prev => ({ ...prev, [itemId]: newStatus }));
+    };
 
     const handleSendForApproval = (item: any, requestedStatus: string) => {
         setSendApprovalModal({ isOpen: true, item, requestedStatus });
@@ -108,11 +117,12 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                             }
 
                                             const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+                                            const canChangeStatus = item.status === 'شروع نشده' || item.status === 'در حال اجرا';
 
                                             return (
                                                 <tr key={item.id}>
                                                     <td>{item.title}</td>
-                                                    <td>{approvalStatusText}</td>
+                                                    <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                     <td>{displayStatus}</td>
                                                     <td>
                                                         <div className="action-buttons">
@@ -125,12 +135,37 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                                             <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
                                                                 <DelegateIcon />
                                                             </button>
-                                                            {item.status === 'شروع نشده' && (
-                                                                <button className="send-approval-btn" onClick={() => handleSendForApproval(item, 'در حال اجرا')}>ارسال برای تایید شروع</button>
-                                                            )}
-                                                            {item.status === 'در حال اجرا' && (
-                                                                <button className="send-approval-btn" onClick={() => handleSendForApproval(item, 'خاتمه یافته')}>ارسال برای تایید خاتمه</button>
-                                                            )}
+                                                            
+                                                            {item.use_workflow === false && canChangeStatus ? (
+                                                                <select
+                                                                    className="status-select"
+                                                                    value={displayStatus}
+                                                                    onChange={(e) => onDirectStatusUpdate(item.id, item.type, e.target.value)}
+                                                                >
+                                                                    {item.status === 'شروع نشده' && <option value="شروع نشده">شروع نشده</option>}
+                                                                    <option value="در حال اجرا">در حال اجرا</option>
+                                                                    <option value="خاتمه یافته">خاتمه یافته</option>
+                                                                </select>
+                                                            ) : item.use_workflow !== false && canChangeStatus ? (
+                                                                <>
+                                                                    <select
+                                                                        className="status-select"
+                                                                        value={nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته')}
+                                                                        onChange={(e) => handleNextStatusChange(item.id, e.target.value)}
+                                                                    >
+                                                                        <option value="در حال اجرا">در حال اجرا</option>
+                                                                        <option value="خاتمه یافته">خاتمه یافته</option>
+                                                                    </select>
+                                                                    <button 
+                                                                        className="icon-btn" 
+                                                                        style={{color: 'var(--c-info)'}} 
+                                                                        title="ارسال برای تایید"
+                                                                        onClick={() => handleSendForApproval(item, nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته'))}
+                                                                    >
+                                                                        <SendIcon />
+                                                                    </button>
+                                                                </>
+                                                            ) : null}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -170,6 +205,7 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                 actions={actions}
                 teamMembers={teamMembers}
                 currentUser={currentUser}
+                users={users}
             />
             <CompletedTasksModal
                 isOpen={isCompletedTasksModalOpen}

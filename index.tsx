@@ -130,25 +130,36 @@ const App = () => {
         document.body.className = theme === 'light' ? 'theme-light' : '';
     }, [theme]);
 
-    const calculateProjectStatus = (activities: any[]) => {
+    const calculateProjectStatus = (project: any) => {
+        const activities = project.activities;
         if (!activities || activities.length === 0) {
             return 'شروع نشده';
         }
 
-        const allCompletedAndApproved = activities.every(
-            act => act.status === 'خاتمه یافته' && act.approvalStatus === 'approved'
-        );
+        const isActivityComplete = (act: any) => {
+            // If workflow is disabled for the project, completion only depends on status.
+            if (project.use_workflow === false) {
+                return act.status === 'خاتمه یافته';
+            }
+            // If workflow is enabled, it needs approval.
+            return act.status === 'خاتمه یافته' && act.approvalStatus === 'approved';
+        };
 
-        if (allCompletedAndApproved) {
+        const allCompleted = activities.every(isActivityComplete);
+        if (allCompleted) {
             return 'خاتمه یافته';
         }
 
-        const anyActiveAndApproved = activities.some(
-            act => (act.status === 'در حال اجرا' && act.approvalStatus === 'approved') ||
-                   (act.status === 'خاتمه یافته' && act.approvalStatus === 'approved')
-        );
-
-        if (anyActiveAndApproved) {
+        const isActivityActive = (act: any) => {
+            if (project.use_workflow === false) {
+                return act.status === 'در حال اجرا' || act.status === 'خاتمه یافته';
+            }
+            // For workflow-enabled projects, 'active' means it was approved to start, or it's already complete.
+            return (act.status === 'در حال اجرا' && act.approvalStatus === 'approved') || isActivityComplete(act);
+        };
+        
+        const anyActive = activities.some(isActivityActive);
+        if (anyActive) {
             return 'در حال اجرا';
         }
 
@@ -159,7 +170,7 @@ const App = () => {
         const projectsWithUpdatedStatus = projects.map(project => {
             if (!project.activities) return project;
             
-            const newStatus = calculateProjectStatus(project.activities);
+            const newStatus = calculateProjectStatus(project);
             if (project.status !== newStatus) {
                 // Also update in DB
                 supabase.from('projects').update({ status: newStatus }).eq('id', project.id).then(({ error }) => {
@@ -604,6 +615,57 @@ const App = () => {
         }
     };
 
+    const handleDirectStatusUpdate = async (itemId: number, itemType: string, newStatus: string) => {
+        setIsActionLoading(true);
+        try {
+            const isActivity = itemType === 'activity';
+            const tableName = isActivity ? 'activities' : 'actions';
+    
+            let itemToUpdate: any, parentProject: any;
+            if (isActivity) {
+                for (const p of projects) {
+                    const found = p.activities.find((a: any) => a.id === itemId);
+                    if (found) {
+                        itemToUpdate = found;
+                        parentProject = p;
+                        break;
+                    }
+                }
+            } else {
+                itemToUpdate = actions.find(a => a.id === itemId);
+            }
+    
+            if (!itemToUpdate) return;
+    
+            const historyEntry = {
+                user: loggedInUser!.username,
+                date: new Date().toISOString(),
+                status: newStatus,
+                details: `وضعیت به صورت دستی به "${newStatus}" تغییر یافت.`
+            };
+    
+            const updatePayload = {
+                status: newStatus,
+                history: [...(itemToUpdate.history || []), historyEntry]
+            };
+    
+            const { data, error } = await supabase.from(tableName).update(updatePayload).eq('id', itemId).select().single();
+            handleSupabaseError(error, 'updating status directly');
+            
+            if (!error && data) {
+                if (isActivity) {
+                    const updatedActivities = parentProject.activities.map((act: any) => act.id === itemId ? data : act);
+                    const updatedProject = { ...parentProject, activities: updatedActivities };
+                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                } else {
+                    setActions(prev => prev.map(act => act.id === itemId ? data : act));
+                }
+            }
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     const handleDelegateTask = async (itemToDelegate, newResponsibleUsername) => {
         setIsActionLoading(true);
         try {
@@ -888,7 +950,7 @@ const App = () => {
     };
 
     const taskItems = [
-        ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title}))),
+        ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title, use_workflow: p.use_workflow}))),
         ...actions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
     ].filter(item => item.responsible === loggedInUser?.username);
 
@@ -976,6 +1038,7 @@ const App = () => {
                             teamMembers={currentUserTeam}
                             onMassDelegate={handleMassDelegateTasks}
                             onViewDetails={handleViewDetails}
+                            onDirectStatusUpdate={handleDirectStatusUpdate}
                         />;
             case 'approvals':
                 return <ApprovalsPage 

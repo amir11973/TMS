@@ -17,7 +17,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     teamMembers: TeamMember[];
 }) => {
     // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
-    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null };
+    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, use_workflow: true };
     const [action, setAction] = useState(initialActionState);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
@@ -36,7 +36,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     useEffect(() => {
         if (isOpen) {
             // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
-            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null };
+            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, use_workflow: true };
             if (actionToEdit) {
                 setAction({ ...freshInitialState, ...actionToEdit, owner: actionToEdit.owner || currentUser.username });
             } else {
@@ -128,6 +128,17 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                                     <option value="ارسال برای تایید">ارسال برای تایید</option>
                                     <option value="خاتمه یافته">خاتمه یافته</option>
                                 </select>
+                            </div>
+                             <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    name="use_workflow" 
+                                    id="action-use_workflow" 
+                                    checked={action.use_workflow} 
+                                    onChange={e => setAction(prev => ({ ...prev, use_workflow: e.target.checked }))} 
+                                    style={{ width: 'auto' }}
+                                />
+                                <label htmlFor="action-use_workflow" style={{ marginBottom: 0, userSelect: 'none' }}>استفاده از گردش کار تاییدات</label>
                             </div>
                         </div>
                     </div>
