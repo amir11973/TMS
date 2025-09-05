@@ -1738,6 +1738,12 @@ body.theme-light .group-header-row:hover {
     transform: translateX(-50%) scale(0.95);
 }
 
+/* Word wrapping for table cells */
+.dashboard-data-table td,
+.projects-actions-list-page .user-list-table td {
+    word-wrap: break-word; /* Ensure content wrapping */
+}
+
 /* ============================================== */
 /* Tablet & Desktop Media Queries                 */
 /* ============================================== */
@@ -1836,6 +1842,34 @@ body.theme-light .group-header-row:hover {
     .dashboard-grid > .dashboard-card {
         grid-column: span 3;
     }
+
+    /* Custom Column Widths for Desktop */
+    .dashboard-data-table,
+    .projects-actions-list-page .user-list-table {
+        table-layout: fixed;
+    }
+
+    /* --- Projects & Actions Page Grid Widths (70/10/20) --- */
+    .projects-actions-list-page .user-list-table th:first-child {
+        width: 70%;
+    }
+    .projects-actions-list-page .user-list-table th:nth-child(2) {
+        width: 10%;
+    }
+    .projects-actions-list-page .user-list-table th:nth-child(3) {
+        width: 20%;
+    }
+
+    /* --- Dashboard Page Grid Widths (80/10/10) --- */
+    .dashboard-data-table th:first-child {
+        width: 80%; /* Title column */
+    }
+    .dashboard-data-table th:nth-child(2) {
+        width: 10%; /* Importance column */
+    }
+    .dashboard-data-table th:nth-child(3) {
+        width: 10%; /* Details column */
+    }
 }
 
 @media (min-width: 1200px) {
@@ -1850,37 +1884,4 @@ body.theme-light .group-header-row:hover {
     .dashboard-grid > .dashboard-card.bar-chart-card.horizontal {
         grid-column: span 3;
     }
-}
-
-/* Custom Column Widths for Dashboard and Projects/Actions Grids */
-.dashboard-data-table,
-.projects-actions-list-page .user-list-table {
-    table-layout: fixed;
-}
-
-.dashboard-data-table td,
-.projects-actions-list-page .user-list-table td {
-    word-wrap: break-word; /* Ensure content wrapping */
-}
-
-/* --- Projects & Actions Page Grid Widths (70/10/20) --- */
-.projects-actions-list-page .user-list-table th:first-child {
-    width: 70%;
-}
-.projects-actions-list-page .user-list-table th:nth-child(2) {
-    width: 10%;
-}
-.projects-actions-list-page .user-list-table th:nth-child(3) {
-    width: 20%;
-}
-
-/* --- Dashboard Page Grid Widths (80/10/10) --- */
-.dashboard-data-table th:first-child {
-    width: 80%; /* Title column */
-}
-.dashboard-data-table th:nth-child(2) {
-    width: 10%; /* Importance column */
-}
-.dashboard-data-table th:nth-child(3) {
-    width: 10%; /* Details column */
 }
