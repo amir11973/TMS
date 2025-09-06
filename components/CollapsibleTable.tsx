@@ -29,7 +29,7 @@ export const CollapsibleTableSection = ({ title, count, children, iconType = 'pl
 
     return (
         <>
-            <tr className="group-header-row" onClick={() => setIsOpen(!isOpen)} title={isOpen ? 'بستن گروه' : 'باز کردن گروه'}>
+            <tr className={`group-header-row group-level-${level}`} onClick={() => setIsOpen(!isOpen)} title={isOpen ? 'بستن گروه' : 'باز کردن گروه'}>
                 <td colSpan={100}>
                     <span style={{ paddingRight: `${level * 24}px` }}>
                         <ToggleIcon />

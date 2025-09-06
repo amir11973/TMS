@@ -14,6 +14,10 @@
   --c-warning: #ffc107;
   --c-info: #17a2b8;
   --font-family: 'Vazirmatn', sans-serif;
+  --c-table-header-bg: #0f3460;
+  --c-table-group-header-bg-level-0: #1c2a4c;
+  --c-table-group-header-bg-level-1: #2a3b5f;
+  --c-table-row-bg: #34456c;
 }
 
 body.theme-light {
@@ -26,6 +30,10 @@ body.theme-light {
   --c-text-muted: #6c757d;
   --c-border: #dee2e6;
   --c-hover-bg: rgba(233, 69, 96, 0.1);
+  --c-table-header-bg: #e9ecef;
+  --c-table-group-header-bg-level-0: #f1f3f5;
+  --c-table-group-header-bg-level-1: #f8f9fa;
+  --c-table-row-bg: #ffffff;
 }
 
 * {
@@ -174,7 +182,7 @@ body {
 }
 
 .header h1 {
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 500;
   color: var(--c-text);
   text-align: center;
@@ -298,7 +306,7 @@ body {
 }
 
 .page-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 500;
   color: var(--c-text);
   margin-bottom: 1rem;
@@ -577,8 +585,8 @@ body {
 }
 
 .user-list-table th {
-    background-color: var(--c-header);
-    font-weight: 500;
+    background-color: var(--c-table-header-bg);
+    font-weight: 700;
 }
 
 .user-list-table tbody tr:last-child td {
@@ -719,9 +727,9 @@ body {
     border-radius: 0.75rem;
 }
 
-.project-form {
+.modal-content .project-form {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
 }
 
@@ -736,11 +744,11 @@ body {
     font-weight: 500;
 }
 
-.project-form .full-width {
+.modal-content .project-form .full-width {
     grid-column: 1 / -1;
 }
 
-.project-form textarea {
+.modal-content .project-form textarea {
     resize: vertical;
 }
 
@@ -861,6 +869,16 @@ body {
 
 .modal-body .input-group {
     margin-bottom: 1rem;
+}
+
+.modal-body .input-group label {
+    font-weight: 700;
+}
+
+.modal-body .input-group input,
+.modal-body .input-group select,
+.modal-body .input-group textarea {
+    font-size: 0.85rem; /* Smaller than the 0.9rem label */
 }
 
 .input-grid-col-2 {
@@ -1500,37 +1518,44 @@ body {
     border-bottom: 0.0625rem solid var(--c-border);
 }
 .dashboard-data-table th {
-    background-color: var(--c-header);
+    background-color: var(--c-table-header-bg);
     position: sticky;
     top: 0;
     z-index: 1;
+    font-weight: 700;
 }
 .dashboard-data-table tbody tr:last-child td {
     border-bottom: none;
 }
-.dashboard-data-table tbody tr:hover:not(.group-header-row) {
+
+.dashboard-data-table tbody tr:not(.group-header-row),
+.user-list-table tbody tr:not(.group-header-row) {
+    background-color: var(--c-table-row-bg);
+}
+
+.dashboard-data-table tbody tr:hover:not(.group-header-row),
+.user-list-table tbody tr:hover:not(.group-header-row) {
     background-color: var(--c-hover-bg);
 }
 
 /* Table Grouping Styles */
 .group-header-row {
-    background-color: var(--c-header);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, filter 0.2s;
     user-select: none; /* Prevent text selection on click */
 }
 .group-header-row:hover {
-    background-color: #2a4a7a; /* A bit lighter than header for hover */
+    filter: brightness(1.2);
 }
-body.theme-light .group-header-row {
-    background-color: #e9ecef;
+.group-header-row.group-level-0 {
+    background-color: var(--c-table-group-header-bg-level-0);
 }
-body.theme-light .group-header-row:hover {
-    background-color: #dee2e6;
+.group-header-row.group-level-1 {
+    background-color: var(--c-table-group-header-bg-level-1);
 }
 .group-header-row td {
     padding: 0.625rem 1rem !important;
-    font-weight: 500;
+    font-weight: 700;
     color: var(--c-text);
     border-bottom: 0.0625rem solid var(--c-border) !important;
 }
@@ -1543,7 +1568,8 @@ body.theme-light .group-header-row:hover {
     flex-shrink: 0;
 }
 .group-header-title {
-    font-size: 1.05rem;
+    font-size: 0.9rem;
+    font-weight: 700;
 }
 .group-header-count {
     color: var(--c-text-muted);
@@ -1779,12 +1805,12 @@ body.theme-light .group-header-row:hover {
     }
 
     .page-title {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         margin-bottom: 1.5rem;
     }
 
     .header h1 {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
@@ -1818,10 +1844,6 @@ body.theme-light .group-header-row:hover {
         grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
         align-items: flex-end;
         padding: 1.5rem;
-    }
-
-    .project-modal-content .project-form {
-        grid-template-columns: 1fr 1fr;
     }
 
     .detail-grid {
