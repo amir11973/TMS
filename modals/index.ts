@@ -4,6 +4,7 @@
 */
 export * from './ActionModal';
 export * from './ActivityModal';
+export * from './AlertModal';
 export * from './ApprovalDecisionModal';
 export * from './ApprovalInfoModal';
 export * from './ChoiceModal';

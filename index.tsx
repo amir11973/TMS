@@ -31,7 +31,8 @@ import {
     ChoiceModal,
     UserEditModal,
     ApprovalInfoModal,
-    ApprovalDecisionModal
+    ApprovalDecisionModal,
+    AlertModal
 } from './modals/index';
 
 moment.loadPersian({ usePersianDigits: true });
@@ -71,6 +72,7 @@ const App = () => {
 
     const [confirmationProps, setConfirmationProps] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     const [approvalDecisionProps, setApprovalDecisionProps] = useState({ isOpen: false, item: null, decision: '' });
+    const [alertProps, setAlertProps] = useState({ isOpen: false, title: '', message: '' });
 
     const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
     
@@ -225,6 +227,14 @@ const App = () => {
         setConfirmationProps({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     };
 
+    const handleRequestAlert = ({ title, message }) => {
+        setAlertProps({ isOpen: true, title, message });
+    };
+
+    const handleCloseAlert = () => {
+        setAlertProps({ isOpen: false, title: '', message: '' });
+    };
+
     const handleRequestApprovalDecision = (item, decision) => {
         setApprovalDecisionProps({ isOpen: true, item, decision });
     };
@@ -315,13 +325,38 @@ const App = () => {
     
     const handleDeleteUser = (userId: number) => {
         const userToDelete = users.find(u => u.id === Number(userId));
-        if (userToDelete?.username === 'mahmoudi.pars@gmail.com') {
-            alert('این کاربر قابل حذف نیست.');
+        if (!userToDelete) return;
+
+        if (userToDelete.username === 'mahmoudi.pars@gmail.com') {
+             handleRequestAlert({
+                title: 'عملیات غیرمجاز',
+                message: 'این کاربر قابل حذف نیست.'
+            });
             return;
         }
+
+        const username = userToDelete.username;
+        const isAssigned = projects.some(p => 
+            p.owner === username ||
+            p.projectManager === username || 
+            (p.activities && p.activities.some(a => a.responsible === username || a.approver === username))
+        ) || actions.some(a => 
+            a.owner === username ||
+            a.responsible === username || 
+            a.approver === username
+        );
+
+        if (isAssigned) {
+            handleRequestAlert({
+                title: 'امکان حذف وجود ندارد',
+                message: 'امکان حذف این کاربر وجود ندارد زیرا مسئولیت‌هایی در پروژه‌ها یا اقدامات به او تخصیص داده شده است. لطفا ابتدا وظایف او را به شخص دیگری واگذار کنید.'
+            });
+            return;
+        }
+
         handleRequestConfirmation({
             title: 'حذف کاربر',
-            message: `آیا از حذف کاربر "${userToDelete?.username}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`,
+            message: `آیا از حذف کاربر "${userToDelete.username}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`,
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
@@ -917,10 +952,9 @@ const App = () => {
         }
     };
 
-    const handleRemoveTeamMember = async (username: string) => {
+    const handleRemoveTeamMember = (username: string) => {
         if (!loggedInUser) return;
 
-        // Check for dependencies before deleting
         const isAssigned = projects.some(p => 
             p.projectManager === username || 
             (p.activities && p.activities.some(a => a.responsible === username || a.approver === username))
@@ -929,26 +963,36 @@ const App = () => {
         );
     
         if (isAssigned) {
-            alert('امکان حذف این کاربر وجود ندارد زیرا مسئولیت‌هایی در پروژه‌ها یا اقدامات به او تخصیص داده شده است. لطفا ابتدا وظایف او را به شخص دیگری واگذار کنید.');
+            handleRequestAlert({
+                title: 'امکان حذف وجود ندارد',
+                message: 'امکان حذف این عضو تیم وجود ندارد زیرا مسئولیت‌هایی در پروژه‌ها یا اقدامات به او تخصیص داده شده است. لطفا ابتدا وظایف او را به شخص دیگری واگذار کنید.'
+            });
             return;
         }
 
-        setIsActionLoading(true);
-        try {
-            const { error } = await supabase.from('teams').delete()
-                .eq('manager_username', loggedInUser.username)
-                .eq('member_username', username);
-            handleSupabaseError(error, 'removing team member');
-            if (!error) {
-                setTeams(prev => {
-                    const currentUserTeam = prev[loggedInUser.username] || [];
-                    const newTeam = currentUserTeam.filter(m => m.username !== username);
-                    return { ...prev, [loggedInUser.username]: newTeam };
-                });
+        const userDetails = users.find(u => u.username === username);
+        handleRequestConfirmation({
+            title: 'حذف عضو تیم',
+            message: `آیا از حذف "${userDetails?.full_name || username}" از تیم خود اطمینان دارید؟`,
+            onConfirm: async () => {
+                setIsActionLoading(true);
+                try {
+                    const { error } = await supabase.from('teams').delete()
+                        .eq('manager_username', loggedInUser.username)
+                        .eq('member_username', username);
+                    handleSupabaseError(error, 'removing team member');
+                    if (!error) {
+                        setTeams(prev => {
+                            const currentUserTeam = prev[loggedInUser.username] || [];
+                            const newTeam = currentUserTeam.filter(m => m.username !== username);
+                            return { ...prev, [loggedInUser.username]: newTeam };
+                        });
+                    }
+                } finally {
+                    setIsActionLoading(false);
+                }
             }
-        } finally {
-            setIsActionLoading(false);
-        }
+        });
     };
 
     const handleUpdateTeamMemberRole = async (username: string, role: TeamMemberRole) => {
@@ -1254,6 +1298,12 @@ const supabaseAnonKey = '...';`}
                 onConfirm={confirmationProps.onConfirm}
                 title={confirmationProps.title}
                 message={confirmationProps.message}
+            />
+            <AlertModal
+                isOpen={alertProps.isOpen}
+                onClose={handleCloseAlert}
+                title={alertProps.title}
+                message={alertProps.message}
             />
             <ApprovalDecisionModal
                 isOpen={approvalDecisionProps.isOpen}
