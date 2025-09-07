@@ -519,7 +519,7 @@ body {
     width: 100%;
 }
 
-.add-user-form, .dashboard-filters {
+.add-user-form {
     background-color: var(--c-surface);
     padding: 1rem;
     border-radius: 0.75rem;
@@ -527,6 +527,16 @@ body {
     display: flex;
     flex-direction: column; /* Mobile-first */
     gap: 1.25rem;
+}
+
+.dashboard-filters {
+    background-color: var(--c-surface);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
 }
 
 .add-user-form h3 {
@@ -1900,10 +1910,9 @@ body {
     }
 
     .dashboard-filters {
-        flex-direction: row;
-        flex-wrap: wrap;
         padding: 1.25rem;
         margin-bottom: 1.5rem;
+        gap: 1.25rem;
     }
 
     .dashboard-grid > .dashboard-card {
