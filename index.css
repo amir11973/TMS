@@ -1921,30 +1921,79 @@ body {
 
     /* Custom Column Widths for Desktop */
     .dashboard-data-table,
-    .projects-actions-list-page .user-list-table {
+    .projects-actions-list-page .user-list-table,
+    .tasks-page .user-list-table,
+    .approvals-page .user-list-table {
         table-layout: fixed;
     }
 
-    /* --- Projects & Actions Page Grid Widths (70/10/20) --- */
-    .projects-actions-list-page .user-list-table th:first-child {
-        width: 70%;
+    /* --- Projects & Actions Page Grid Widths (5/55/10/10/20) --- */
+    .projects-actions-list-page .user-list-table th:nth-child(1) {
+        width: 5%;
     }
     .projects-actions-list-page .user-list-table th:nth-child(2) {
-        width: 10%;
+        width: 55%;
     }
     .projects-actions-list-page .user-list-table th:nth-child(3) {
-        width: 20%;
+        width: 10%; /* Status */
+    }
+    .projects-actions-list-page .user-list-table th:nth-child(4) {
+        width: 10%; /* Importance */
+    }
+    .projects-actions-list-page .user-list-table th:nth-child(5) {
+        width: 20%; /* Actions */
     }
 
-    /* --- Dashboard Page Grid Widths (80/10/10) --- */
-    .dashboard-data-table th:first-child {
-        width: 80%; /* Title column */
+
+    /* --- Dashboard Page Grid Widths (5/65/10/10/10) --- */
+    .dashboard-data-table th:nth-child(1) {
+        width: 5%; /* Row number */
     }
     .dashboard-data-table th:nth-child(2) {
-        width: 10%; /* Importance column */
+        width: 65%; /* Title column */
     }
     .dashboard-data-table th:nth-child(3) {
+        width: 10%; /* Status */
+    }
+    .dashboard-data-table th:nth-child(4) {
+        width: 10%; /* Importance column */
+    }
+    .dashboard-data-table th:nth-child(5) {
         width: 10%; /* Details column */
+    }
+    
+    /* --- Tasks Page Grid Widths (5/40/20/15/20) --- */
+    .tasks-page .user-list-table th:nth-child(1) {
+        width: 5%; /* Row Number */
+    }
+    .tasks-page .user-list-table th:nth-child(2) {
+        width: 40%; /* Title */
+    }
+    .tasks-page .user-list-table th:nth-child(3) {
+        width: 20%; /* Approval Status */
+    }
+    .tasks-page .user-list-table th:nth-child(4) {
+        width: 15%; /* Status */
+    }
+    .tasks-page .user-list-table th:nth-child(5) {
+        width: 20%; /* Actions */
+    }
+
+    /* --- Approvals Page Grid Widths (5/45/15/15/20) --- */
+    .approvals-page .user-list-table th:nth-child(1) {
+        width: 5%; /* Row Number */
+    }
+    .approvals-page .user-list-table th:nth-child(2) {
+        width: 45%; /* Title */
+    }
+    .approvals-page .user-list-table th:nth-child(3) {
+        width: 15%; /* Responsible */
+    }
+    .approvals-page .user-list-table th:nth-child(4) {
+        width: 15%; /* Requested Status */
+    }
+    .approvals-page .user-list-table th:nth-child(5) {
+        width: 20%; /* Actions */
     }
 }
 

@@ -68,17 +68,18 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         if (isOpen) {
             if (projectToEdit) {
                 const isDifferentProject = project.id !== projectToEdit.id;
-                setProject({ ...initialProjectState, ...projectToEdit });
-
-                // Only change tab when the project itself changes, not on sub-object updates
+                // FIX: Ensure owner is set from current user for new projects
+                const projectWithOwner = { 
+                    ...initialProjectState, 
+                    ...projectToEdit,
+                    owner: projectToEdit.isNew ? currentUser!.username : projectToEdit.owner
+                };
+                setProject(projectWithOwner);
+    
                 if (isDifferentProject) { 
-                    if (projectToEdit.initialTab) {
-                        setActiveTab(projectToEdit.initialTab);
-                    } else {
-                        setActiveTab('main');
-                    }
+                    setActiveTab(projectToEdit.initialTab || 'main');
                 }
-            } else { // New project
+            } else { // New project logic, just in case
                 setProject({...initialProjectState, owner: currentUser!.username });
                 setActiveTab('main');
             }

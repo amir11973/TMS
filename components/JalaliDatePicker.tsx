@@ -14,6 +14,13 @@ const jalaaliMonths = [
     { value: 11, name: 'بهمن' }, { value: 12, name: 'اسفند' },
 ];
 
+const toPersianDigits = (n) => {
+    if (n === null || n === undefined) return '';
+    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    return n.toString().replace(/\d/g, (x) => persianDigits[parseInt(x, 10)]);
+};
+
+
 export const JalaliDatePicker = ({ value, onChange, name, id, required, disabled }: {
     value: string;
     onChange: (event: any) => void;
@@ -104,7 +111,7 @@ export const JalaliDatePicker = ({ value, onChange, name, id, required, disabled
                 required={required}
                 aria-label="Day"
             >
-                {dayOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                {dayOptions.map(d => <option key={d} value={d}>{toPersianDigits(d)}</option>)}
             </select>
             <select
                 value={month}
@@ -122,7 +129,7 @@ export const JalaliDatePicker = ({ value, onChange, name, id, required, disabled
                 required={required}
                 aria-label="Year"
             >
-                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                {yearOptions.map(y => <option key={y} value={y}>{toPersianDigits(y)}</option>)}
             </select>
             <input type="hidden" name={name} id={id} value={value || ''} />
         </div>

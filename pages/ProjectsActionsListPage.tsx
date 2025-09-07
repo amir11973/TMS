@@ -70,26 +70,19 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
 
     }, [projects, actions, currentUser, teams, titleFilter, responsibleFilter, statusFilter]);
     
-    const projectItems = filteredItems.filter(item => item.type === 'project');
-    const actionItems = filteredItems.filter(item => item.type === 'action');
+    const statusOrder = { 'شروع نشده': 1, 'در حال اجرا': 2, 'خاتمه یافته': 3 };
 
-    const groupItemsByStatus = (items: any[], isAction: boolean = false) => {
-        return items.reduce((acc, item) => {
-            const statusKey = isAction
-                ? (item.status === 'ارسال برای تایید' ? (item.underlyingStatus || item.status) : item.status)
-                : item.status;
-            
-            const status = statusKey || 'نامشخص';
-            if (!acc[status]) {
-                acc[status] = [];
-            }
-            acc[status].push(item);
-            return acc;
-        }, {} as Record<string, any[]>);
-    };
-
-    const groupedProjects = groupItemsByStatus(projectItems);
-    const groupedActions = groupItemsByStatus(actionItems, true);
+    const getActionDisplayStatus = (item: any) => item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+    
+    const sortedProjects = useMemo(() => 
+        filteredItems.filter(item => item.type === 'project')
+        .sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99)),
+    [filteredItems]);
+    
+    const sortedActions = useMemo(() => 
+        filteredItems.filter(item => item.type === 'action')
+        .sort((a, b) => (statusOrder[getActionDisplayStatus(a)] || 99) - (statusOrder[getActionDisplayStatus(b)] || 99)),
+    [filteredItems]);
 
 
     return (
@@ -125,7 +118,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                 <table className="user-list-table">
                     <thead>
                         <tr>
+                            <th>ردیف</th>
                             <th>عنوان</th>
+                            <th>وضعیت</th>
                             <th>اهمیت</th>
                             <th>عملیات</th>
                         </tr>
@@ -133,111 +128,105 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                     <tbody>
                         {filteredItems.length > 0 && currentUser ? (
                             <>
-                                {projectItems.length > 0 && (
-                                    <CollapsibleTableSection key="projects-section" title="پروژه‌ها" count={projectItems.length} defaultOpen>
-                                        {/* FIX: Explicitly type array from Object.entries to resolve 'unknown' type error. */}
-                                        {Object.entries(groupedProjects).map(([status, itemsInStatus]: [string, any[]]) => (
-                                            <CollapsibleTableSection key={`project-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen level={1}>
-                                                {itemsInStatus.map(item => {
-                                                    const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                                    const itemOwnerUsername = item.owner;
-                                                    const ownerTeam = teams[itemOwnerUsername] || [];
-                                                    const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
-                                                        member => member.username === currentUser.username && member.role === 'ادمین'
-                                                    );
-                                                    
-                                                    const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                                    const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                                    
-                                                    return (
-                                                        <tr key={`project-${item.id}`}>
-                                                            <td>{item.title}</td>
-                                                            <td>{renderPriorityBadge(item.priority)}</td>
-                                                            <td>
-                                                                <div className="action-buttons-grid">
-                                                                    <div className="action-buttons-row">
-                                                                        <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                                            <DetailsIcon />
-                                                                        </button>
-                                                                        {canEdit && (
-                                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
-                                                                                <EditIcon />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="action-buttons-row">
-                                                                        {canDelete && (
-                                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
-                                                                                <DeleteIcon />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </CollapsibleTableSection>
-                                        ))}
+                                {sortedProjects.length > 0 && (
+                                    <CollapsibleTableSection key="projects-section" title="پروژه‌ها" count={sortedProjects.length} defaultOpen>
+                                        {sortedProjects.map((item, index) => {
+                                            const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+                                            const itemOwnerUsername = item.owner;
+                                            const ownerTeam = teams[itemOwnerUsername] || [];
+                                            const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+                                                member => member.username === currentUser.username && member.role === 'ادمین'
+                                            );
+                                            
+                                            const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                            const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                            
+                                            return (
+                                                <tr key={`project-${item.id}`}>
+                                                    <td>{index + 1}</td>
+                                                    <td>{item.title}</td>
+                                                    <td>{item.status}</td>
+                                                    <td>{renderPriorityBadge(item.priority)}</td>
+                                                    <td>
+                                                        <div className="action-buttons-grid">
+                                                            <div className="action-buttons-row">
+                                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                    <DetailsIcon />
+                                                                </button>
+                                                                {canEdit && (
+                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
+                                                                        <EditIcon />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <div className="action-buttons-row">
+                                                                {canDelete && (
+                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
+                                                                        <DeleteIcon />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </CollapsibleTableSection>
                                 )}
-                                 {actionItems.length > 0 && (
-                                    <CollapsibleTableSection key="actions-section" title="اقدامات" count={actionItems.length} defaultOpen>
-                                        {/* FIX: Explicitly type array from Object.entries to resolve 'unknown' type error. */}
-                                        {Object.entries(groupedActions).map(([status, itemsInStatus]: [string, any[]]) => (
-                                            <CollapsibleTableSection key={`action-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen level={1}>
-                                                {itemsInStatus.map(item => {
-                                                    const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                                    const itemOwnerUsername = item.owner;
-                                                    const ownerTeam = teams[itemOwnerUsername] || [];
-                                                    const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
-                                                        member => member.username === currentUser.username && member.role === 'ادمین'
-                                                    );
+                                 {sortedActions.length > 0 && (
+                                    <CollapsibleTableSection key="actions-section" title="اقدامات" count={sortedActions.length} defaultOpen>
+                                        {sortedActions.map((item, index) => {
+                                            const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+                                            const itemOwnerUsername = item.owner;
+                                            const ownerTeam = teams[itemOwnerUsername] || [];
+                                            const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+                                                member => member.username === currentUser.username && member.role === 'ادمین'
+                                            );
 
-                                                    const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                                    const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                            const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                            const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
 
-                                                    return (
-                                                        <tr key={`action-${item.id}`}>
-                                                            <td>{item.title}</td>
-                                                            <td>{renderPriorityBadge(item.priority)}</td>
-                                                            <td>
-                                                                <div className="action-buttons-grid">
-                                                                    <div className="action-buttons-row">
-                                                                        <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                                            <DetailsIcon />
-                                                                        </button>
-                                                                        {canEdit && (
-                                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
-                                                                                <EditIcon />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="action-buttons-row">
-                                                                        {canDelete && (
-                                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
-                                                                                <DeleteIcon />
-                                                                            </button>
-                                                                        )}
-                                                                        {item.history && (
-                                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                                                <HistoryIcon />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </CollapsibleTableSection>
-                                        ))}
+                                            return (
+                                                <tr key={`action-${item.id}`}>
+                                                    <td>{index + 1}</td>
+                                                    <td>{item.title}</td>
+                                                    <td>{item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status}</td>
+                                                    <td>{renderPriorityBadge(item.priority)}</td>
+                                                    <td>
+                                                        <div className="action-buttons-grid">
+                                                            <div className="action-buttons-row">
+                                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                    <DetailsIcon />
+                                                                </button>
+                                                                {canEdit && (
+                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
+                                                                        <EditIcon />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <div className="action-buttons-row">
+                                                                {canDelete && (
+                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
+                                                                        <DeleteIcon />
+                                                                    </button>
+                                                                )}
+                                                                {item.history && (
+                                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                        <HistoryIcon />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </CollapsibleTableSection>
                                 )}
                             </>
                         ) : (
                             <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>موردی برای نمایش یافت نشد.</td>
+                                <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>موردی برای نمایش یافت نشد.</td>
                             </tr>
                         )}
                     </tbody>

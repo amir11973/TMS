@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../CollapsibleTable';
 import { renderPriorityBadge } from '../PriorityBadge';
 import { DetailsIcon } from '../../icons';
@@ -17,22 +17,17 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
         return null; 
     }
 
-    const projectItems = items.filter(item => item.type === 'پروژه');
-    const actionItems = items.filter(item => item.type === 'اقدام');
-
-    const groupItemsByStatus = (itemsToGroup: any[]) => {
-        return itemsToGroup.reduce((acc, item) => {
-            const status = item.status || 'نامشخص';
-            if (!acc[status]) {
-                acc[status] = [];
-            }
-            acc[status].push(item);
-            return acc;
-        }, {} as Record<string, any[]>);
+    const statusOrder = {
+        'شروع نشده': 1,
+        'در حال اجرا': 2,
+        'خاتمه یافته': 3
     };
+    
+    // Helper for consistent sorting
+    const sortByStatus = (a: any, b: any) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
 
-    const groupedProjects = groupItemsByStatus(projectItems);
-    const groupedActions = groupItemsByStatus(actionItems);
+    const projectItems = useMemo(() => items.filter(item => item.type === 'پروژه').sort(sortByStatus), [items]);
+    const actionItems = useMemo(() => items.filter(item => item.type === 'اقدام').sort(sortByStatus), [items]);
 
     const handleDetailsClick = (item: any) => {
         const [type, originalIdStr] = item.id.split('-');
@@ -59,7 +54,9 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                 <table className="user-list-table dashboard-data-table">
                     <thead>
                         <tr>
+                            <th>ردیف</th>
                             <th>عنوان</th>
+                            <th>وضعیت</th>
                             <th>اهمیت</th>
                             <th>جزئیات</th>
                         </tr>
@@ -67,41 +64,35 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                     <tbody>
                         {projectItems.length > 0 && (
                             <CollapsibleTableSection key="dashboard-projects" title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
-                                {/* FIX: Explicitly type array from Object.entries to resolve 'unknown' type error. */}
-                                {Object.entries(groupedProjects).map(([status, itemsInStatus]: [string, any[]]) => (
-                                    <CollapsibleTableSection key={`dashboard-project-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen={true} level={1}>
-                                        {itemsInStatus.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{item.name}</td>
-                                                <td>{renderPriorityBadge(item.priority)}</td>
-                                                <td>
-                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
-                                                        <DetailsIcon />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </CollapsibleTableSection>
+                                {projectItems.map((item, index) => (
+                                    <tr key={item.id}>
+                                        <td>{index + 1}</td>
+                                        <td>{item.name}</td>
+                                        <td>{item.status}</td>
+                                        <td>{renderPriorityBadge(item.priority)}</td>
+                                        <td>
+                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
+                                                <DetailsIcon />
+                                            </button>
+                                        </td>
+                                    </tr>
                                 ))}
                             </CollapsibleTableSection>
                         )}
                         {actionItems.length > 0 && (
                              <CollapsibleTableSection key="dashboard-actions" title="اقدامات" count={actionItems.length} defaultOpen={true}>
-                                {/* FIX: Explicitly type array from Object.entries to resolve 'unknown' type error. */}
-                                {Object.entries(groupedActions).map(([status, itemsInStatus]: [string, any[]]) => (
-                                     <CollapsibleTableSection key={`dashboard-action-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen={true} level={1}>
-                                        {itemsInStatus.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{item.name}</td>
-                                                <td>{renderPriorityBadge(item.priority)}</td>
-                                                <td>
-                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
-                                                        <DetailsIcon />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </CollapsibleTableSection>
+                                {actionItems.map((item, index) => (
+                                    <tr key={item.id}>
+                                        <td>{index + 1}</td>
+                                        <td>{item.name}</td>
+                                        <td>{item.status}</td>
+                                        <td>{renderPriorityBadge(item.priority)}</td>
+                                        <td>
+                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
+                                                <DetailsIcon />
+                                            </button>
+                                        </td>
+                                    </tr>
                                 ))}
                             </CollapsibleTableSection>
                         )}

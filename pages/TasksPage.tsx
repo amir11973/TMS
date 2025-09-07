@@ -95,6 +95,7 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                     <table className="user-list-table">
                         <thead>
                             <tr>
+                                <th>ردیف</th>
                                 <th>عنوان</th>
                                 <th>وضعیت تائید</th>
                                 <th>وضعیت</th>
@@ -106,7 +107,7 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                 // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
                                 Object.entries(groupedOpenTasks).map(([groupName, tasks]: [string, any[]]) => (
                                     <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
-                                        {tasks.map(item => {
+                                        {tasks.map((item, index) => {
                                             let approvalStatusText = '—';
                                             if (item.status === 'ارسال برای تایید') {
                                                 approvalStatusText = `منتظر تایید (${item.requestedStatus})`;
@@ -121,6 +122,7 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
 
                                             return (
                                                 <tr key={item.id}>
+                                                    <td>{index + 1}</td>
                                                     <td>{item.title}</td>
                                                     <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                     <td>{displayStatus}</td>

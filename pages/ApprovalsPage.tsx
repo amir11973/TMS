@@ -52,6 +52,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                     <table className="user-list-table">
                         <thead>
                             <tr>
+                                <th>ردیف</th>
                                 <th>عنوان</th>
                                 <th>مسئول</th>
                                 <th>درخواست برای</th>
@@ -63,8 +64,9 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                  // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
                                  Object.entries(groupedPendingApprovals).map(([groupName, tasks]: [string, any[]]) => (
                                     <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
-                                        {tasks.map(item => (
+                                        {tasks.map((item, index) => (
                                             <tr key={item.id}>
+                                                <td>{index + 1}</td>
                                                 <td>{item.title}</td>
                                                 <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                 <td>{item.requestedStatus}</td>
@@ -97,7 +99,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                  ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
+                                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
                                         هیچ موردی در انتظار تایید شما نیست.
                                     </td>
                                 </tr>
