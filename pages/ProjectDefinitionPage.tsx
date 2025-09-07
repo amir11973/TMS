@@ -12,7 +12,7 @@ import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
 
-export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert }: {
+export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams }: {
     users: User[];
     sections: string[];
     onSave: (project: any) => void;
@@ -21,6 +21,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     onShowHistory: (history: any[]) => void;
     currentUser: User | null;
     teamMembers: TeamMember[];
+    teams: Record<string, TeamMember[]>;
     onUpdateProject: (project: any) => void;
     isOpen: boolean;
     onClose: () => void;
@@ -46,22 +47,28 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     
-    const possibleOwners = useMemo(() => {
-        if (!currentUser) return [];
-        const ownerList = [{ username: currentUser.username }, ...teamMembers];
-        const uniqueOwners = Array.from(new Set(ownerList.map(u => u.username)))
-                                 .map(username => ({ username }));
-        return uniqueOwners;
-    }, [currentUser, teamMembers]);
-    
-    const projectManagers = teamMembers.filter(m => m.role !== 'عضو تیم');
+    const projectManagers = users;
+
+    const canManageActivities = useMemo(() => {
+        if (!currentUser || !project || readOnly) return false;
+        const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+        if (isAdmin) return true;
+        
+        const projectOwnerUsername = project.owner;
+        if (currentUser.username === projectOwnerUsername) return true;
+
+        const ownerTeam = teams[projectOwnerUsername] || [];
+        const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+            member => member.username === currentUser.username && member.role === 'ادمین'
+        );
+        return isCurrentUserAdminInOwnersTeam;
+    }, [currentUser, project, teams, readOnly]);
 
     useEffect(() => {
         if (isOpen) {
             if (projectToEdit) {
                 const isDifferentProject = project.id !== projectToEdit.id;
-                const ownerToSet = projectToEdit.owner || (currentUser ? currentUser.username : '');
-                setProject({ ...initialProjectState, ...projectToEdit, owner: ownerToSet });
+                setProject({ ...initialProjectState, ...projectToEdit });
 
                 // Only change tab when the project itself changes, not on sub-object updates
                 if (isDifferentProject) { 
@@ -209,6 +216,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     }
 
     const modalTitle = projectToEdit?.isNew ? 'تعریف پروژه جدید' : `ویرایش پروژه: ${project.title}`;
+    const isOwner = currentUser?.username === project.owner;
 
 
     return (
@@ -236,14 +244,15 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                 </div>
                                 <div className="input-group">
                                     <label htmlFor="owner">مالک</label>
-                                    <select name="owner" id="owner" value={project.owner} onChange={handleChange} required disabled={readOnly}>
-                                        <option value="" disabled>یک مالک انتخاب کنید</option>
-                                        {possibleOwners.map(u => <option key={u.username} value={u.username}>{userMap.get(u.username) || u.username}</option>)}
-                                    </select>
+                                    <input 
+                                        id="owner"
+                                        value={userMap.get(project.owner) || project.owner}
+                                        disabled
+                                    />
                                 </div>
                                 <div className="input-group">
                                     <label htmlFor="projectManager">مدیر پروژه</label>
-                                    <select name="projectManager" id="projectManager" value={project.projectManager} onChange={handleChange} required disabled={readOnly}>
+                                    <select name="projectManager" id="projectManager" value={project.projectManager} onChange={handleChange} required disabled={readOnly || (!isOwner && !project.isNew)}>
                                         <option value="" disabled>یک مدیر انتخاب کنید</option>
                                         {projectManagers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                                     </select>
@@ -299,7 +308,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                         <div className="tab-content" style={{ backgroundColor: 'transparent', padding: '12px 0' }}>
                             <div className="activities-header">
                                 <h3>لیست فعالیت‌ها</h3>
-                                {!readOnly && (
+                                {canManageActivities && (
                                      <button className="add-activity-btn" onClick={handleAddActivity}>
                                         افزودن فعالیت
                                     </button>
@@ -326,7 +335,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                             className="status-select"
                                                             value={activity.status}
                                                             onChange={(e) => handleDirectActivityStatusChange(activity.id, e.target.value)}
-                                                            disabled={readOnly}
+                                                            disabled={!canManageActivities}
                                                         >
                                                             <option value="شروع نشده">شروع نشده</option>
                                                             <option value="در حال اجرا">در حال اجرا</option>
@@ -342,14 +351,14 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                             <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
                                                                 <DetailsIcon />
                                                             </button>
-                                                            {!readOnly && (
+                                                            {canManageActivities && (
                                                                 <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
                                                                     <EditIcon />
                                                                 </button>
                                                             )}
                                                         </div>
                                                         <div className="action-buttons-row">
-                                                            {!readOnly && (
+                                                            {canManageActivities && (
                                                                 <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
                                                                     <DeleteIcon />
                                                                 </button>
@@ -386,6 +395,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     teamMembers={teamMembers}
                     users={users}
                     onRequestAlert={onRequestAlert}
+                    isProjectOwner={isOwner}
                 />
             </div>
         </div>

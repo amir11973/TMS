@@ -267,6 +267,11 @@ const App = () => {
     const handleSignUp = async ({ username, password, fullName }) => {
         setIsActionLoading(true);
         try {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(username)) {
+                return { error: { message: 'نام کاربری باید یک ایمیل معتبر باشد.' } };
+            }
+
             const { data: existingUser } = await supabase
                 .from('users')
                 .select('id')
@@ -360,10 +365,25 @@ const App = () => {
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
-                     const { error } = await supabase.from('users').delete().eq('id', userId);
-                     handleSupabaseError(error, 'deleting user');
-                     if (!error) {
-                        setUsers(prev => prev.filter(u => u.id !== userId));
+                    // Also delete the user from any teams they are a member of
+                    const { error: teamMembershipError } = await supabase
+                        .from('teams')
+                        .delete()
+                        .eq('member_username', userToDelete.username);
+                    handleSupabaseError(teamMembershipError, 'deleting user memberships');
+
+                    // Also delete any team managed by this user
+                    const { error: managedTeamError } = await supabase
+                        .from('teams')
+                        .delete()
+                        .eq('manager_username', userToDelete.username);
+                    handleSupabaseError(managedTeamError, 'deleting managed team');
+
+                     const { error: userError } = await supabase.from('users').delete().eq('id', userId);
+                     handleSupabaseError(userError, 'deleting user');
+                     if (!userError) {
+                        // Instead of manually updating parts of state, refetch all data for consistency
+                        await fetchData();
                      }
                 } finally {
                     setIsActionLoading(false);
@@ -455,7 +475,7 @@ const App = () => {
         try {
             if (projectToSave.isNew) {
                 const { activities, isNew, ...newProjectPayload } = projectToSave;
-                newProjectPayload.owner = newProjectPayload.owner || loggedInUser.username;
+                newProjectPayload.owner = loggedInUser.username;
                 delete newProjectPayload.id; // Ensure ID is not sent for new records
                 const { data, error } = await supabase.from('projects').insert(newProjectPayload).select().single();
                 handleSupabaseError(error, 'creating new project');
@@ -491,7 +511,7 @@ const App = () => {
                     setActions(prev => prev.map(a => a.id === data.id ? data : a));
                 }
             } else { // Insert
-                const newActionPayload = { ...actionToSave, owner: actionToSave.owner || loggedInUser.username, history: [{ status: actionToSave.status, user: loggedInUser.username, date: new Date().toISOString() }] };
+                const newActionPayload = { ...actionToSave, owner: loggedInUser.username, history: [{ status: actionToSave.status, user: loggedInUser.username, date: new Date().toISOString() }] };
                 delete newActionPayload.id;
                 const { data, error } = await supabase.from('actions').insert(newActionPayload).select().single();
                 handleSupabaseError(error, 'creating new action');
@@ -1107,6 +1127,7 @@ const App = () => {
                             actions={actions}
                             currentUser={loggedInUser}
                             users={users}
+                            teams={teams}
                             onViewDetails={handleViewDetails}
                         />;
             case 'my_team':
@@ -1120,9 +1141,9 @@ const App = () => {
                         />;
             // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
             case 'users':
-                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} onViewDetails={handleViewDetails} />;
+                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
             case 'projects_actions_list':
-                return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} users={users} />;
+                return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} users={users} teams={teams} />;
             case 'tasks':
                 return <TasksPage 
                             items={taskItems} 
@@ -1295,6 +1316,7 @@ const supabaseAnonKey = '...';`}
                 onShowHistory={handleShowHistory}
                 currentUser={loggedInUser}
                 teamMembers={currentUserTeam}
+                teams={teams}
                 onUpdateProject={handleUpdateProjectState}
                 onViewDetails={handleViewDetails}
             />

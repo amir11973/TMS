@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useMemo } from 'react';
-import { User } from '../types';
+import { User, TeamMember } from '../types';
 import { PieChart, BarChart, StatCard, AnimatedNumber, DashboardDataTable } from '../components/dashboard';
 
-export const DashboardPage = ({ projects, actions, currentUser, users, onViewDetails }: {
+export const DashboardPage = ({ projects, actions, currentUser, users, teams, onViewDetails }: {
     projects: any[];
     actions: any[];
     currentUser: User | null;
     users: User[];
+    teams: Record<string, TeamMember[]>;
     onViewDetails: (item: any) => void;
 }) => {
     const [filters, setFilters] = useState({
@@ -63,13 +64,21 @@ export const DashboardPage = ({ projects, actions, currentUser, users, onViewDet
         if (currentUser.username === 'mahmoudi.pars@gmail.com') {
             return combinedItems;
         }
-        return combinedItems.filter(item => 
-            item.owner === currentUser.username ||
-            item.responsible === currentUser.username ||
-            item.approver === currentUser.username || // for actions
-            (item.activities && item.activities.some((act:any) => act.responsible === currentUser.username || act.approver === currentUser.username)) // for projects
-        );
-    }, [combinedItems, currentUser]);
+        return combinedItems.filter(item => {
+            const ownerTeam = teams[item.owner] || [];
+            const isTeamAdmin = ownerTeam.some(
+                member => member.username === currentUser.username && member.role === 'ادمین'
+            );
+
+            return (
+                item.owner === currentUser.username ||
+                item.responsible === currentUser.username ||
+                item.approver === currentUser.username || // for actions
+                (item.activities && item.activities.some((act:any) => act.responsible === currentUser.username || act.approver === currentUser.username)) || // for projects
+                isTeamAdmin
+            );
+        });
+    }, [combinedItems, currentUser, teams]);
 
 
     const filteredItems = useMemo(() => {

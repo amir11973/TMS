@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useMemo } from 'react';
-import { User } from '../types';
+import { User, TeamMember } from '../types';
 import { renderPriorityBadge, CollapsibleTableSection } from '../components';
 import { DetailsIcon, EditIcon, DeleteIcon, HistoryIcon } from '../icons';
 
-export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEditProject, onDeleteProject, onEditAction, onDeleteAction, currentUser, onShowHistory, users }: {
+export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEditProject, onDeleteProject, onEditAction, onDeleteAction, currentUser, onShowHistory, users, teams }: {
     projects: any[];
     actions: any[];
     onViewDetails: (item: any) => void;
@@ -18,6 +18,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
     currentUser: User | null;
     onShowHistory: (history: any[]) => void;
     users: User[];
+    teams: Record<string, TeamMember[]>;
 }) => {
     const [titleFilter, setTitleFilter] = useState('');
     const [responsibleFilter, setResponsibleFilter] = useState('all');
@@ -31,16 +32,25 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
         if (!currentUser) return [];
         const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
         
-        const visibleProjects = isAdmin ? projects : projects.filter(p => 
-            p.owner === currentUser.username ||
-            p.projectManager === currentUser.username ||
-            (p.activities && p.activities.some((act:any) => act.responsible === currentUser.username || act.approver === currentUser.username))
-        );
-        const visibleActions = isAdmin ? actions : actions.filter(a => 
-            a.owner === currentUser.username ||
-            a.responsible === currentUser.username ||
-            a.approver === currentUser.username
-        );
+        const visibleProjects = isAdmin ? projects : projects.filter(p => {
+            const ownerTeam = teams[p.owner] || [];
+            const isTeamAdmin = ownerTeam.some(member => member.username === currentUser.username && member.role === 'ادمین');
+
+            return p.owner === currentUser.username ||
+                p.projectManager === currentUser.username ||
+                (p.activities && p.activities.some((act:any) => act.responsible === currentUser.username || act.approver === currentUser.username)) ||
+                isTeamAdmin;
+        });
+
+        const visibleActions = isAdmin ? actions : actions.filter(a => {
+            const ownerTeam = teams[a.owner] || [];
+            const isTeamAdmin = ownerTeam.some(member => member.username === currentUser.username && member.role === 'ادمین');
+            
+            return a.owner === currentUser.username ||
+                a.responsible === currentUser.username ||
+                a.approver === currentUser.username ||
+                isTeamAdmin;
+        });
 
         const allVisibleItems = [
             ...visibleProjects.map(p => ({ ...p, type: 'project', responsible: p.projectManager })),
@@ -58,7 +68,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
             return titleMatch && responsibleMatch && statusMatch;
         });
 
-    }, [projects, actions, currentUser, titleFilter, responsibleFilter, statusFilter]);
+    }, [projects, actions, currentUser, teams, titleFilter, responsibleFilter, statusFilter]);
     
     const projectItems = filteredItems.filter(item => item.type === 'project');
     const actionItems = filteredItems.filter(item => item.type === 'action');
@@ -130,8 +140,15 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                             <CollapsibleTableSection key={`project-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen level={1}>
                                                 {itemsInStatus.map(item => {
                                                     const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                                    const canEdit = isAdmin || currentUser.username === item.owner || currentUser.username === item.responsible;
-                                                    const canDelete = isAdmin || currentUser.username === item.owner;
+                                                    const itemOwnerUsername = item.owner;
+                                                    const ownerTeam = teams[itemOwnerUsername] || [];
+                                                    const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+                                                        member => member.username === currentUser.username && member.role === 'ادمین'
+                                                    );
+                                                    
+                                                    const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                    const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                    
                                                     return (
                                                         <tr key={`project-${item.id}`}>
                                                             <td>{item.title}</td>
@@ -171,8 +188,15 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                             <CollapsibleTableSection key={`action-status-${status}`} title={status} count={itemsInStatus.length} defaultOpen level={1}>
                                                 {itemsInStatus.map(item => {
                                                     const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                                    const canEdit = isAdmin || currentUser.username === item.owner || currentUser.username === item.responsible;
-                                                    const canDelete = isAdmin || currentUser.username === item.owner;
+                                                    const itemOwnerUsername = item.owner;
+                                                    const ownerTeam = teams[itemOwnerUsername] || [];
+                                                    const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+                                                        member => member.username === currentUser.username && member.role === 'ادمین'
+                                                    );
+
+                                                    const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                    const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+
                                                     return (
                                                         <tr key={`action-${item.id}`}>
                                                             <td>{item.title}</td>

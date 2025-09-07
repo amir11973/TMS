@@ -8,7 +8,7 @@ import { TeamMember, User } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers, users, onRequestAlert }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers, users, onRequestAlert, isProjectOwner }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
@@ -16,6 +16,7 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
     teamMembers: TeamMember[];
     users: User[];
     onRequestAlert: (props: any) => void;
+    isProjectOwner: boolean;
 }) => {
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط' };
     
@@ -23,8 +24,8 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
-    const responsibleUsers = teamMembers;
-    const approverUsers = teamMembers.filter(m => m.role === 'مدیر' || m.role === 'ادمین');
+    const responsibleUsers = users;
+    const approverUsers = users;
 
     useEffect(() => {
         if (isOpen) {
@@ -101,14 +102,14 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
                         </div>
                         <div className="input-group">
                             <label htmlFor="responsible">مسئول انجام</label>
-                            <select name="responsible" id="responsible" value={activity.responsible} onChange={handleChange} required>
+                            <select name="responsible" id="responsible" value={activity.responsible} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
                                 <option value="" disabled>یک کاربر انتخاب کنید</option>
                                 {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                             </select>
                         </div>
                         <div className="input-group">
                             <label htmlFor="approver">تایید کننده</label>
-                            <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required>
+                            <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
                                 <option value="" disabled>یک کاربر انتخاب کنید</option>
                                 {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                             </select>
