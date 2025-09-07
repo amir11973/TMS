@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
+import moment from 'moment-jalaali';
 import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
 import { supabase, handleSupabaseError } from '../supabaseClient';
@@ -78,7 +79,17 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setProject(prev => ({ ...prev, [name]: value }));
+
+        const updatedProject = { ...project, [name]: value };
+
+        if (name === 'projectEndDate' && moment(value).isBefore(updatedProject.projectStartDate)) {
+            updatedProject.projectEndDate = updatedProject.projectStartDate;
+        }
+        if (name === 'projectStartDate' && moment(updatedProject.projectEndDate).isBefore(value)) {
+            updatedProject.projectEndDate = value;
+        }
+
+        setProject(updatedProject);
     };
     
     const handleSave = (e: FormEvent) => {

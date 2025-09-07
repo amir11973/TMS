@@ -4,7 +4,7 @@
 */
 import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../components';
-import { DetailsIcon, HistoryIcon, DocumentIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, DocumentIcon, ApproveIcon, RejectIcon } from '../icons';
 import { User } from '../types';
 
 export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo, users }: {
@@ -79,8 +79,12 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                         <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
                                                             <HistoryIcon />
                                                         </button>
-                                                        <button className="approve-btn" onClick={() => onApprovalDecision(item, 'approved')}>تایید</button>
-                                                        <button className="reject-btn" onClick={() => onApprovalDecision(item, 'rejected')}>رد</button>
+                                                        <button className="icon-btn approve-btn" title="تایید" onClick={() => onApprovalDecision(item, 'approved')}>
+                                                            <ApproveIcon />
+                                                        </button>
+                                                        <button className="icon-btn reject-btn" title="رد" onClick={() => onApprovalDecision(item, 'rejected')}>
+                                                            <RejectIcon />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>

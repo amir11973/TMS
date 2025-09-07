@@ -134,3 +134,13 @@ export const SendIcon = () => (
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
   </svg>
 );
+export const ApproveIcon = () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
+        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+    </svg>
+);
+export const RejectIcon = () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
+        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+    </svg>
+);

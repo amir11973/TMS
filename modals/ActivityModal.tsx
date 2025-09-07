@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect, useMemo } from 'react';
+import moment from 'moment-jalaali';
 import { TeamMember, User } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
@@ -38,7 +39,18 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setActivity(prev => ({ ...prev, [name]: value }));
+        
+        const updatedActivity = { ...activity, [name]: value };
+
+        // Date validation logic
+        if (name === 'endDate' && moment(value).isBefore(updatedActivity.startDate)) {
+            updatedActivity.endDate = updatedActivity.startDate;
+        }
+        if (name === 'startDate' && moment(updatedActivity.endDate).isBefore(value)) {
+            updatedActivity.endDate = value;
+        }
+
+        setActivity(updatedActivity);
     };
 
     const handleSave = (e: React.FormEvent) => {

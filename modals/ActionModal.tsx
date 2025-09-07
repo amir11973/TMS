@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect, useMemo } from 'react';
+import moment from 'moment-jalaali';
 import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
@@ -50,7 +51,18 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setAction(prev => ({ ...prev, [name]: value }));
+        
+        const updatedAction = { ...action, [name]: value };
+
+        // Date validation logic
+        if (name === 'endDate' && moment(value).isBefore(updatedAction.startDate)) {
+            updatedAction.endDate = updatedAction.startDate;
+        }
+        if (name === 'startDate' && moment(updatedAction.endDate).isBefore(value)) {
+            updatedAction.endDate = value;
+        }
+        
+        setAction(updatedAction);
     };
 
     const handleSave = (e: React.FormEvent) => {

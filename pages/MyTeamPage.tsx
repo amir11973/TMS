@@ -4,7 +4,41 @@
 */
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember, TeamMemberRole } from '../types';
-import { DeleteIcon } from '../icons';
+import { DeleteIcon, DetailsIcon } from '../icons';
+
+const TeamMemberDetailsModal = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () => void; user: User | null }) => {
+    if (!isOpen || !user) return null;
+
+    return (
+        <div className="modal-backdrop" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h3>جزییات عضو تیم</h3>
+                    <button type="button" className="close-button" onClick={onClose}>&times;</button>
+                </div>
+                <div className="modal-body">
+                    <div className="detail-grid">
+                        <div className="detail-group">
+                            <span className="detail-label">نام و نام خانوادگی</span>
+                            <p className="detail-value">{user.full_name}</p>
+                        </div>
+                        <div className="detail-group">
+                            <span className="detail-label">نام کاربری (ایمیل)</span>
+                            <p className="detail-value">{user.username}</p>
+                        </div>
+                        <div className="detail-group full-width">
+                            <span className="detail-label">کد اعتباری</span>
+                            <p className="detail-value">تعریف نشده</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, onRemoveMember, onUpdateRole }: {
     allUsers: User[];
@@ -15,6 +49,7 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
     onUpdateRole: (username: string, role: TeamMemberRole) => void;
 }) => {
     const [userToAdd, setUserToAdd] = useState('');
+    const [detailsModalUser, setDetailsModalUser] = useState<User | null>(null);
 
     const usersAvailableToAdd = useMemo(() => {
         if (!currentUser) return [];
@@ -61,7 +96,6 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                     <thead>
                         <tr>
                             <th>نام و نام خانوادگی</th>
-                            <th>نام کاربری</th>
                             <th>نقش در تیم</th>
                             <th>عملیات</th>
                         </tr>
@@ -73,7 +107,6 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                             return (
                                 <tr key={member.username}>
                                     <td>{userDetails?.full_name}</td>
-                                    <td>{member.username}</td>
                                     <td>
                                         <select 
                                             className="status-select"
@@ -87,14 +120,19 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                                         </select>
                                     </td>
                                     <td>
-                                        <button 
-                                            className="icon-btn delete-btn" 
-                                            title={isCurrentUser ? "امکان حذف کاربر جاری از تیم وجود ندارد" : "حذف از تیم"} 
-                                            onClick={() => onRemoveMember(member.username)}
-                                            disabled={isCurrentUser}
-                                        >
-                                            <DeleteIcon />
-                                        </button>
+                                        <div className="action-buttons">
+                                            <button className="icon-btn details-btn" title="جزییات" onClick={() => setDetailsModalUser(userDetails || null)}>
+                                                <DetailsIcon />
+                                            </button>
+                                            <button 
+                                                className="icon-btn delete-btn" 
+                                                title={isCurrentUser ? "امکان حذف کاربر جاری از تیم وجود ندارد" : "حذف از تیم"} 
+                                                onClick={() => onRemoveMember(member.username)}
+                                                disabled={isCurrentUser}
+                                            >
+                                                <DeleteIcon />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             );
@@ -102,6 +140,11 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                     </tbody>
                 </table>
             </div>
+            <TeamMemberDetailsModal 
+                isOpen={!!detailsModalUser}
+                onClose={() => setDetailsModalUser(null)}
+                user={detailsModalUser}
+            />
         </div>
     );
 };

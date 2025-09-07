@@ -962,6 +962,12 @@ body {
 .icon-btn.delete-btn {
     color: var(--c-danger);
 }
+.icon-btn.approve-btn {
+    color: var(--c-success);
+}
+.icon-btn.reject-btn {
+    color: var(--c-danger);
+}
 .details-btn {
     color: var(--c-info);
 }
