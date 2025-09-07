@@ -8,7 +8,7 @@ import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionToEdit, currentUser, teamMembers }: {
+export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionToEdit, currentUser, teamMembers, onRequestAlert }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (action: any) => void;
@@ -17,6 +17,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     actionToEdit: any;
     currentUser: User;
     teamMembers: TeamMember[];
+    onRequestAlert: (props: any) => void;
 }) => {
     // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
     const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, use_workflow: true };
@@ -52,12 +53,17 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         
+        if (name === 'endDate' && moment(value).isBefore(action.startDate)) {
+            onRequestAlert({
+                title: 'تاریخ نامعتبر',
+                message: 'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.'
+            });
+            return; // Prevent state update
+        }
+
         const updatedAction = { ...action, [name]: value };
 
-        // Date validation logic
-        if (name === 'endDate' && moment(value).isBefore(updatedAction.startDate)) {
-            updatedAction.endDate = updatedAction.startDate;
-        }
+        // If start date changes and is after end date, update end date to match.
         if (name === 'startDate' && moment(updatedAction.endDate).isBefore(value)) {
             updatedAction.endDate = value;
         }

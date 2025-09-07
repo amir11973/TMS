@@ -1291,6 +1291,7 @@ const supabaseAnonKey = '...';`}
                 users={users}
                 sections={sections}
                 onRequestConfirmation={handleRequestConfirmation}
+                onRequestAlert={handleRequestAlert}
                 onShowHistory={handleShowHistory}
                 currentUser={loggedInUser}
                 teamMembers={currentUserTeam}
@@ -1306,6 +1307,7 @@ const supabaseAnonKey = '...';`}
                 actionToEdit={editingAction}
                 currentUser={loggedInUser}
                 teamMembers={currentUserTeam}
+                onRequestAlert={handleRequestAlert}
             />
             <DetailsModal 
                 isOpen={isDetailsModalOpen}

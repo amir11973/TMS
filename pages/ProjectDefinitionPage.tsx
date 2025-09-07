@@ -12,7 +12,7 @@ import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
 
-export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails }: {
+export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert }: {
     users: User[];
     sections: string[];
     onSave: (project: any) => void;
@@ -25,6 +25,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     isOpen: boolean;
     onClose: () => void;
     onViewDetails: (item: any) => void;
+    onRequestAlert: (props: any) => void;
 }) => {
     const initialProjectState = {
         title: '', projectManager: '', unit: sections[0] || '', priority: 'متوسط',
@@ -80,11 +81,16 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
 
+        if (name === 'projectEndDate' && moment(value).isBefore(project.projectStartDate)) {
+            onRequestAlert({
+                title: 'تاریخ نامعتبر',
+                message: 'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.'
+            });
+            return;
+        }
+
         const updatedProject = { ...project, [name]: value };
 
-        if (name === 'projectEndDate' && moment(value).isBefore(updatedProject.projectStartDate)) {
-            updatedProject.projectEndDate = updatedProject.projectStartDate;
-        }
         if (name === 'projectStartDate' && moment(updatedProject.projectEndDate).isBefore(value)) {
             updatedProject.projectEndDate = value;
         }
@@ -375,6 +381,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     activityToEdit={editingActivity}
                     teamMembers={teamMembers}
                     users={users}
+                    onRequestAlert={onRequestAlert}
                 />
             </div>
         </div>

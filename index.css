@@ -42,6 +42,10 @@ body.theme-light {
   padding: 0;
 }
 
+html {
+  font-size: 87.5%; /* Base font size for mobile (14px) */
+}
+
 html, body {
   height: 100%;
 }
@@ -612,6 +616,19 @@ body {
     gap: 0.5rem;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.action-buttons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; /* Small gap between rows */
+  align-items: flex-end; /* Align rows to the right */
+}
+
+.action-buttons-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .action-buttons button:not(.icon-btn) {
@@ -1794,6 +1811,10 @@ body {
 /* ============================================== */
 
 @media (min-width: 768px) {
+    html {
+        font-size: 100%; /* Reset to 16px for desktop */
+    }
+
     .sidebar {
         display: flex;
         width: 15rem;

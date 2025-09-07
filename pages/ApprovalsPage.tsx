@@ -69,22 +69,26 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                 <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                 <td>{item.requestedStatus}</td>
                                                 <td>
-                                                    <div className="action-buttons">
-                                                        <button className="icon-btn" style={{color: 'var(--c-info)'}} title="اطلاعات ارسال" onClick={() => onShowInfo(item)}>
-                                                            <DocumentIcon />
-                                                        </button>
-                                                        <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
-                                                            <DetailsIcon />
-                                                        </button>
-                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                            <HistoryIcon />
-                                                        </button>
-                                                        <button className="icon-btn approve-btn" title="تایید" onClick={() => onApprovalDecision(item, 'approved')}>
-                                                            <ApproveIcon />
-                                                        </button>
-                                                        <button className="icon-btn reject-btn" title="رد" onClick={() => onApprovalDecision(item, 'rejected')}>
-                                                            <RejectIcon />
-                                                        </button>
+                                                    <div className="action-buttons-grid">
+                                                        <div className="action-buttons-row">
+                                                            <button className="icon-btn" style={{color: 'var(--c-info)'}} title="اطلاعات ارسال" onClick={() => onShowInfo(item)}>
+                                                                <DocumentIcon />
+                                                            </button>
+                                                            <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
+                                                                <DetailsIcon />
+                                                            </button>
+                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                <HistoryIcon />
+                                                            </button>
+                                                        </div>
+                                                        <div className="action-buttons-row">
+                                                            <button className="icon-btn approve-btn" title="تایید" onClick={() => onApprovalDecision(item, 'approved')}>
+                                                                <ApproveIcon />
+                                                            </button>
+                                                            <button className="icon-btn reject-btn" title="رد" onClick={() => onApprovalDecision(item, 'rejected')}>
+                                                                <RejectIcon />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>

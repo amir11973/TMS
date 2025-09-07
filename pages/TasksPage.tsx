@@ -125,47 +125,52 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                                     <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                     <td>{displayStatus}</td>
                                                     <td>
-                                                        <div className="action-buttons">
-                                                            <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
-                                                                <DetailsIcon />
-                                                            </button>
-                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                                <HistoryIcon />
-                                                            </button>
-                                                            <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
-                                                                <DelegateIcon />
-                                                            </button>
-                                                            
-                                                            {item.use_workflow === false && canChangeStatus ? (
-                                                                <select
-                                                                    className="status-select"
-                                                                    value={displayStatus}
-                                                                    onChange={(e) => onDirectStatusUpdate(item.id, item.type, e.target.value)}
-                                                                >
-                                                                    {item.status === 'شروع نشده' && <option value="شروع نشده">شروع نشده</option>}
-                                                                    <option value="در حال اجرا">در حال اجرا</option>
-                                                                    <option value="خاتمه یافته">خاتمه یافته</option>
-                                                                </select>
-                                                            ) : item.use_workflow !== false && canChangeStatus ? (
-                                                                <>
-                                                                    <select
-                                                                        className="status-select"
-                                                                        value={nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته')}
-                                                                        onChange={(e) => handleNextStatusChange(item.id, e.target.value)}
-                                                                    >
-                                                                        <option value="در حال اجرا">در حال اجرا</option>
-                                                                        <option value="خاتمه یافته">خاتمه یافته</option>
-                                                                    </select>
-                                                                    <button 
-                                                                        className="icon-btn" 
-                                                                        style={{color: 'var(--c-info)'}} 
-                                                                        title="ارسال برای تایید"
-                                                                        onClick={() => handleSendForApproval(item, nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته'))}
-                                                                    >
-                                                                        <SendIcon />
-                                                                    </button>
-                                                                </>
-                                                            ) : null}
+                                                        <div className="action-buttons-grid">
+                                                            <div className="action-buttons-row">
+                                                                <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
+                                                                    <DetailsIcon />
+                                                                </button>
+                                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                    <HistoryIcon />
+                                                                </button>
+                                                                <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
+                                                                    <DelegateIcon />
+                                                                </button>
+                                                            </div>
+                                                            {canChangeStatus && (
+                                                                <div className="action-buttons-row">
+                                                                    {item.use_workflow === false ? (
+                                                                        <select
+                                                                            className="status-select"
+                                                                            value={displayStatus}
+                                                                            onChange={(e) => onDirectStatusUpdate(item.id, item.type, e.target.value)}
+                                                                        >
+                                                                            {item.status === 'شروع نشده' && <option value="شروع نشده">شروع نشده</option>}
+                                                                            <option value="در حال اجرا">در حال اجرا</option>
+                                                                            <option value="خاتمه یافته">خاتمه یافته</option>
+                                                                        </select>
+                                                                    ) : (
+                                                                        <>
+                                                                            <select
+                                                                                className="status-select"
+                                                                                value={nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته')}
+                                                                                onChange={(e) => handleNextStatusChange(item.id, e.target.value)}
+                                                                            >
+                                                                                <option value="در حال اجرا">در حال اجرا</option>
+                                                                                <option value="خاتمه یافته">خاتمه یافته</option>
+                                                                            </select>
+                                                                            <button 
+                                                                                className="icon-btn" 
+                                                                                style={{color: 'var(--c-info)'}} 
+                                                                                title="ارسال برای تایید"
+                                                                                onClick={() => handleSendForApproval(item, nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته'))}
+                                                                            >
+                                                                                <SendIcon />
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

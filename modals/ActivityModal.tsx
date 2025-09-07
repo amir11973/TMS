@@ -8,13 +8,14 @@ import { TeamMember, User } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers, users }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers, users, onRequestAlert }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
     activityToEdit: any;
     teamMembers: TeamMember[];
     users: User[];
+    onRequestAlert: (props: any) => void;
 }) => {
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط' };
     
@@ -40,12 +41,17 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMem
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         
+        if (name === 'endDate' && moment(value).isBefore(activity.startDate)) {
+            onRequestAlert({
+                title: 'تاریخ نامعتبر',
+                message: 'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.'
+            });
+            return;
+        }
+
         const updatedActivity = { ...activity, [name]: value };
 
         // Date validation logic
-        if (name === 'endDate' && moment(value).isBefore(updatedActivity.startDate)) {
-            updatedActivity.endDate = updatedActivity.startDate;
-        }
         if (name === 'startDate' && moment(updatedActivity.endDate).isBefore(value)) {
             updatedActivity.endDate = value;
         }
