@@ -79,21 +79,25 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
                                     </span>
                                 </td>
                                 <td>
-                                    <div className="action-buttons">
-                                        <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditUser(user.id)}>
-                                            <EditIcon />
-                                        </button>
-                                        <button
-                                            className="icon-btn"
-                                            title={user.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
-                                            onClick={() => onToggleUserActive(user.id)}
-                                            style={{ color: user.is_active ? 'var(--c-warning)' : 'var(--c-success)' }}
-                                        >
-                                            <PowerIcon />
-                                        </button>
-                                        <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteUser(user.id)} disabled={user.username === 'mahmoudi.pars@gmail.com'}>
-                                            <DeleteIcon />
-                                        </button>
+                                    <div className="action-buttons-grid">
+                                        <div className="action-buttons-row">
+                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditUser(user.id)}>
+                                                <EditIcon />
+                                            </button>
+                                            <button
+                                                className="icon-btn"
+                                                title={user.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
+                                                onClick={() => onToggleUserActive(user.id)}
+                                                style={{ color: user.is_active ? 'var(--c-warning)' : 'var(--c-success)' }}
+                                            >
+                                                <PowerIcon />
+                                            </button>
+                                        </div>
+                                        <div className="action-buttons-row">
+                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteUser(user.id)} disabled={user.username === 'mahmoudi.pars@gmail.com'}>
+                                                <DeleteIcon />
+                                            </button>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

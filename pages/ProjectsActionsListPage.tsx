@@ -137,20 +137,24 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                             <td>{item.title}</td>
                                                             <td>{renderPriorityBadge(item.priority)}</td>
                                                             <td>
-                                                                <div className="action-buttons">
-                                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                                        <DetailsIcon />
-                                                                    </button>
-                                                                    {canEdit && (
-                                                                        <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
-                                                                            <EditIcon />
+                                                                <div className="action-buttons-grid">
+                                                                    <div className="action-buttons-row">
+                                                                        <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                            <DetailsIcon />
                                                                         </button>
-                                                                    )}
-                                                                    {canDelete && (
-                                                                        <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
-                                                                            <DeleteIcon />
-                                                                        </button>
-                                                                    )}
+                                                                        {canEdit && (
+                                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
+                                                                                <EditIcon />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="action-buttons-row">
+                                                                        {canDelete && (
+                                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
+                                                                                <DeleteIcon />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -174,25 +178,29 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                             <td>{item.title}</td>
                                                             <td>{renderPriorityBadge(item.priority)}</td>
                                                             <td>
-                                                                <div className="action-buttons">
-                                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                                        <DetailsIcon />
-                                                                    </button>
-                                                                    {canEdit && (
-                                                                        <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
-                                                                            <EditIcon />
+                                                                <div className="action-buttons-grid">
+                                                                    <div className="action-buttons-row">
+                                                                        <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                            <DetailsIcon />
                                                                         </button>
-                                                                    )}
-                                                                    {canDelete && (
-                                                                        <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
-                                                                            <DeleteIcon />
-                                                                        </button>
-                                                                    )}
-                                                                    {item.history && (
-                                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                                            <HistoryIcon />
-                                                                        </button>
-                                                                    )}
+                                                                        {canEdit && (
+                                                                            <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
+                                                                                <EditIcon />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="action-buttons-row">
+                                                                        {canDelete && (
+                                                                            <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
+                                                                                <DeleteIcon />
+                                                                            </button>
+                                                                        )}
+                                                                        {item.history && (
+                                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                                <HistoryIcon />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                         </tr>

@@ -337,23 +337,27 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                     )}
                                                 </td>
                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
-                                                            <DetailsIcon />
-                                                        </button>
-                                                        {!readOnly && (
-                                                            <>
+                                                    <div className="action-buttons-grid">
+                                                        <div className="action-buttons-row">
+                                                            <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
+                                                                <DetailsIcon />
+                                                            </button>
+                                                            {!readOnly && (
                                                                 <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
                                                                     <EditIcon />
                                                                 </button>
+                                                            )}
+                                                        </div>
+                                                        <div className="action-buttons-row">
+                                                            {!readOnly && (
                                                                 <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
                                                                     <DeleteIcon />
                                                                 </button>
-                                                            </>
-                                                        )}
-                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
-                                                            <HistoryIcon />
-                                                        </button>
+                                                            )}
+                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
+                                                                <HistoryIcon />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                </td>
                                            </tr>
