@@ -4,3 +4,4 @@
 */
 export * from './PriorityBadge';
 export * from './CollapsibleTable';
+export * from './JalaliDatePicker';

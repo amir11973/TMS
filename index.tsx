@@ -632,20 +632,51 @@ const App = () => {
         }
     };
     
-    const handleSendForApproval = async (itemToUpdate, requestedStatus, extraData = {}) => {
+    const handleSendForApproval = async (itemToUpdate: any, requestedStatus: string, extraData: { comment: string, file: File | null }) => {
         setIsActionLoading(true);
         try {
+            const { comment, file } = extraData;
+            let fileUrl = null;
+            let fileName = null;
+    
+            if (file) {
+                const fileExt = file.name.split('.').pop();
+                const filePath = `${loggedInUser!.username}/${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('task_attachments')
+                    .upload(filePath, file);
+    
+                if (uploadError) {
+                    handleSupabaseError(uploadError, 'uploading attachment');
+                    handleRequestAlert({ title: 'خطای آپلود', message: `امکان آپلود فایل وجود نداشت: ${uploadError.message}` });
+                    setIsActionLoading(false);
+                    return;
+                }
+    
+                const { data } = supabase.storage
+                    .from('task_attachments')
+                    .getPublicUrl(filePath);
+                
+                fileUrl = data.publicUrl;
+                fileName = file.name;
+            }
+    
             const isActivity = itemToUpdate.type === 'activity';
             const tableName = isActivity ? 'activities' : 'actions';
-
-            const historyEntry = {
+    
+            const historyEntry: any = {
                 status: 'ارسال برای تایید',
-                user: loggedInUser.username,
+                user: loggedInUser!.username,
                 date: new Date().toISOString(),
                 requestedStatus,
-                ...extraData
+                comment,
             };
-
+            
+            if (fileUrl) {
+                historyEntry.fileUrl = fileUrl;
+                historyEntry.fileName = fileName;
+            }
+    
             const updatePayload = {
                 underlyingStatus: itemToUpdate.status,
                 status: 'ارسال برای تایید',
@@ -929,10 +960,11 @@ const App = () => {
     };
 
     // --- Team Management Handlers ---
-    const handleAddTeamMember = async (username: string, role: TeamMemberRole = 'عضو تیم') => {
+    const handleAddTeamMember = async (username: string) => {
         if (!loggedInUser) return;
         setIsActionLoading(true);
         try {
+            const role: TeamMemberRole = username === loggedInUser.username ? 'ادمین' : 'عضو تیم';
             const newMember: TeamMember = { username, role };
             const { error } = await supabase.from('teams').insert({
                 manager_username: loggedInUser.username,

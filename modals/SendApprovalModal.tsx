@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 export const SendApprovalModal = ({ isOpen, onClose, onSend, requestedStatus }: {
     isOpen: boolean;
     onClose: () => void;
-    onSend: (data: { comment: string, fileName: string | null }) => void;
+    onSend: (data: { comment: string, file: File | null }) => void;
     requestedStatus: string;
 }) => {
     const [comment, setComment] = useState('');
@@ -22,7 +22,7 @@ export const SendApprovalModal = ({ isOpen, onClose, onSend, requestedStatus }: 
     };
 
     const handleSend = () => {
-        onSend({ comment, fileName: file ? file.name : null });
+        onSend({ comment, file });
         setComment('');
         setFile(null);
     };

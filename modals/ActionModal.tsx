@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
+import { JalaliDatePicker } from '../components';
 
 export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionToEdit, currentUser, teamMembers }: {
     isOpen: boolean;
@@ -85,11 +86,11 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                             </div>
                              <div className="input-group">
                                 <label htmlFor="action-startDate">تاریخ شروع</label>
-                                <input type="date" name="startDate" id="action-startDate" value={action.startDate} onChange={handleChange} required />
+                                <JalaliDatePicker name="startDate" id="action-startDate" value={action.startDate} onChange={handleChange} required />
                             </div>
                             <div className="input-group">
                                 <label htmlFor="action-endDate">تاریخ پایان</label>
-                                <input type="date" name="endDate" id="action-endDate" value={action.endDate} onChange={handleChange} required />
+                                <JalaliDatePicker name="endDate" id="action-endDate" value={action.endDate} onChange={handleChange} required />
                             </div>
                             <div className="input-group">
                                 <label htmlFor="action-unit">بخش</label>

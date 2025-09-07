@@ -12,7 +12,7 @@ import { SendApprovalModal, DelegateTaskModal, MassDelegateModal, CompletedTasks
 export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate }: {
     items: any[];
     currentUser: User | null;
-    onSendForApproval: (item: any, status: string, data: any) => void;
+    onSendForApproval: (item: any, status: string, data: { comment: string, file: File | null }) => void;
     onShowHistory: (history: any[]) => void;
     users: User[];
     onDelegateTask: (item: any, newResponsible: string) => void;
@@ -58,8 +58,8 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
         setSendApprovalModal({ isOpen: true, item, requestedStatus });
     };
 
-    const handleConfirmSend = (extraData: any) => {
-        onSendForApproval(sendApprovalModal.item, sendApprovalModal.requestedStatus, extraData);
+    const handleConfirmSend = (data: { comment: string, file: File | null }) => {
+        onSendForApproval(sendApprovalModal.item, sendApprovalModal.requestedStatus, data);
         setSendApprovalModal({ isOpen: false, item: null, requestedStatus: '' });
     };
 

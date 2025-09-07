@@ -34,7 +34,11 @@ export const ApprovalInfoModal = ({ isOpen, onClose, item }: { isOpen: boolean; 
                     <div className="detail-group full-width">
                         <span className="detail-label">سند الصاق شده</span>
                         <p className="detail-value">
-                            {approvalRequestInfo?.fileName || 'سندی الصاق نشده است.'}
+                            {approvalRequestInfo?.fileUrl && approvalRequestInfo?.fileName ? (
+                                <a href={approvalRequestInfo.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-primary)', textDecoration: 'none' }}>
+                                    {approvalRequestInfo.fileName}
+                                </a>
+                            ) : 'سندی الصاق نشده است.'}
                         </p>
                     </div>
                 </div>

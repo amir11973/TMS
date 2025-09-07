@@ -10,7 +10,7 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
     allUsers: User[];
     currentUser: User | null;
     teamMembers: TeamMember[];
-    onAddMember: (username: string, role: TeamMemberRole) => void;
+    onAddMember: (username: string) => void;
     onRemoveMember: (username: string) => void;
     onUpdateRole: (username: string, role: TeamMemberRole) => void;
 }) => {
@@ -26,8 +26,7 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
         
         const userExists = usersAvailableToAdd.some(u => u.username === userToAdd);
         if (userExists) {
-            const role = userToAdd === currentUser!.username ? 'ادمین' : 'عضو تیم';
-            onAddMember(userToAdd, role);
+            onAddMember(userToAdd);
             setUserToAdd('');
         } else {
             alert('لطفا یک کاربر معتبر از لیست انتخاب کنید یا نام کاربری را به درستی وارد کنید.');

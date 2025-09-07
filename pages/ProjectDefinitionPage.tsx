@@ -7,7 +7,7 @@ import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
 import { supabase, handleSupabaseError } from '../supabaseClient';
 import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon } from '../icons';
-import { renderPriorityBadge } from '../components';
+import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
 
@@ -252,11 +252,11 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                 </div>
                                 <div className="input-group">
                                     <label htmlFor="projectStartDate">تاریخ شروع</label>
-                                    <input type="date" name="projectStartDate" id="projectStartDate" value={project.projectStartDate} onChange={handleChange} required disabled={readOnly} />
+                                    <JalaliDatePicker name="projectStartDate" id="projectStartDate" value={project.projectStartDate} onChange={handleChange} required disabled={readOnly} />
                                 </div>
                                 <div className="input-group">
                                     <label htmlFor="projectEndDate">تاریخ پایان</label>
-                                    <input type="date" name="projectEndDate" id="projectEndDate" value={project.projectEndDate} onChange={handleChange} required disabled={readOnly} />
+                                    <JalaliDatePicker name="projectEndDate" id="projectEndDate" value={project.projectEndDate} onChange={handleChange} required disabled={readOnly} />
                                 </div>
                                 <div className="input-group full-width">
                                     <label htmlFor="projectGoal">هدف پروژه</label>

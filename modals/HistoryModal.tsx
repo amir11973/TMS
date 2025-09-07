@@ -35,7 +35,14 @@ export const HistoryModal = ({ isOpen, onClose, history }: { isOpen: boolean; on
                                <p><strong>تاریخ:</strong> {entry?.date ? moment(entry.date).format('jYYYY/jMM/jDD HH:mm') : 'نامشخص'}</p>
                                {entry?.comment && <p><strong>توضیحات:</strong> {entry.comment}</p>}
                                {entry?.details && <p><strong>جزئیات:</strong> {entry.details}</p>}
-                               {entry?.fileName && <p><strong>فایل:</strong> {entry.fileName}</p>}
+                               {entry?.fileName && entry?.fileUrl && (
+                                    <p>
+                                        <strong>فایل:</strong>
+                                        <a href={entry.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-primary)', textDecoration: 'none', marginRight: '5px' }}>
+                                            {entry.fileName}
+                                        </a>
+                                    </p>
+                                )}
                                <hr style={{border: '1px solid var(--c-border)', margin: '10px 0'}}/>
                             </div>
                         )

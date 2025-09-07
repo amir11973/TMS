@@ -926,6 +926,19 @@ body {
     background-color: #d43751;
 }
 
+/* Jalali Date Picker */
+.jalali-datepicker-container {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+}
+.jalali-datepicker-container select {
+    flex: 1;
+    min-width: 4rem;
+    padding: 0.75rem;
+}
+
+
 /* Icon Button for tables (e.g., Edit) */
 .icon-btn {
     background: none;
