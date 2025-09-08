@@ -590,14 +590,14 @@ body {
 .user-list-table th, .user-list-table td {
     padding: 0.75rem 0.875rem;
     font-size: 0.9rem;
-    text-align: right;
+    text-align: center;
     border-bottom: 0.0625rem solid var(--c-border);
     vertical-align: middle;
 }
 
-.user-list-table th:first-child,
-.dashboard-data-table th:first-child {
-    width: 45%;
+.user-list-table th:nth-child(2),
+.user-list-table td:nth-child(2) {
+    text-align: right;
 }
 
 .user-list-table th {
@@ -627,20 +627,20 @@ body {
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: center;
 }
 
 .action-buttons-grid {
   display: flex;
   flex-direction: column;
   gap: 0.25rem; /* Small gap between rows */
-  align-items: flex-end; /* Align rows to the right */
+  align-items: center; /* Align rows to the right */
 }
 
 .action-buttons-row {
   display: flex;
   gap: 0.5rem;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .action-buttons button:not(.icon-btn) {
@@ -1562,9 +1562,15 @@ body {
 .dashboard-data-table th, .dashboard-data-table td {
     padding: 0.625rem 0.875rem;
     font-size: 0.85rem;
-    text-align: right;
+    text-align: center;
     border-bottom: 0.0625rem solid var(--c-border);
 }
+
+.dashboard-data-table th:nth-child(2),
+.dashboard-data-table td:nth-child(2) {
+    text-align: right;
+}
+
 .dashboard-data-table th {
     background-color: var(--c-table-header-bg);
     position: sticky;
@@ -1606,6 +1612,7 @@ body {
     font-weight: 700;
     color: var(--c-text);
     border-bottom: 0.0625rem solid var(--c-border) !important;
+    text-align: right !important; /* Group headers are always right aligned */
 }
 .group-header-row td > span { /* Direct child span for better scoping */
     display: flex;
@@ -1816,6 +1823,46 @@ body {
 .user-list-table td {
     word-wrap: break-word; /* Ensure content wrapping */
 }
+
+/* ============================================== */
+/* Mobile-First Table Column Widths               */
+/* ============================================== */
+.dashboard-data-table,
+.projects-actions-list-page .user-list-table,
+.tasks-page .user-list-table,
+.approvals-page .user-list-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* --- Projects & Actions Page --- */
+.projects-actions-list-page .user-list-table th:nth-child(1) { width: 10%; }
+.projects-actions-list-page .user-list-table th:nth-child(2) { width: 40%; }
+.projects-actions-list-page .user-list-table th:nth-child(3) { width: 15%; }
+.projects-actions-list-page .user-list-table th:nth-child(4) { width: 15%; }
+.projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
+
+/* --- Dashboard Page --- */
+.dashboard-data-table th:nth-child(1) { width: 10%; }
+.dashboard-data-table th:nth-child(2) { width: 50%; }
+.dashboard-data-table th:nth-child(3) { width: 15%; }
+.dashboard-data-table th:nth-child(4) { width: 15%; }
+.dashboard-data-table th:nth-child(5) { width: 10%; }
+
+/* --- Tasks Page --- */
+.tasks-page .user-list-table th:nth-child(1) { width: 10%; }
+.tasks-page .user-list-table th:nth-child(2) { width: 35%; }
+.tasks-page .user-list-table th:nth-child(3) { width: 20%; }
+.tasks-page .user-list-table th:nth-child(4) { width: 15%; }
+.tasks-page .user-list-table th:nth-child(5) { width: 20%; }
+
+/* --- Approvals Page --- */
+.approvals-page .user-list-table th:nth-child(1) { width: 10%; }
+.approvals-page .user-list-table th:nth-child(2) { width: 30%; }
+.approvals-page .user-list-table th:nth-child(3) { width: 20%; }
+.approvals-page .user-list-table th:nth-child(4) { width: 20%; }
+.approvals-page .user-list-table th:nth-child(5) { width: 20%; }
+
 
 /* ============================================== */
 /* Tablet & Desktop Media Queries                 */
