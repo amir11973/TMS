@@ -1027,7 +1027,7 @@ const App = () => {
                 const fileExt = file.name.split('.').pop();
                 const newFileName = `${Math.random()}.${fileExt}`;
                 const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('attachments')
+                    .from('task_attachments')
                     .upload(newFileName, file);
 
                 if (uploadError) {
@@ -1035,7 +1035,7 @@ const App = () => {
                     return;
                 }
                 
-                const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(uploadData.path);
+                const { data: urlData } = supabase.storage.from('task_attachments').getPublicUrl(uploadData.path);
                 fileUrl = urlData.publicUrl;
                 fileName = file.name;
             }
