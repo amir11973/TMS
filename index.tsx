@@ -33,7 +33,8 @@ import {
     UserEditModal,
     ApprovalInfoModal,
     ApprovalDecisionModal,
-    AlertModal
+    AlertModal,
+    SendApprovalModal
 } from './modals/index';
 import { UserInfoModal } from './modals';
 
@@ -80,6 +81,8 @@ const App = () => {
     
     const [isUserEditModalOpen, setIsUserEditModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    const [sendApprovalProps, setSendApprovalProps] = useState({ isOpen: false, item: null as any, requestedStatus: '' });
 
     const [userInfoUser, setUserInfoUser] = useState<User | null>(null);
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
@@ -666,128 +669,6 @@ const App = () => {
             setIsActionLoading(false);
         }
     };
-    
-    const handleSendForApproval = async (itemToUpdate: any, requestedStatus: string, extraData: { comment: string, file: File | null }) => {
-        setIsActionLoading(true);
-        try {
-            const { comment, file } = extraData;
-            let fileUrl = null;
-            let fileName = null;
-    
-            if (file) {
-                const fileExt = file.name.split('.').pop();
-                const filePath = `${loggedInUser!.username}/${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('task_attachments')
-                    .upload(filePath, file);
-    
-                if (uploadError) {
-                    handleSupabaseError(uploadError, 'uploading attachment');
-                    handleRequestAlert({ title: 'خطای آپلود', message: `امکان آپلود فایل وجود نداشت: ${uploadError.message}` });
-                    setIsActionLoading(false);
-                    return;
-                }
-    
-                const { data } = supabase.storage
-                    .from('task_attachments')
-                    .getPublicUrl(filePath);
-                
-                fileUrl = data.publicUrl;
-                fileName = file.name;
-            }
-    
-            const isActivity = itemToUpdate.type === 'activity';
-            const tableName = isActivity ? 'activities' : 'actions';
-    
-            const historyEntry: any = {
-                status: 'ارسال برای تایید',
-                user: loggedInUser!.username,
-                date: new Date().toISOString(),
-                requestedStatus,
-                comment,
-            };
-            
-            if (fileUrl) {
-                historyEntry.fileUrl = fileUrl;
-                historyEntry.fileName = fileName;
-            }
-    
-            const updatePayload = {
-                underlyingStatus: itemToUpdate.status,
-                status: 'ارسال برای تایید',
-                requestedStatus: requestedStatus,
-                approvalStatus: null,
-                history: [...(itemToUpdate.history || []), historyEntry]
-            };
-            
-            const { data, error } = await supabase.from(tableName).update(updatePayload).eq('id', itemToUpdate.id).select().single();
-            handleSupabaseError(error, 'sending for approval');
-            
-            if (!error && data) {
-                if (isActivity) {
-                    setProjects(prevProjects => prevProjects.map(p => ({
-                        ...p,
-                        activities: p.activities.map(act => act.id === itemToUpdate.id ? data : act)
-                    })));
-                } else {
-                    setActions(prev => prev.map(act => act.id === itemToUpdate.id ? data : act));
-                }
-            }
-        } finally {
-            setIsActionLoading(false);
-        }
-    };
-
-    const handleDirectStatusUpdate = async (itemId: number, itemType: string, newStatus: string) => {
-        setIsActionLoading(true);
-        try {
-            const isActivity = itemType === 'activity';
-            const tableName = isActivity ? 'activities' : 'actions';
-    
-            let itemToUpdate: any, parentProject: any;
-            if (isActivity) {
-                for (const p of projects) {
-                    const found = p.activities.find((a: any) => a.id === itemId);
-                    if (found) {
-                        itemToUpdate = found;
-                        parentProject = p;
-                        break;
-                    }
-                }
-            } else {
-                itemToUpdate = actions.find(a => a.id === itemId);
-            }
-    
-            if (!itemToUpdate) return;
-    
-            const historyEntry = {
-                user: loggedInUser!.username,
-                date: new Date().toISOString(),
-                status: newStatus,
-                details: `وضعیت به صورت دستی به "${newStatus}" تغییر یافت.`
-            };
-    
-            const updatePayload = {
-                status: newStatus,
-                history: [...(itemToUpdate.history || []), historyEntry]
-            };
-    
-            const { data, error } = await supabase.from(tableName).update(updatePayload).eq('id', itemId).select().single();
-            handleSupabaseError(error, 'updating status directly');
-            
-            if (!error && data) {
-                if (isActivity) {
-                    const updatedActivities = parentProject.activities.map((act: any) => act.id === itemId ? data : act);
-                    const updatedProject = { ...parentProject, activities: updatedActivities };
-                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-                } else {
-                    setActions(prev => prev.map(act => act.id === itemId ? data : act));
-                }
-            }
-        } finally {
-            setIsActionLoading(false);
-        }
-    };
 
     const handleDelegateTask = async (itemToDelegate, newResponsibleUsername) => {
         setIsActionLoading(true);
@@ -1125,6 +1006,101 @@ const App = () => {
         return notStartedProjects + notStartedActions;
     }, [projects, actions, loggedInUser]);
     
+    const handleRequestSendForApproval = (item: any, requestedStatus: string) => {
+        setSendApprovalProps({ isOpen: true, item, requestedStatus });
+    };
+
+    const handleCloseSendForApproval = () => {
+        setSendApprovalProps({ isOpen: false, item: null, requestedStatus: '' });
+    };
+
+    const handleConfirmSendForApproval = async ({ comment, file }: { comment: string, file: File | null }) => {
+        const { item, requestedStatus } = sendApprovalProps;
+        if (!item || !requestedStatus || !loggedInUser) return;
+
+        setIsActionLoading(true);
+        try {
+            let fileUrl = null;
+            let fileName = null;
+
+            if (file) {
+                const fileExt = file.name.split('.').pop();
+                const newFileName = `${Math.random()}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('attachments')
+                    .upload(newFileName, file);
+
+                if (uploadError) {
+                    handleSupabaseError(uploadError, 'uploading attachment');
+                    return;
+                }
+                
+                const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(uploadData.path);
+                fileUrl = urlData.publicUrl;
+                fileName = file.name;
+            }
+
+            const isActivity = item.type === 'activity';
+            const tableName = isActivity ? 'activities' : 'actions';
+
+            let itemToUpdate: any, parentProject: any;
+            if (isActivity) {
+                for (const p of projects) {
+                    const found = p.activities.find((a: any) => a.id === item.id);
+                    if (found) {
+                        itemToUpdate = found;
+                        parentProject = p;
+                        break;
+                    }
+                }
+            } else {
+                itemToUpdate = actions.find((a: any) => a.id === item.id);
+            }
+
+            if (!itemToUpdate) return;
+            
+            const historyEntry = {
+                status: 'ارسال برای تایید',
+                user: loggedInUser.username,
+                date: new Date().toISOString(),
+                comment,
+                requestedStatus,
+                fileUrl,
+                fileName,
+            };
+
+            const updatePayload = {
+                status: 'ارسال برای تایید',
+                underlyingStatus: itemToUpdate.status,
+                requestedStatus: requestedStatus,
+                history: [...(itemToUpdate.history || []), historyEntry],
+                approvalStatus: 'pending'
+            };
+
+            const { data, error } = await supabase.from(tableName).update(updatePayload).eq('id', item.id).select().single();
+            handleSupabaseError(error, 'sending for approval');
+
+            if (!error && data) {
+                if (isActivity && parentProject) {
+                    const updatedActivities = parentProject.activities.map((act: any) => act.id === item.id ? data : act);
+                    const updatedProject = { ...parentProject, activities: updatedActivities };
+                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                } else {
+                    setActions(prev => prev.map((act: any) => act.id === item.id ? data : act));
+                }
+            }
+        } finally {
+            setIsActionLoading(false);
+            handleCloseSendForApproval();
+        }
+    };
+
+    const handleDirectStatusUpdate = (itemId: number, itemType: string, newStatus: string) => {
+        if (loggedInUser) {
+            updateItemStatus(itemId, itemType, newStatus, { details: `وضعیت به صورت دستی به "${newStatus}" تغییر یافت.` });
+        }
+    };
+    
     const badgeCounts = {
         tasks: notStartedTasksCount,
         approvals: pendingApprovalsCount,
@@ -1163,7 +1139,6 @@ const App = () => {
                 return <TasksPage 
                             items={taskItems} 
                             currentUser={loggedInUser} 
-                            onSendForApproval={handleSendForApproval} 
                             onShowHistory={handleShowHistory} 
                             users={users} 
                             onDelegateTask={handleDelegateTask}
@@ -1173,6 +1148,7 @@ const App = () => {
                             onMassDelegate={handleMassDelegateTasks}
                             onViewDetails={handleViewDetails}
                             onDirectStatusUpdate={handleDirectStatusUpdate}
+                            onSendForApproval={handleRequestSendForApproval}
                         />;
             case 'approvals':
                 return <ApprovalsPage 
@@ -1362,6 +1338,7 @@ const supabaseAnonKey = '...';`}
                 isOpen={isHistoryModalOpen}
                 onClose={() => setIsHistoryModalOpen(false)}
                 history={history}
+                users={users}
             />
             <ConfirmationModal
                 isOpen={confirmationProps.isOpen}
@@ -1393,6 +1370,12 @@ const supabaseAnonKey = '...';`}
                 onClose={() => setIsUserEditModalOpen(false)}
                 onSave={handleUpdateUser}
                 userToEdit={editingUser}
+            />
+            <SendApprovalModal
+                isOpen={sendApprovalProps.isOpen}
+                onClose={handleCloseSendForApproval}
+                onSend={handleConfirmSendForApproval}
+                requestedStatus={sendApprovalProps.requestedStatus}
             />
             <UserInfoModal
                 isOpen={isUserInfoModalOpen}

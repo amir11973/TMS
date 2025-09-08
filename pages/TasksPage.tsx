@@ -5,15 +5,14 @@
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { CollapsibleTableSection } from '../components';
-import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon, SendForFinishIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
-import { SendApprovalModal, DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
+import { DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
 
-export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate }: {
+export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval }: {
     items: any[];
     currentUser: User | null;
-    onSendForApproval: (item: any, status: string, data: { comment: string, file: File | null }) => void;
     onShowHistory: (history: any[]) => void;
     users: User[];
     onDelegateTask: (item: any, newResponsible: string) => void;
@@ -23,12 +22,11 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
     onMassDelegate: (updates: any[]) => void;
     onViewDetails: (item: any) => void;
     onDirectStatusUpdate: (itemId: number, itemType: string, newStatus: string) => void;
+    onSendForApproval: (item: any, requestedStatus: string) => void;
 }) => {
-    const [sendApprovalModal, setSendApprovalModal] = useState({ isOpen: false, item: null as any, requestedStatus: '' });
     const [delegateModal, setDelegateModal] = useState({ isOpen: false, item: null as any });
     const [isMassDelegateModalOpen, setIsMassDelegateModalOpen] = useState(false);
     const [isCompletedTasksModalOpen, setIsCompletedTasksModalOpen] = useState(false);
-    const [nextStatus, setNextStatus] = useState<Record<string, string>>({});
     
     if (!Array.isArray(items)) {
         return <p>خطا: داده‌های وظایف نامعتبر است.</p>;
@@ -50,19 +48,6 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
             return acc;
         }, {} as Record<string, any[]>);
     }, [openTasks]);
-
-    const handleNextStatusChange = (itemId: number, newStatus: string) => {
-        setNextStatus(prev => ({ ...prev, [itemId]: newStatus }));
-    };
-
-    const handleSendForApproval = (item: any, requestedStatus: string) => {
-        setSendApprovalModal({ isOpen: true, item, requestedStatus });
-    };
-
-    const handleConfirmSend = (data: { comment: string, file: File | null }) => {
-        onSendForApproval(sendApprovalModal.item, sendApprovalModal.requestedStatus, data);
-        setSendApprovalModal({ isOpen: false, item: null, requestedStatus: '' });
-    };
 
     const handleOpenDelegateModal = (item: any) => {
         setDelegateModal({ isOpen: true, item });
@@ -119,7 +104,9 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                             }
 
                                             const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
-                                            const canChangeStatus = item.status === 'شروع نشده' || item.status === 'در حال اجرا';
+                                            const isPendingApproval = item.status === 'ارسال برای تایید';
+                                            const canStart = displayStatus === 'شروع نشده' && !isPendingApproval;
+                                            const canFinish = displayStatus === 'در حال اجرا' && !isPendingApproval;
 
                                             return (
                                                 <tr key={item.id}>
@@ -140,37 +127,35 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                                                                     <DelegateIcon />
                                                                 </button>
                                                             </div>
-                                                            {canChangeStatus && (
+                                                             {item.use_workflow === false ? (
                                                                 <div className="action-buttons-row">
-                                                                    {item.use_workflow === false ? (
-                                                                        <select
-                                                                            className="status-select"
-                                                                            value={displayStatus}
-                                                                            onChange={(e) => onDirectStatusUpdate(item.id, item.type, e.target.value)}
-                                                                        >
-                                                                            {item.status === 'شروع نشده' && <option value="شروع نشده">شروع نشده</option>}
-                                                                            <option value="در حال اجرا">در حال اجرا</option>
-                                                                            <option value="خاتمه یافته">خاتمه یافته</option>
-                                                                        </select>
-                                                                    ) : (
+                                                                    <select
+                                                                        className="status-select"
+                                                                        value={displayStatus}
+                                                                        onChange={(e) => onDirectStatusUpdate(item.id, item.type, e.target.value)}
+                                                                        disabled={isPendingApproval}
+                                                                    >
+                                                                        <option value="شروع نشده">شروع نشده</option>
+                                                                        <option value="در حال اجرا">در حال اجرا</option>
+                                                                        <option value="خاتمه یافته">خاتمه یافته</option>
+                                                                    </select>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="action-buttons-row">
+                                                                    {canStart && (
                                                                         <>
-                                                                            <select
-                                                                                className="status-select"
-                                                                                value={nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته')}
-                                                                                onChange={(e) => handleNextStatusChange(item.id, e.target.value)}
-                                                                            >
-                                                                                <option value="در حال اجرا">در حال اجرا</option>
-                                                                                <option value="خاتمه یافته">خاتمه یافته</option>
-                                                                            </select>
-                                                                            <button 
-                                                                                className="icon-btn" 
-                                                                                style={{color: 'var(--c-info)'}} 
-                                                                                title="ارسال برای تایید"
-                                                                                onClick={() => handleSendForApproval(item, nextStatus[item.id] || (item.status === 'شروع نشده' ? 'در حال اجرا' : 'خاتمه یافته'))}
-                                                                            >
+                                                                            <button className="icon-btn" style={{ color: 'var(--c-info)' }} title="ارسال برای تایید شروع" onClick={() => onSendForApproval(item, 'در حال اجرا')}>
                                                                                 <SendIcon />
                                                                             </button>
+                                                                            <button className="icon-btn" title="ارسال برای تایید خاتمه" onClick={() => onSendForApproval(item, 'خاتمه یافته')}>
+                                                                                <SendForFinishIcon />
+                                                                            </button>
                                                                         </>
+                                                                    )}
+                                                                    {canFinish && (
+                                                                        <button className="icon-btn" title="ارسال برای تایید خاتمه" onClick={() => onSendForApproval(item, 'خاتمه یافته')}>
+                                                                            <SendForFinishIcon />
+                                                                        </button>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -192,12 +177,6 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                     </table>
                 </div>
             </section>
-            <SendApprovalModal 
-                isOpen={sendApprovalModal.isOpen}
-                onClose={() => setSendApprovalModal({ isOpen: false, item: null, requestedStatus: '' })}
-                onSend={handleConfirmSend}
-                requestedStatus={sendApprovalModal.requestedStatus}
-            />
             <DelegateTaskModal
                 isOpen={delegateModal.isOpen}
                 onClose={() => setDelegateModal({ isOpen: false, item: null })}

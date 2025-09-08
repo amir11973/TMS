@@ -2,11 +2,14 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React from 'react';
+import React, { useMemo } from 'react';
 import moment from 'moment-jalaali';
+import { User } from '../types';
 
-export const HistoryModal = ({ isOpen, onClose, history }: { isOpen: boolean; onClose: () => void; history: any[] }) => {
+export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: boolean; onClose: () => void; history: any[]; users: User[] }) => {
     if (!isOpen) return null;
+
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
@@ -26,12 +29,14 @@ export const HistoryModal = ({ isOpen, onClose, history }: { isOpen: boolean; on
                              approvalStatusText = 'رد شده';
                          }
                         
+                        const userName = userMap.get(entry?.user) || entry?.user || 'نامشخص';
+                        
                         return (
                             <div className="history-detail-item" key={index}>
                                {entry.parentTitle && <p><strong>مورد:</strong> {entry.parentTitle}</p>}
                                <p><strong>وضعیت:</strong> {entry?.status ?? 'نامشخص'} {entry?.requestedStatus ? `(درخواست برای ${entry.requestedStatus})` : ''}</p>
                                {approvalStatusText && <p><strong>وضعیت تایید:</strong> {approvalStatusText}</p>}
-                               <p><strong>کاربر:</strong> {entry?.user ?? 'نامشخص'}</p>
+                               <p><strong>نام کاربر:</strong> {userName}</p>
                                <p><strong>تاریخ:</strong> {entry?.date ? moment(entry.date).format('jYYYY/jMM/jDD HH:mm') : 'نامشخص'}</p>
                                {entry?.comment && <p><strong>توضیحات:</strong> {entry.comment}</p>}
                                {entry?.details && <p><strong>جزئیات:</strong> {entry.details}</p>}

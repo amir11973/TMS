@@ -834,7 +834,7 @@ body {
     animation: slideIn 0.3s;
     display: flex;
     flex-direction: column;
-    max-height: 90vh; /* Ensure modal fits on screen */
+    max-height: 85vh; /* Ensure modal fits on screen */
 }
 
 .modal-content form {
