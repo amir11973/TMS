@@ -9,6 +9,7 @@ import { User, TeamMember, TeamMemberRole } from './types';
 import { menuItems } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
 import { PlusIcon } from './icons';
+import { toPersianDigits } from './utils';
 
 // FIX: Corrected import path to avoid conflict with empty pages.tsx file.
 import { 
@@ -34,6 +35,7 @@ import {
     ApprovalDecisionModal,
     AlertModal
 } from './modals/index';
+import { UserInfoModal } from './modals';
 
 moment.loadPersian({ usePersianDigits: true });
 
@@ -78,6 +80,9 @@ const App = () => {
     
     const [isUserEditModalOpen, setIsUserEditModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    const [userInfoUser, setUserInfoUser] = useState<User | null>(null);
+    const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
 
     const isInitialRenderRef = useRef(true);
 
@@ -414,6 +419,16 @@ const App = () => {
             setEditingUser(userToEdit);
             setIsUserEditModalOpen(true);
         }
+    };
+
+    const handleShowUserInfo = (user: User) => {
+        setUserInfoUser(user);
+        setIsUserInfoModalOpen(true);
+    };
+
+    const handleCloseUserInfo = () => {
+        setIsUserInfoModalOpen(false);
+        setUserInfoUser(null);
     };
 
     const handleUpdateUser = async (updatedUser: User & { new_password?: string }) => {
@@ -1141,7 +1156,7 @@ const App = () => {
                         />;
             // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
             case 'users':
-                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
+                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} onShowUserInfo={handleShowUserInfo} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
             case 'projects_actions_list':
                 return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} users={users} teams={teams} />;
             case 'tasks':
@@ -1257,7 +1272,7 @@ const supabaseAnonKey = '...';`}
                                 >
                                     {item.icon}
                                     <span className="sidebar-button-text">{item.name}</span>
-                                    {badgeCount > 0 && <span className="sidebar-badge">{badgeCount}</span>}
+                                    {badgeCount > 0 && <span className="sidebar-badge">{toPersianDigits(badgeCount)}</span>}
                                 </button>
                             );
                         })}
@@ -1289,7 +1304,7 @@ const supabaseAnonKey = '...';`}
                             >
                                 {item.icon}
                                 <span className="bottom-nav-button-text">{item.name}</span>
-                                {badgeCount > 0 && <span className="bottom-nav-badge">{badgeCount}</span>}
+                                {badgeCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(badgeCount)}</span>}
                             </button>
                         );
                     })}
@@ -1378,6 +1393,11 @@ const supabaseAnonKey = '...';`}
                 onClose={() => setIsUserEditModalOpen(false)}
                 onSave={handleUpdateUser}
                 userToEdit={editingUser}
+            />
+            <UserInfoModal
+                isOpen={isUserInfoModalOpen}
+                onClose={handleCloseUserInfo}
+                user={userInfoUser}
             />
         </div>
     );

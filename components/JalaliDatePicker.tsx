@@ -4,6 +4,7 @@
 */
 import React, { useState, useEffect } from 'react';
 import moment from 'moment-jalaali';
+import { toPersianDigits } from '../utils';
 
 const jalaaliMonths = [
     { value: 1, name: 'فروردین' }, { value: 2, name: 'اردیبهشت' },
@@ -13,13 +14,6 @@ const jalaaliMonths = [
     { value: 9, name: 'آذر' }, { value: 10, name: 'دی' },
     { value: 11, name: 'بهمن' }, { value: 12, name: 'اسفند' },
 ];
-
-const toPersianDigits = (n) => {
-    if (n === null || n === undefined) return '';
-    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    return n.toString().replace(/\d/g, (x) => persianDigits[parseInt(x, 10)]);
-};
-
 
 export const JalaliDatePicker = ({ value, onChange, name, id, required, disabled }: {
     value: string;

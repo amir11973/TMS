@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../CollapsibleTable';
 import { renderPriorityBadge } from '../PriorityBadge';
 import { DetailsIcon } from '../../icons';
+import { toPersianDigits } from '../../utils';
 
 export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: { 
     items: any[];
@@ -66,7 +67,7 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                             <CollapsibleTableSection key="dashboard-projects" title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
                                 {projectItems.map((item, index) => (
                                     <tr key={item.id}>
-                                        <td>{index + 1}</td>
+                                        <td>{toPersianDigits(index + 1)}</td>
                                         <td>{item.name}</td>
                                         <td>{item.status}</td>
                                         <td>{renderPriorityBadge(item.priority)}</td>
@@ -83,7 +84,7 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                              <CollapsibleTableSection key="dashboard-actions" title="اقدامات" count={actionItems.length} defaultOpen={true}>
                                 {actionItems.map((item, index) => (
                                     <tr key={item.id}>
-                                        <td>{index + 1}</td>
+                                        <td>{toPersianDigits(index + 1)}</td>
                                         <td>{item.name}</td>
                                         <td>{item.status}</td>
                                         <td>{renderPriorityBadge(item.priority)}</td>

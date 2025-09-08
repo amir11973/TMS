@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
+import { toPersianDigits } from '../../utils';
 
 export const BarChart = ({ data, title, color, orientation = 'vertical' }: { data: { name: string; value: number }[], title: string, color: string, orientation?: 'vertical' | 'horizontal' }) => {
      if (!data || data.length === 0 || data.every(d => d.value === 0)) {
@@ -24,9 +25,9 @@ export const BarChart = ({ data, title, color, orientation = 'vertical' }: { dat
                                     backgroundColor: color,
                                     animationDelay: `${index * 75}ms`
                                 }}
-                                title={`${item.name}: ${item.value}`}
+                                title={`${item.name}: ${toPersianDigits(item.value)}`}
                             >
-                                {item.value > 0 && <span className="bar-value">{item.value}</span>}
+                                {item.value > 0 && <span className="bar-value">{toPersianDigits(item.value)}</span>}
                             </div>
                         </div>
                         <span className="bar-label">{item.name}</span>

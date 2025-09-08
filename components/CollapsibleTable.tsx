@@ -4,6 +4,7 @@
 */
 import React, { useState } from 'react';
 import { PlusIcon, MinusIcon, GroupCollapsedIcon } from '../icons';
+import { toPersianDigits } from '../utils';
 
 export const CollapsibleTableSection = ({ title, count, children, iconType = 'plus-minus', defaultOpen = false, level = 0 }: {
     title: string;
@@ -34,7 +35,7 @@ export const CollapsibleTableSection = ({ title, count, children, iconType = 'pl
                     <span style={{ paddingRight: `${level * 24}px` }}>
                         <ToggleIcon />
                         <span className="group-header-title">{title}</span>
-                        <span className="group-header-count">({count} مورد)</span>
+                        <span className="group-header-count">({toPersianDigits(count)} مورد)</span>
                     </span>
                 </td>
             </tr>

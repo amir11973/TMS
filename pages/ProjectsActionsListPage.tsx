@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { renderPriorityBadge, CollapsibleTableSection } from '../components';
 import { DetailsIcon, EditIcon, DeleteIcon, HistoryIcon } from '../icons';
+import { toPersianDigits } from '../utils';
 
 export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEditProject, onDeleteProject, onEditAction, onDeleteAction, currentUser, onShowHistory, users, teams }: {
     projects: any[];
@@ -143,7 +144,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                             
                                             return (
                                                 <tr key={`project-${item.id}`}>
-                                                    <td>{index + 1}</td>
+                                                    <td>{toPersianDigits(index + 1)}</td>
                                                     <td>{item.title}</td>
                                                     <td>{item.status}</td>
                                                     <td>{renderPriorityBadge(item.priority)}</td>
@@ -188,7 +189,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
 
                                             return (
                                                 <tr key={`action-${item.id}`}>
-                                                    <td>{index + 1}</td>
+                                                    <td>{toPersianDigits(index + 1)}</td>
                                                     <td>{item.title}</td>
                                                     <td>{item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status}</td>
                                                     <td>{renderPriorityBadge(item.priority)}</td>

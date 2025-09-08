@@ -4,14 +4,15 @@
 */
 import React, { useState, FormEvent } from 'react';
 import { User } from '../types';
-import { EditIcon, DeleteIcon, PowerIcon } from '../icons';
+import { EditIcon, DeleteIcon, PowerIcon, DetailsIcon } from '../icons';
 
-export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUserActive, onEditUser }: {
+export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUserActive, onEditUser, onShowUserInfo }: {
     users: User[];
     onAddUser: (details: { username: string, password: string, fullName: string }) => void;
     onDeleteUser: (id: number) => void;
     onToggleUserActive: (id: number) => void;
     onEditUser: (id: number) => void;
+    onShowUserInfo: (user: User) => void;
 }) => {
     const [fullName, setFullName] = useState('');
     const [username, setUsername] = useState('');
@@ -81,9 +82,14 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
                                 <td>
                                     <div className="action-buttons-grid">
                                         <div className="action-buttons-row">
+                                            <button className="icon-btn details-btn" title="اطلاعات" onClick={() => onShowUserInfo(user)}>
+                                                <DetailsIcon />
+                                            </button>
                                             <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditUser(user.id)}>
                                                 <EditIcon />
                                             </button>
+                                        </div>
+                                        <div className="action-buttons-row">
                                             <button
                                                 className="icon-btn"
                                                 title={user.is_active ? 'غیرفعال کردن' : 'فعال کردن'}
@@ -92,8 +98,6 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
                                             >
                                                 <PowerIcon />
                                             </button>
-                                        </div>
-                                        <div className="action-buttons-row">
                                             <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteUser(user.id)} disabled={user.username === 'mahmoudi.pars@gmail.com'}>
                                                 <DeleteIcon />
                                             </button>

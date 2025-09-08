@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect, useRef } from 'react';
+import { toPersianDigits } from '../../utils';
 
 export const AnimatedNumber = ({ value }: { value: number }) => {
     const [displayValue, setDisplayValue] = useState(0);
@@ -39,5 +40,5 @@ export const AnimatedNumber = ({ value }: { value: number }) => {
 
     }, [value]);
 
-    return <span className="stat-card-value">{displayValue}</span>;
+    return <span className="stat-card-value">{toPersianDigits(displayValue)}</span>;
 };

@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../components';
 import { DetailsIcon, HistoryIcon, DocumentIcon, ApproveIcon, RejectIcon } from '../icons';
 import { User } from '../types';
+import { toPersianDigits } from '../utils';
 
 export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo, users }: {
     items: any[];
@@ -43,11 +44,11 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
             <div className="page-header-actions">
                 <button className="header-action-btn" onClick={onShowGlobalHistory}>
                     <HistoryIcon />
-                    <span>نمایش تاریخچه تاییدات من</span>
+                    <span>تاریخچه تاییدات من</span>
                 </button>
             </div>
             <section>
-                <h3 className="list-section-header">موارد در انتظار تایید ({pendingApprovals.length})</h3>
+                <h3 className="list-section-header">موارد در انتظار تایید ({toPersianDigits(pendingApprovals.length)})</h3>
                 <div className="table-wrapper">
                     <table className="user-list-table">
                         <thead>
@@ -66,7 +67,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                     <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
                                         {tasks.map((item, index) => (
                                             <tr key={item.id}>
-                                                <td>{index + 1}</td>
+                                                <td>{toPersianDigits(index + 1)}</td>
                                                 <td>{item.title}</td>
                                                 <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                 <td>{item.requestedStatus}</td>

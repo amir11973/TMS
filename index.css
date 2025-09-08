@@ -1962,21 +1962,21 @@ body {
         width: 10%; /* Details column */
     }
     
-    /* --- Tasks Page Grid Widths (5/40/20/15/20) --- */
+    /* --- Tasks Page Grid Widths (5/60/10/10/15) --- */
     .tasks-page .user-list-table th:nth-child(1) {
         width: 5%; /* Row Number */
     }
     .tasks-page .user-list-table th:nth-child(2) {
-        width: 40%; /* Title */
+        width: 60%; /* Title */
     }
     .tasks-page .user-list-table th:nth-child(3) {
-        width: 20%; /* Approval Status */
+        width: 10%; /* Approval Status */
     }
     .tasks-page .user-list-table th:nth-child(4) {
-        width: 15%; /* Status */
+        width: 10%; /* Status */
     }
     .tasks-page .user-list-table th:nth-child(5) {
-        width: 20%; /* Actions */
+        width: 15%; /* Actions */
     }
 
     /* --- Approvals Page Grid Widths (5/45/15/15/20) --- */

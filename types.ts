@@ -15,6 +15,8 @@ export type User = {
     role: UserRole;
     is_active: boolean;
     theme?: string;
+    created_at: string;
+    last_login?: string | null;
 };
 
 export type ItemStatus = 'شروع نشده' | 'در حال اجرا' | 'ارسال برای تایید' | 'خاتمه یافته' | 'رد شده';

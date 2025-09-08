@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { CollapsibleTableSection } from '../components';
 import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon } from '../icons';
+import { toPersianDigits } from '../utils';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { SendApprovalModal, DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
 
@@ -86,11 +87,11 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                 </button>
                 <button className="header-action-btn" onClick={() => setIsCompletedTasksModalOpen(true)}>
                     <HistoryIcon />
-                    <span>فعالیتهای خاتمه یافته</span>
+                    <span>خاتمه یافته ها</span>
                 </button>
             </div>
             <section>
-                <h3 className="list-section-header">وظایف جاری ({openTasks.length})</h3>
+                <h3 className="list-section-header">وظایف جاری ({toPersianDigits(openTasks.length)})</h3>
                 <div className="table-wrapper">
                     <table className="user-list-table">
                         <thead>
@@ -122,7 +123,7 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
 
                                             return (
                                                 <tr key={item.id}>
-                                                    <td>{index + 1}</td>
+                                                    <td>{toPersianDigits(index + 1)}</td>
                                                     <td>{item.title}</td>
                                                     <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                     <td>{displayStatus}</td>
@@ -218,6 +219,7 @@ export const TasksPage = ({ items, currentUser, onSendForApproval, onShowHistory
                 isOpen={isCompletedTasksModalOpen}
                 onClose={() => setIsCompletedTasksModalOpen(false)}
                 items={completedTasks}
+                onShowHistory={onShowHistory}
             />
         </div>
     );

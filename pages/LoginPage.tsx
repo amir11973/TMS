@@ -40,6 +40,16 @@ export const LoginPage = ({ onLogin, onSignUp }: {
                 }
 
                 if (user.is_active) {
+                    const { error: updateError } = await supabase
+                        .from('users')
+                        .update({ last_login: new Date().toISOString() })
+                        .eq('id', user.id);
+
+                    if (updateError) {
+                        // Log the error but don't block login
+                        console.error('Failed to update last login time:', updateError);
+                    }
+                    
                     const { password_hash, ...userToLogin } = user;
                     onLogin(userToLogin);
                 } else {

@@ -4,6 +4,7 @@
 */
 import React from 'react';
 import { StatCard } from './StatCard';
+import { toPersianDigits } from '../../utils';
 
 export const PieChart = ({ data, isDonut = false, title }: { data: { name: string; value: number; color: string }[], isDonut?: boolean, title: string }) => {
     if (!data || data.length === 0 || data.every(d => d.value === 0)) {
@@ -31,7 +32,7 @@ export const PieChart = ({ data, isDonut = false, title }: { data: { name: strin
                     {data.filter(item => item.value > 0).map(item => (
                         <div key={item.name} className="legend-item">
                             <span className="legend-color-box" style={{ backgroundColor: item.color }}></span>
-                            <span className="legend-label">{item.name} ({item.value})</span>
+                            <span className="legend-label">{item.name} ({toPersianDigits(item.value)})</span>
                         </div>
                     ))}
                 </div>
