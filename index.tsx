@@ -260,10 +260,26 @@ const App = () => {
     };
 
     const handleLogin = (user) => {
-        setLoggedInUser(user);
-        setTheme(user.theme || 'dark');
-        setView('dashboard');
-        setContentTitle('داشبورد من');
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+            // This forces a re-evaluation of the viewport, effectively zooming out on mobile.
+            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            setTimeout(() => {
+                // Restore the original content to allow zooming again if desired by the user.
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                // Set user and view after the viewport has had a chance to reset
+                setLoggedInUser(user);
+                setTheme(user.theme || 'dark');
+                setView('dashboard');
+                setContentTitle('داشبورد من');
+            }, 50); // A small delay to ensure the browser processes the change.
+        } else {
+            // Fallback for environments where the meta tag might not be present
+            setLoggedInUser(user);
+            setTheme(user.theme || 'dark');
+            setView('dashboard');
+            setContentTitle('داشبورد من');
+        }
     };
     
     const handleLogout = () => {
@@ -501,6 +517,11 @@ const App = () => {
                     const newProject = { ...data, activities: [] };
                     setProjects(prev => [...prev, newProject]);
                     setEditingProject({ ...newProject, initialTab: 'activities' });
+                } else {
+                    handleRequestAlert({
+                        title: 'خطا در ذخیره‌سازی',
+                        message: 'اطلاعات پروژه ذخیره نشد. لطفا دوباره تلاش کنید.'
+                    });
                 }
             } else {
                 const { activities, type, readOnly, initialTab, isNew, ...updatePayload } = projectToSave;
@@ -511,8 +532,18 @@ const App = () => {
                     setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
                     setIsProjectModalOpen(false);
                     setEditingProject(null);
+                } else {
+                    handleRequestAlert({
+                        title: 'خطا در بروزرسانی',
+                        message: 'اطلاعات پروژه بروزرسانی نشد. لطفا دوباره تلاش کنید.'
+                    });
                 }
             }
+        } catch (e: any) {
+            handleRequestAlert({
+                title: 'خطا در ذخیره‌سازی',
+                message: `اطلاعات پروژه ذخیره نشد. لطفا دوباره تلاش کنید. (${e.message})`
+            });
         } finally {
             setIsActionLoading(false);
         }
@@ -527,6 +558,13 @@ const App = () => {
                 handleSupabaseError(error, 'updating action');
                 if (data) {
                     setActions(prev => prev.map(a => a.id === data.id ? data : a));
+                    setIsActionModalOpen(false);
+                    setEditingAction(null);
+                } else {
+                    handleRequestAlert({
+                        title: 'خطا در بروزرسانی',
+                        message: 'اطلاعات اقدام بروزرسانی نشد. لطفا دوباره تلاش کنید.'
+                    });
                 }
             } else { // Insert
                 const newActionPayload = { ...actionToSave, owner: loggedInUser.username, history: [{ status: actionToSave.status, user: loggedInUser.username, date: new Date().toISOString() }] };
@@ -535,12 +573,22 @@ const App = () => {
                 handleSupabaseError(error, 'creating new action');
                 if (data) {
                     setActions(prev => [...prev, data]);
+                    setIsActionModalOpen(false);
+                    setEditingAction(null);
+                } else {
+                     handleRequestAlert({
+                        title: 'خطا در ذخیره‌سازی',
+                        message: 'اطلاعات اقدام ذخیره نشد. لطفا دوباره تلاش کنید.'
+                    });
                 }
             }
+        } catch (e: any) {
+            handleRequestAlert({
+                title: 'خطا در ذخیره‌سازی',
+                message: `اطلاعات اقدام ذخیره نشد. لطفا دوباره تلاش کنید. (${e.message})`
+            });
         } finally {
             setIsActionLoading(false);
-            setIsActionModalOpen(false);
-            setEditingAction(null);
         }
     };
     

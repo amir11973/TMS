@@ -12,6 +12,14 @@ import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
 
+const isDelayed = (status: string, endDateStr: string) => {
+    if (status === 'خاتمه یافته' || !endDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateStr);
+    return endDate < today;
+};
+
 export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams }: {
     users: User[];
     sections: string[];
@@ -175,41 +183,60 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     };
 
     const handleSaveActivity = async (activityToSave: any) => {
-        let updatedProject;
-        if (activityToSave.id) { // Update
-            const { data, error } = await supabase.from('activities').update(activityToSave).eq('id', activityToSave.id).select().single();
-            handleSupabaseError(error, 'updating activity');
-            if (data) {
-                updatedProject = {
-                    ...project,
-                    activities: project.activities.map((a:any) => a.id === data.id ? data : a)
+        try {
+            let updatedProject;
+            let success = false;
+            if (activityToSave.id) { // Update
+                const { data, error } = await supabase.from('activities').update(activityToSave).eq('id', activityToSave.id).select().single();
+                handleSupabaseError(error, 'updating activity');
+                if (data) {
+                    updatedProject = {
+                        ...project,
+                        activities: project.activities.map((a:any) => a.id === data.id ? data : a)
+                    };
+                    success = true;
+                } else {
+                     onRequestAlert({
+                        title: 'خطا در بروزرسانی',
+                        message: `اطلاعات فعالیت بروزرسانی نشد. لطفا دوباره تلاش کنید.`
+                    });
+                }
+            } else { // Insert
+                const newActivityPayload = { 
+                    ...activityToSave, 
+                    project_id: project.id,
+                    status: 'شروع نشده',
+                    history: []
                 };
+                delete newActivityPayload.id;
+                const { data, error } = await supabase.from('activities').insert(newActivityPayload).select().single();
+                handleSupabaseError(error, 'creating new activity');
+                if (data) {
+                    updatedProject = {
+                        ...project,
+                        activities: [...project.activities, data]
+                    };
+                    success = true;
+                } else {
+                    onRequestAlert({
+                        title: 'خطا در ذخیره‌سازی',
+                        message: `اطلاعات فعالیت ذخیره نشد. لطفا دوباره تلاش کنید.`
+                    });
+                }
             }
-        } else { // Insert
-            const newActivityPayload = { 
-                ...activityToSave, 
-                project_id: project.id,
-                status: 'شروع نشده',
-                history: []
-            };
-            delete newActivityPayload.id;
-            const { data, error } = await supabase.from('activities').insert(newActivityPayload).select().single();
-            handleSupabaseError(error, 'creating new activity');
-            if (data) {
-                updatedProject = {
-                    ...project,
-                    activities: [...project.activities, data]
-                };
+            
+            if (success && updatedProject) {
+                setProject(updatedProject);
+                onUpdateProject(updatedProject);
+                setIsActivityModalOpen(false);
+                setActiveTab('activities');
             }
+        } catch(e: any) {
+            onRequestAlert({
+                title: 'خطا در ذخیره‌سازی',
+                message: `اطلاعات فعالیت ذخیره نشد. لطفا دوباره تلاش کنید. (${e.message})`
+            });
         }
-        
-        if (updatedProject) {
-            setProject(updatedProject);
-            onUpdateProject(updatedProject);
-        }
-
-        setIsActivityModalOpen(false);
-        setActiveTab('activities');
     };
     
     if (!isOpen) {
@@ -328,7 +355,15 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                     <tbody>
                                        {(project.activities || []).map((activity: any) => (
                                            <tr key={activity.id}>
-                                               <td>{activity.title}</td>
+                                               <td>
+                                                    <div className="title-cell-content">
+                                                        <span>{activity.title}</span>
+                                                        <span 
+                                                            className={`delay-indicator-dot ${isDelayed(activity.status, activity.endDate) ? 'delayed' : 'on-time'}`}
+                                                            title={isDelayed(activity.status, activity.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                        ></span>
+                                                    </div>
+                                               </td>
                                                <td>{renderPriorityBadge(activity.priority)}</td>
                                                <td>
                                                     {project.use_workflow === false ? (

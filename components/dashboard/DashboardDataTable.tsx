@@ -8,6 +8,14 @@ import { renderPriorityBadge } from '../PriorityBadge';
 import { DetailsIcon } from '../../icons';
 import { toPersianDigits } from '../../utils';
 
+const isDelayed = (status: string, endDateStr: string) => {
+    if (status === 'خاتمه یافته' || !endDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateStr);
+    return endDate < today;
+};
+
 export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: { 
     items: any[];
     onViewDetails: (item: any) => void;
@@ -68,7 +76,15 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                 {projectItems.map((item, index) => (
                                     <tr key={item.id}>
                                         <td>{toPersianDigits(index + 1)}</td>
-                                        <td>{item.name}</td>
+                                        <td>
+                                            <div className="title-cell-content">
+                                                <span>{item.name}</span>
+                                                <span 
+                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                    title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                ></span>
+                                            </div>
+                                        </td>
                                         <td>{item.status}</td>
                                         <td>{renderPriorityBadge(item.priority)}</td>
                                         <td>
@@ -85,7 +101,15 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                 {actionItems.map((item, index) => (
                                     <tr key={item.id}>
                                         <td>{toPersianDigits(index + 1)}</td>
-                                        <td>{item.name}</td>
+                                        <td>
+                                            <div className="title-cell-content">
+                                                <span>{item.name}</span>
+                                                <span 
+                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                    title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                ></span>
+                                            </div>
+                                        </td>
                                         <td>{item.status}</td>
                                         <td>{renderPriorityBadge(item.priority)}</td>
                                         <td>

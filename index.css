@@ -1824,13 +1824,39 @@ body {
     word-wrap: break-word; /* Ensure content wrapping */
 }
 
+/* Title with Delay Indicator */
+.title-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: right;
+  width: 100%;
+}
+
+.delay-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.delay-indicator-dot.delayed {
+  background-color: var(--c-danger);
+}
+
+.delay-indicator-dot.on-time {
+  background-color: var(--c-success);
+}
+
 /* ============================================== */
 /* Mobile-First Table Column Widths               */
 /* ============================================== */
 .dashboard-data-table,
 .projects-actions-list-page .user-list-table,
 .tasks-page .user-list-table,
-.approvals-page .user-list-table {
+.approvals-page .user-list-table,
+.mass-delegate-table,
+.completed-tasks-table {
     table-layout: fixed;
     width: 100%;
 }
@@ -1862,6 +1888,17 @@ body {
 .approvals-page .user-list-table th:nth-child(3) { width: 15%; }
 .approvals-page .user-list-table th:nth-child(4) { width: 20%; }
 .approvals-page .user-list-table th:nth-child(5) { width: 30%; }
+
+/* --- Modal Tables --- */
+.mass-delegate-table th:nth-child(1) { width: 35%; } /* پروژه / اقدام */
+.mass-delegate-table th:nth-child(2) { width: 35%; } /* فعالیت / عنوان */
+.mass-delegate-table th:nth-child(3) { width: 15%; } /* مسئول فعلی */
+.mass-delegate-table th:nth-child(4) { width: 15%; } /* مسئول جدید */
+
+.completed-tasks-table th:nth-child(1) { width: 40%; } /* عنوان */
+.completed-tasks-table th:nth-child(2) { width: 40%; } /* پروژه / اقدام */
+.completed-tasks-table th:nth-child(3) { width: 12%; } /* تاریخ تایید نهایی */
+.completed-tasks-table th:nth-child(4) { width: 8%; } /* تاریخچه */
 
 
 /* ============================================== */

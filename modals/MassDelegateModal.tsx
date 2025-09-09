@@ -87,7 +87,7 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
                 </div>
                 <div className="modal-body">
                     <div className="table-container" style={{ maxHeight: '60vh' }}>
-                        <table className="user-list-table">
+                        <table className="user-list-table mass-delegate-table">
                             <thead>
                                 <tr>
                                     <th>پروژه / اقدام</th>

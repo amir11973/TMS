@@ -8,6 +8,14 @@ import { renderPriorityBadge, CollapsibleTableSection } from '../components';
 import { DetailsIcon, EditIcon, DeleteIcon, HistoryIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 
+const isDelayed = (status: string, endDateStr: string) => {
+    if (status === 'خاتمه یافته' || !endDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateStr);
+    return endDate < today;
+};
+
 export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEditProject, onDeleteProject, onEditAction, onDeleteAction, currentUser, onShowHistory, users, teams }: {
     projects: any[];
     actions: any[];
@@ -145,7 +153,15 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                             return (
                                                 <tr key={`project-${item.id}`}>
                                                     <td>{toPersianDigits(index + 1)}</td>
-                                                    <td>{item.title}</td>
+                                                    <td>
+                                                        <div className="title-cell-content">
+                                                            <span>{item.title}</span>
+                                                            <span 
+                                                                className={`delay-indicator-dot ${isDelayed(item.status, item.projectEndDate) ? 'delayed' : 'on-time'}`}
+                                                                title={isDelayed(item.status, item.projectEndDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                            ></span>
+                                                        </div>
+                                                    </td>
                                                     <td>{item.status}</td>
                                                     <td>{renderPriorityBadge(item.priority)}</td>
                                                     <td>
@@ -190,7 +206,15 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                             return (
                                                 <tr key={`action-${item.id}`}>
                                                     <td>{toPersianDigits(index + 1)}</td>
-                                                    <td>{item.title}</td>
+                                                    <td>
+                                                        <div className="title-cell-content">
+                                                            <span>{item.title}</span>
+                                                            <span 
+                                                                className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                                title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                            ></span>
+                                                        </div>
+                                                    </td>
                                                     <td>{item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status}</td>
                                                     <td>{renderPriorityBadge(item.priority)}</td>
                                                     <td>

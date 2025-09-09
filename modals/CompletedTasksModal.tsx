@@ -18,13 +18,13 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                 </div>
                 <div className="modal-body">
                     <div className="table-container" style={{ maxHeight: '60vh' }}>
-                        <table className="user-list-table">
+                        <table className="user-list-table completed-tasks-table">
                             <thead>
                                 <tr>
-                                    <th style={{width: '60%'}}>عنوان</th>
-                                    <th style={{width: '15%'}}>پروژه / اقدام</th>
-                                    <th style={{width: '15%'}}>تاریخ تایید نهایی</th>
-                                    <th style={{width: '10%'}}>تاریخچه</th>
+                                    <th>عنوان</th>
+                                    <th>پروژه / اقدام</th>
+                                    <th>تاریخ تایید نهایی</th>
+                                    <th>تاریخچه</th>
                                 </tr>
                             </thead>
                             <tbody>
