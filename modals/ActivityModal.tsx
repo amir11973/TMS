@@ -4,28 +4,26 @@
 */
 import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment-jalaali';
-import { TeamMember, User } from '../types';
+import { User } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, teamMembers, users, onRequestAlert, isProjectOwner }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
     activityToEdit: any;
-    teamMembers: TeamMember[];
     users: User[];
     onRequestAlert: (props: any) => void;
     isProjectOwner: boolean;
+    responsibleUsers: User[];
+    approverUsers: User[];
 }) => {
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط' };
     
     const [activity, setActivity] = useState(initialActivityState);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
-
-    const responsibleUsers = users;
-    const approverUsers = users;
 
     useEffect(() => {
         if (isOpen) {

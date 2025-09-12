@@ -80,7 +80,7 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
-            <div className="modal-content" style={{ maxWidth: '800px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content mass-delegate-modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>تغییر واگذاری گروهی</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>

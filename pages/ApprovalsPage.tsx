@@ -8,6 +8,14 @@ import { DetailsIcon, HistoryIcon, DocumentIcon, ApproveIcon, RejectIcon } from 
 import { User } from '../types';
 import { toPersianDigits } from '../utils';
 
+const isDelayed = (status: string, endDateStr: string) => {
+    if (status === 'خاتمه یافته' || !endDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateStr);
+    return endDate < today;
+};
+
 export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo, users }: {
     items: any[];
     currentUser: any;
@@ -68,7 +76,15 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                         {tasks.map((item, index) => (
                                             <tr key={item.id}>
                                                 <td>{toPersianDigits(index + 1)}</td>
-                                                <td>{item.title}</td>
+                                                <td>
+                                                    <div className="title-cell-content">
+                                                        <span 
+                                                            className={`delay-indicator-dot ${isDelayed(item.underlyingStatus, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                            title={isDelayed(item.underlyingStatus, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                        ></span>
+                                                        <span>{item.title}</span>
+                                                    </div>
+                                                </td>
                                                 <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                 <td>{item.requestedStatus}</td>
                                                 <td>

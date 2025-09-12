@@ -16,3 +16,4 @@ export * from './HistoryModal';
 export * from './MassDelegateModal';
 export * from './SendApprovalModal';
 export * from './UserEditModal';
+export * from './ChatbotModal';

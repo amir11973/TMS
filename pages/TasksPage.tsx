@@ -10,6 +10,14 @@ import { toPersianDigits } from '../utils';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
 
+const isDelayed = (status: string, endDateStr: string) => {
+    if (status === 'خاتمه یافته' || !endDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateStr);
+    return endDate < today;
+};
+
 export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval }: {
     items: any[];
     currentUser: User | null;
@@ -111,7 +119,15 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                             return (
                                                 <tr key={item.id}>
                                                     <td>{toPersianDigits(index + 1)}</td>
-                                                    <td>{item.title}</td>
+                                                    <td>
+                                                        <div className="title-cell-content">
+                                                            <span 
+                                                                className={`delay-indicator-dot ${isDelayed(displayStatus, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                                title={isDelayed(displayStatus, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                            ></span>
+                                                            <span>{item.title}</span>
+                                                        </div>
+                                                    </td>
                                                     <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                     <td>{displayStatus}</td>
                                                     <td>

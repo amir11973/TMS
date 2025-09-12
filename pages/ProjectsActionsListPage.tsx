@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { renderPriorityBadge, CollapsibleTableSection } from '../components';
-import { DetailsIcon, EditIcon, DeleteIcon, HistoryIcon } from '../icons';
+import { DetailsIcon, EditIcon, DeleteIcon, HistoryIcon, ApproveIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 
 const isDelayed = (status: string, endDateStr: string) => {
@@ -155,11 +155,17 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                     <td>{toPersianDigits(index + 1)}</td>
                                                     <td>
                                                         <div className="title-cell-content">
+                                                            {item.status === 'خاتمه یافته' ? (
+                                                                <span className="completed-indicator" title="تکمیل شده">
+                                                                    <ApproveIcon />
+                                                                </span>
+                                                            ) : (
+                                                                <span 
+                                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.projectEndDate) ? 'delayed' : 'on-time'}`}
+                                                                    title={isDelayed(item.status, item.projectEndDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                                ></span>
+                                                            )}
                                                             <span>{item.title}</span>
-                                                            <span 
-                                                                className={`delay-indicator-dot ${isDelayed(item.status, item.projectEndDate) ? 'delayed' : 'on-time'}`}
-                                                                title={isDelayed(item.status, item.projectEndDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                            ></span>
                                                         </div>
                                                     </td>
                                                     <td>{item.status}</td>
@@ -208,11 +214,17 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                     <td>{toPersianDigits(index + 1)}</td>
                                                     <td>
                                                         <div className="title-cell-content">
+                                                            {item.status === 'خاتمه یافته' ? (
+                                                                <span className="completed-indicator" title="تکمیل شده">
+                                                                    <ApproveIcon />
+                                                                </span>
+                                                            ) : (
+                                                                <span 
+                                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                                    title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                                ></span>
+                                                            )}
                                                             <span>{item.title}</span>
-                                                            <span 
-                                                                className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                                title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                            ></span>
                                                         </div>
                                                     </td>
                                                     <td>{item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status}</td>

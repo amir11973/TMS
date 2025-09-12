@@ -25,8 +25,24 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
-    const responsibleUsers = users;
-    const approverUsers = users;
+    const responsibleUsers = useMemo(() => {
+        if (!currentUser) return [];
+        const teamUsernames = new Set(teamMembers.map(m => m.username));
+        // The list should include the manager (currentUser) and their team members.
+        return users.filter(u => u.username === currentUser.username || teamUsernames.has(u.username));
+    }, [users, teamMembers, currentUser]);
+
+    const approverUsers = useMemo(() => {
+        if (!currentUser) return [];
+        const managerAndAdminUsernames = new Set(
+            teamMembers
+                .filter(m => m.role === 'ادمین' || m.role === 'مدیر')
+                .map(m => m.username)
+        );
+        // The manager (currentUser) can always be an approver.
+        managerAndAdminUsernames.add(currentUser.username);
+        return users.filter(u => managerAndAdminUsernames.has(u.username));
+    }, [users, teamMembers, currentUser]);
 
     useEffect(() => {
         if (isOpen) {

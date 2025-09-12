@@ -7,7 +7,7 @@ import moment from 'moment-jalaali';
 import { User, TeamMember } from '../types';
 import { getTodayString } from '../constants';
 import { supabase, handleSupabaseError } from '../supabaseClient';
-import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon } from '../icons';
+import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon, ApproveIcon } from '../icons';
 import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
@@ -55,7 +55,14 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     
-    const projectManagers = users;
+    const projectManagers = useMemo(() => {
+        const owner = project.owner || currentUser?.username;
+        if (!owner) return [];
+        const ownerTeam = teams[owner] || [];
+        const teamUsernames = new Set(ownerTeam.map(m => m.username));
+        teamUsernames.add(owner);
+        return users.filter(u => teamUsernames.has(u.username));
+    }, [project.owner, currentUser, teams, users]);
 
     const canManageActivities = useMemo(() => {
         if (!currentUser || !project || readOnly) return false;
@@ -71,6 +78,28 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         );
         return isCurrentUserAdminInOwnersTeam;
     }, [currentUser, project, teams, readOnly]);
+
+    const activityResponsibleUsers = useMemo(() => {
+        const owner = project.owner || currentUser?.username;
+        if (!owner) return [];
+        const ownerTeam = teams[owner] || [];
+        const teamUsernames = new Set(ownerTeam.map(m => m.username));
+        teamUsernames.add(owner);
+        return users.filter(u => teamUsernames.has(u.username));
+    }, [project.owner, currentUser, teams, users]);
+
+    const activityApproverUsers = useMemo(() => {
+        const owner = project.owner || currentUser?.username;
+        if (!owner) return [];
+        const ownerTeam = teams[owner] || [];
+        const approverUsernames = new Set(
+            ownerTeam
+                .filter(m => m.role === 'ادمین' || m.role === 'مدیر')
+                .map(m => m.username)
+        );
+        approverUsernames.add(owner);
+        return users.filter(u => approverUsernames.has(u.username));
+    }, [project.owner, currentUser, teams, users]);
 
     useEffect(() => {
         if (isOpen) {
@@ -357,29 +386,22 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                            <tr key={activity.id}>
                                                <td>
                                                     <div className="title-cell-content">
+                                                        {activity.status === 'خاتمه یافته' ? (
+                                                            <span className="completed-indicator" title="تکمیل شده">
+                                                                <ApproveIcon />
+                                                            </span>
+                                                        ) : (
+                                                            <span 
+                                                                className={`delay-indicator-dot ${isDelayed(activity.status, activity.endDate) ? 'delayed' : 'on-time'}`}
+                                                                title={isDelayed(activity.status, activity.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                            ></span>
+                                                        )}
                                                         <span>{activity.title}</span>
-                                                        <span 
-                                                            className={`delay-indicator-dot ${isDelayed(activity.status, activity.endDate) ? 'delayed' : 'on-time'}`}
-                                                            title={isDelayed(activity.status, activity.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                        ></span>
                                                     </div>
                                                </td>
                                                <td>{renderPriorityBadge(activity.priority)}</td>
                                                <td>
-                                                    {project.use_workflow === false ? (
-                                                        <select
-                                                            className="status-select"
-                                                            value={activity.status}
-                                                            onChange={(e) => handleDirectActivityStatusChange(activity.id, e.target.value)}
-                                                            disabled={!canManageActivities}
-                                                        >
-                                                            <option value="شروع نشده">شروع نشده</option>
-                                                            <option value="در حال اجرا">در حال اجرا</option>
-                                                            <option value="خاتمه یافته">خاتمه یافته</option>
-                                                        </select>
-                                                    ) : (
-                                                        activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status
-                                                    )}
+                                                    {activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status}
                                                 </td>
                                                <td>
                                                     <div className="action-buttons-grid">
@@ -428,10 +450,11 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     onClose={() => setIsActivityModalOpen(false)}
                     onSave={handleSaveActivity}
                     activityToEdit={editingActivity}
-                    teamMembers={teamMembers}
                     users={users}
                     onRequestAlert={onRequestAlert}
-                    isProjectOwner={isOwner}
+                    isProjectOwner={canManageActivities}
+                    responsibleUsers={activityResponsibleUsers}
+                    approverUsers={activityApproverUsers}
                 />
             </div>
         </div>

@@ -2,13 +2,14 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, FormEvent, useEffect, useCallback, useRef } from 'react';
+import React, { useState, FormEvent, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import moment from 'moment-jalaali';
 import { User, TeamMember, TeamMemberRole } from './types';
 import { menuItems } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
-import { PlusIcon } from './icons';
+import { PlusIcon, ChatbotIcon } from './icons';
+// FIX: Import 'toPersianDigits' to resolve 'Cannot find name' errors.
 import { toPersianDigits } from './utils';
 
 // FIX: Corrected import path to avoid conflict with empty pages.tsx file.
@@ -34,7 +35,8 @@ import {
     ApprovalInfoModal,
     ApprovalDecisionModal,
     AlertModal,
-    SendApprovalModal
+    SendApprovalModal,
+    ChatbotModal
 } from './modals/index';
 import { UserInfoModal } from './modals';
 
@@ -86,6 +88,7 @@ const App = () => {
 
     const [userInfoUser, setUserInfoUser] = useState<User | null>(null);
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
+    const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
     const isInitialRenderRef = useRef(true);
 
@@ -260,26 +263,10 @@ const App = () => {
     };
 
     const handleLogin = (user) => {
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-        if (viewportMeta) {
-            // This forces a re-evaluation of the viewport, effectively zooming out on mobile.
-            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-            setTimeout(() => {
-                // Restore the original content to allow zooming again if desired by the user.
-                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                // Set user and view after the viewport has had a chance to reset
-                setLoggedInUser(user);
-                setTheme(user.theme || 'dark');
-                setView('dashboard');
-                setContentTitle('داشبورد من');
-            }, 50); // A small delay to ensure the browser processes the change.
-        } else {
-            // Fallback for environments where the meta tag might not be present
-            setLoggedInUser(user);
-            setTheme(user.theme || 'dark');
-            setView('dashboard');
-            setContentTitle('داشبورد من');
-        }
+        setLoggedInUser(user);
+        setTheme(user.theme || 'dark');
+        setView('dashboard');
+        setContentTitle('داشبورد من');
     };
     
     const handleLogout = () => {
@@ -1154,10 +1141,37 @@ const App = () => {
         approvals: pendingApprovalsCount,
         projects_actions_list: notStartedProjectsAndActionsCount,
     };
+    
+    const isAdmin = loggedInUser?.username === 'mahmoudi.pars@gmail.com';
+    
+    const chatbotVisibleItems = useMemo(() => {
+        if (!loggedInUser) return { projects: [], actions: [] };
+        if (isAdmin) {
+            return { projects, actions };
+        }
+    
+        const visibleProjects = projects.filter(p => {
+            const ownerTeam = teams[p.owner] || [];
+            const isTeamAdmin = ownerTeam.some(member => member.username === loggedInUser.username && member.role === 'ادمین');
+            return p.owner === loggedInUser.username ||
+                p.projectManager === loggedInUser.username ||
+                (p.activities && p.activities.some((act:any) => act.responsible === loggedInUser.username || act.approver === loggedInUser.username)) ||
+                isTeamAdmin;
+        });
+    
+        const visibleActions = actions.filter(a => {
+            const ownerTeam = teams[a.owner] || [];
+            const isTeamAdmin = ownerTeam.some(member => member.username === loggedInUser.username && member.role === 'ادمین');
+            return a.owner === loggedInUser.username ||
+                a.responsible === loggedInUser.username ||
+                a.approver === loggedInUser.username ||
+                isTeamAdmin;
+        });
+    
+        return { projects: visibleProjects, actions: visibleActions };
+    }, [projects, actions, loggedInUser, teams, isAdmin]);
 
     const renderContent = () => {
-        const isAdmin = loggedInUser?.username === 'mahmoudi.pars@gmail.com';
-
         switch(view) {
             // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
             case 'dashboard':
@@ -1253,8 +1267,6 @@ const supabaseAnonKey = '...';`}
         return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} />;
     }
 
-    const isAdmin = loggedInUser?.username === 'mahmoudi.pars@gmail.com';
-
     return (
         <div className="app-container">
             {isActionLoading && (
@@ -1343,6 +1355,15 @@ const supabaseAnonKey = '...';`}
                 <PlusIcon />
             </button>
 
+            <button
+                className="chatbot-fab"
+                title="دستیار هوشمند"
+                onClick={() => setIsChatbotOpen(true)}
+                aria-label="باز کردن دستیار هوشمند"
+            >
+                <ChatbotIcon />
+            </button>
+
             <ProjectDefinitionPage
                 isOpen={isProjectModalOpen}
                 onClose={() => { setIsProjectModalOpen(false); setEditingProject(null); }}
@@ -1429,6 +1450,17 @@ const supabaseAnonKey = '...';`}
                 isOpen={isUserInfoModalOpen}
                 onClose={handleCloseUserInfo}
                 user={userInfoUser}
+            />
+            <ChatbotModal
+                isOpen={isChatbotOpen}
+                onClose={() => setIsChatbotOpen(false)}
+                projects={chatbotVisibleItems.projects}
+                actions={chatbotVisibleItems.actions}
+                users={users}
+                currentUser={loggedInUser}
+                taskItems={taskItems}
+                approvalItems={approvalItems}
+                teamMembers={currentUserTeam}
             />
         </div>
     );

@@ -5,7 +5,7 @@
 import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../CollapsibleTable';
 import { renderPriorityBadge } from '../PriorityBadge';
-import { DetailsIcon } from '../../icons';
+import { DetailsIcon, ApproveIcon } from '../../icons';
 import { toPersianDigits } from '../../utils';
 
 const isDelayed = (status: string, endDateStr: string) => {
@@ -78,11 +78,17 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                         <td>{toPersianDigits(index + 1)}</td>
                                         <td>
                                             <div className="title-cell-content">
+                                                {item.status === 'خاتمه یافته' ? (
+                                                    <span className="completed-indicator" title="تکمیل شده">
+                                                        <ApproveIcon />
+                                                    </span>
+                                                ) : (
+                                                    <span 
+                                                        className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                        title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                    ></span>
+                                                )}
                                                 <span>{item.name}</span>
-                                                <span 
-                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                    title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                ></span>
                                             </div>
                                         </td>
                                         <td>{item.status}</td>
@@ -103,11 +109,17 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                         <td>{toPersianDigits(index + 1)}</td>
                                         <td>
                                             <div className="title-cell-content">
+                                                 {item.status === 'خاتمه یافته' ? (
+                                                    <span className="completed-indicator" title="تکمیل شده">
+                                                        <ApproveIcon />
+                                                    </span>
+                                                ) : (
+                                                    <span 
+                                                        className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                        title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                    ></span>
+                                                )}
                                                 <span>{item.name}</span>
-                                                <span 
-                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                    title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                ></span>
                                             </div>
                                         </td>
                                         <td>{item.status}</td>

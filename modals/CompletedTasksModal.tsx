@@ -11,7 +11,7 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
-            <div className="modal-content" style={{ maxWidth: '800px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content completed-tasks-modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>خاتمه یافته ها</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
@@ -29,7 +29,14 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                             </thead>
                             <tbody>
                                 {items.length > 0 ? items.map(item => {
-                                    const finalApprovalEntry = item.history?.slice().reverse().find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
+                                    // First, look for the explicit approval history entry for workflow items
+                                    let finalApprovalEntry = item.history?.slice().reverse().find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
+                                    
+                                    // If not found (e.g., for non-workflow items), find the last entry where status became 'خاتمه یافته'
+                                    if (!finalApprovalEntry) {
+                                        finalApprovalEntry = item.history?.slice().reverse().find(h => h.status === 'خاتمه یافته');
+                                    }
+
                                     const finalApprovalDate = finalApprovalEntry ? moment(finalApprovalEntry.date).format('jYYYY/jMM/jDD') : '—';
                                     
                                     return (
