@@ -5,7 +5,13 @@
 import React from 'react';
 import { toPersianDigits } from '../../utils';
 
-export const BarChart = ({ data, title, color, orientation = 'vertical' }: { data: { name: string; value: number }[], title: string, color: string, orientation?: 'vertical' | 'horizontal' }) => {
+export const BarChart = ({ data, title, color, orientation = 'vertical', onBarClick }: { 
+    data: { name: string; value: number }[], 
+    title: string, 
+    color: string, 
+    orientation?: 'vertical' | 'horizontal',
+    onBarClick?: (barName: string) => void 
+}) => {
      if (!data || data.length === 0 || data.every(d => d.value === 0)) {
         return <div className="dashboard-card bar-chart-card"><h4 className="chart-title">{title}</h4><p className="no-data-message">داده‌ای برای نمایش وجود ندارد</p></div>;
     }
@@ -16,7 +22,19 @@ export const BarChart = ({ data, title, color, orientation = 'vertical' }: { dat
             <h4 className="chart-title">{title}</h4>
             <div className={`bar-chart-container ${orientation}`}>
                 {data.map((item, index) => (
-                    <div key={item.name} className="bar-item">
+                    <div 
+                        key={item.name} 
+                        className={`bar-item ${onBarClick ? 'clickable' : ''}`}
+                        onClick={() => onBarClick?.(item.name)}
+                        role={onBarClick ? 'button' : undefined}
+                        tabIndex={onBarClick ? 0 : -1}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onBarClick?.(item.name);
+                            }
+                        }}
+                    >
                         <div className="bar-wrapper">
                             <div 
                                 className="bar" 

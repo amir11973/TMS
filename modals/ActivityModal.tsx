@@ -8,7 +8,7 @@ import { User } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers, currentUser }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
@@ -18,6 +18,7 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
     isProjectOwner: boolean;
     responsibleUsers: User[];
     approverUsers: User[];
+    currentUser: User | null;
 }) => {
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط' };
     
@@ -30,10 +31,14 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
             if (activityToEdit) {
                 setActivity({ ...initialActivityState, ...activityToEdit });
             } else {
-                setActivity(initialActivityState);
+                setActivity({
+                    ...initialActivityState,
+                    responsible: currentUser?.username || '',
+                    approver: currentUser?.username || '',
+                });
             }
         }
-    }, [activityToEdit, isOpen]);
+    }, [activityToEdit, isOpen, currentUser]);
 
     if (!isOpen) return null;
 

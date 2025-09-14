@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { CollapsibleTableSection } from '../components';
-import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon, SendForFinishIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon, SendForFinishIcon, NotesIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
@@ -18,7 +18,7 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval }: {
+export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval, onOpenNotesModal }: {
     items: any[];
     currentUser: User | null;
     onShowHistory: (history: any[]) => void;
@@ -31,6 +31,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
     onViewDetails: (item: any) => void;
     onDirectStatusUpdate: (itemId: number, itemType: string, newStatus: string) => void;
     onSendForApproval: (item: any, requestedStatus: string) => void;
+    onOpenNotesModal: (item: any, viewMode: 'responsible' | 'approver') => void;
 }) => {
     const [delegateModal, setDelegateModal] = useState({ isOpen: false, item: null as any });
     const [isMassDelegateModalOpen, setIsMassDelegateModalOpen] = useState(false);
@@ -141,6 +142,9 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                                                 </button>
                                                                 <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
                                                                     <DelegateIcon />
+                                                                </button>
+                                                                <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'responsible')}>
+                                                                    <NotesIcon />
                                                                 </button>
                                                             </div>
                                                              {item.use_workflow === false ? (

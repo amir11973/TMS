@@ -17,3 +17,5 @@ export * from './MassDelegateModal';
 export * from './SendApprovalModal';
 export * from './UserEditModal';
 export * from './ChatbotModal';
+export * from './DashboardListModal';
+export * from './NotesModal';

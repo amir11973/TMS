@@ -4,7 +4,7 @@
 */
 import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../components';
-import { DetailsIcon, HistoryIcon, DocumentIcon, ApproveIcon, RejectIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, DocumentIcon, ApproveIcon, RejectIcon, NotesIcon } from '../icons';
 import { User } from '../types';
 import { toPersianDigits } from '../utils';
 
@@ -16,7 +16,7 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo, users }: {
+export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShowGlobalHistory, onViewDetails, onShowInfo, users, onOpenNotesModal }: {
     items: any[];
     currentUser: any;
     onApprovalDecision: (item: any, decision: string) => void;
@@ -25,6 +25,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
     onViewDetails: (item: any) => void;
     onShowInfo: (item: any) => void;
     users: User[];
+    onOpenNotesModal: (item: any, viewMode: 'responsible' | 'approver') => void;
 }) => {
     
     if (!Array.isArray(items)) {
@@ -98,6 +99,9 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                             </button>
                                                             <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
                                                                 <HistoryIcon />
+                                                            </button>
+                                                            <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'approver')}>
+                                                                <NotesIcon />
                                                             </button>
                                                         </div>
                                                         <div className="action-buttons-row">

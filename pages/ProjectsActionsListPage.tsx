@@ -96,7 +96,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
 
     return (
         <div className="projects-actions-list-page">
-            <div className="dashboard-filters" style={{marginBottom: '24px'}}>
+            <div className="dashboard-filters">
                 <div className="filter-group">
                     <label htmlFor="title-filter">عنوان</label>
                     <input 

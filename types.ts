@@ -27,3 +27,14 @@ export type TeamMember = {
     username: string;
     role: TeamMemberRole;
 };
+
+export type Note = {
+    id: number;
+    item_id: number;
+    item_type: 'activity' | 'action';
+    content: string;
+    author_username: string;
+    is_private: boolean;
+    created_at: string;
+    updated_at: string;
+};

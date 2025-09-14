@@ -6,7 +6,12 @@ import React from 'react';
 import { StatCard } from './StatCard';
 import { toPersianDigits } from '../../utils';
 
-export const PieChart = ({ data, isDonut = false, title }: { data: { name: string; value: number; color: string }[], isDonut?: boolean, title: string }) => {
+export const PieChart = ({ data, isDonut = false, title, onSegmentClick }: { 
+    data: { name: string; value: number; color: string }[], 
+    isDonut?: boolean, 
+    title: string,
+    onSegmentClick?: (segmentName: string) => void
+}) => {
     if (!data || data.length === 0 || data.every(d => d.value === 0)) {
         return <StatCard title={title}><p className="no-data-message">داده‌ای برای نمایش وجود ندارد</p></StatCard>;
     }
@@ -30,7 +35,18 @@ export const PieChart = ({ data, isDonut = false, title }: { data: { name: strin
                 <div className={`pie-chart ${isDonut ? 'donut' : ''}`} style={{ background: gradient }} role="img" aria-label={title}></div>
                 <div className="pie-chart-legend">
                     {data.filter(item => item.value > 0).map(item => (
-                        <div key={item.name} className="legend-item">
+                        <div 
+                            key={item.name} 
+                            className={`legend-item ${onSegmentClick ? 'clickable' : ''}`}
+                            onClick={() => onSegmentClick?.(item.name)}
+                            role={onSegmentClick ? 'button' : undefined}
+                            tabIndex={onSegmentClick ? 0 : -1}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    onSegmentClick?.(item.name);
+                                }
+                            }}
+                        >
                             <span className="legend-color-box" style={{ backgroundColor: item.color }}></span>
                             <span className="legend-label">{item.name} ({toPersianDigits(item.value)})</span>
                         </div>

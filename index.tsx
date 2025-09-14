@@ -6,7 +6,7 @@ import React, { useState, FormEvent, useEffect, useCallback, useRef, useMemo } f
 import { createRoot } from 'react-dom/client';
 import moment from 'moment-jalaali';
 import { User, TeamMember, TeamMemberRole } from './types';
-import { menuItems } from './constants';
+import { menuItems, getTodayString } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
 import { PlusIcon, ChatbotIcon } from './icons';
 // FIX: Import 'toPersianDigits' to resolve 'Cannot find name' errors.
@@ -36,11 +36,23 @@ import {
     ApprovalDecisionModal,
     AlertModal,
     SendApprovalModal,
-    ChatbotModal
+    ChatbotModal,
+    DashboardListModal,
+    NotesModal
 } from './modals/index';
 import { UserInfoModal } from './modals';
 
 moment.loadPersian({ usePersianDigits: true });
+
+const findUserByMention = (mention: string | null | undefined, users: User[]): string | undefined => {
+    if (!mention) return undefined;
+    const lowerMention = mention.toLowerCase().trim();
+    const userByUsername = users.find(u => u.username.toLowerCase() === lowerMention);
+    if (userByUsername) return userByUsername.username;
+    const userByFullName = users.find(u => u.full_name && u.full_name.toLowerCase().includes(lowerMention));
+    if (userByFullName) return userByFullName.username;
+    return undefined;
+};
 
 const App = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +102,11 @@ const App = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
+    const [notesModalProps, setNotesModalProps] = useState({ isOpen: false, item: null as any, viewMode: 'responsible' as 'responsible' | 'approver' });
+
     const isInitialRenderRef = useRef(true);
+    
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -1136,6 +1152,240 @@ const App = () => {
         }
     };
     
+    // --- Notes Modal Handlers ---
+    const handleOpenNotesModal = (item: any, viewMode: 'responsible' | 'approver') => {
+        setNotesModalProps({ isOpen: true, item, viewMode });
+    };
+    const handleCloseNotesModal = () => {
+        setNotesModalProps(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // --- Chatbot Creation and Deletion Handlers ---
+    const handleCreateProjectForChatbot = async (projectData: any) => {
+        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
+        try {
+            const managerUsername = findUserByMention(projectData.projectManager, users) || loggedInUser.username;
+            const payload = {
+                title: projectData.title,
+                owner: loggedInUser.username,
+                projectManager: managerUsername,
+                unit: projectData.unit || (sections.length > 0 ? sections[0] : ''),
+                priority: projectData.priority || 'متوسط',
+                projectStartDate: projectData.projectStartDate ? moment(projectData.projectStartDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
+                projectEndDate: projectData.projectEndDate ? moment(projectData.projectEndDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
+                projectGoal: projectData.projectGoal || '',
+                status: 'شروع نشده',
+                use_workflow: true,
+            };
+            const { error } = await supabase.from('projects').insert(payload);
+            if (error) {
+                handleSupabaseError(error, 'creating project from chatbot');
+                return { success: false, error: error.message };
+            }
+            await fetchData();
+            return { success: true, title: payload.title };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+    
+    const handleCreateActionForChatbot = async (actionData: any) => {
+        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
+        try {
+            const responsibleUsername = findUserByMention(actionData.responsible, users) || loggedInUser.username;
+            const approverUsername = findUserByMention(actionData.approver, users) || loggedInUser.username;
+            const payload = {
+                title: actionData.title,
+                owner: loggedInUser.username,
+                responsible: responsibleUsername,
+                approver: approverUsername,
+                unit: actionData.unit || (sections.length > 0 ? sections[0] : ''),
+                priority: actionData.priority || 'متوسط',
+                startDate: actionData.startDate ? moment(actionData.startDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
+                endDate: actionData.endDate ? moment(actionData.endDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
+                status: 'شروع نشده',
+                use_workflow: true,
+                history: [{ status: 'شروع نشده', user: loggedInUser.username, date: new Date().toISOString() }]
+            };
+            const { error } = await supabase.from('actions').insert(payload);
+            if (error) {
+                handleSupabaseError(error, 'creating action from chatbot');
+                return { success: false, error: error.message };
+            }
+            await fetchData();
+            return { success: true, title: payload.title };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+
+    const handleCreateActivityForChatbot = async (activityData: any) => {
+        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
+        try {
+            const { data: foundProjects, error: findError } = await supabase
+                .from('projects')
+                .select('id, title')
+                .ilike('title', `%${activityData.project_name}%`);
+    
+            if (findError || !foundProjects || foundProjects.length === 0) {
+                return { success: false, error: `پروژه‌ای با نام "${activityData.project_name}" یافت نشد.` };
+            }
+    
+            let project = foundProjects.find(p => p.title.toLowerCase() === activityData.project_name.toLowerCase()) || foundProjects[0];
+            
+            const responsibleUsername = findUserByMention(activityData.responsible, users) || loggedInUser.username;
+            const approverUsername = findUserByMention(activityData.approver, users) || loggedInUser.username;
+            const payload = {
+                title: activityData.title,
+                project_id: project.id,
+                responsible: responsibleUsername,
+                approver: approverUsername,
+                priority: activityData.priority || 'متوسط',
+                startDate: activityData.startDate ? moment(activityData.startDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
+                endDate: activityData.endDate ? moment(activityData.endDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
+                status: 'شروع نشده',
+                history: []
+            };
+            const { error } = await supabase.from('activities').insert(payload);
+            if (error) {
+                handleSupabaseError(error, 'creating activity from chatbot');
+                return { success: false, error: error.message };
+            }
+            await fetchData();
+            return { success: true, title: payload.title, parent: project.title };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+    
+    const handleAddTeamMemberForChatbot = async ({ username: userMention, role }: { username: string; role?: TeamMemberRole }) => {
+        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
+        try {
+            const username = findUserByMention(userMention, users);
+            if (!username) {
+                return { success: false, error: `کاربری با نام "${userMention}" یافت نشد.` };
+            }
+            
+            const team = teams[loggedInUser.username] || [];
+            if (team.some(m => m.username === username)) {
+                return { success: false, error: `کاربر "${userMention}" از قبل عضو تیم شما است.` };
+            }
+            
+            const newRole = role || 'عضو تیم';
+            
+            const { error } = await supabase.from('teams').insert({
+                manager_username: loggedInUser.username,
+                member_username: username,
+                role: newRole,
+            });
+    
+            if (error) {
+                handleSupabaseError(error, 'adding team member from chatbot');
+                return { success: false, error: error.message };
+            }
+            
+            await fetchData();
+            const userDetails = users.find(u => u.username === username);
+            return { success: true, name: userDetails?.full_name || username, role: newRole };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+
+    const handleRemoveTeamMemberForChatbot = async ({ username: memberMention }) => {
+        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
+        try {
+            const username = findUserByMention(memberMention, users);
+            if (!username) {
+                return { success: false, error: `کاربری با نام "${memberMention}" یافت نشد.` };
+            }
+            const team = teams[loggedInUser.username] || [];
+            if (!team.some(m => m.username === username)) {
+                return { success: false, error: `کاربر "${memberMention}" عضو تیم شما نیست.` };
+            }
+    
+            const { error } = await supabase.from('teams').delete().eq('manager_username', loggedInUser.username).eq('member_username', username);
+            if (error) {
+                handleSupabaseError(error, 'removing team member from chatbot');
+                return { success: false, error: error.message };
+            }
+    
+            await fetchData();
+            return { success: true, name: userMap.get(username) || username };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+
+    const handleDeleteProjectForChatbot = async ({ title }) => {
+        try {
+            const projectToDelete = projects.find(p => p.title.toLowerCase() === title.toLowerCase());
+            if (!projectToDelete) {
+                return { success: false, error: `پروژه "${title}" یافت نشد.` };
+            }
+            const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
+            if (error) {
+                handleSupabaseError(error, 'deleting project from chatbot');
+                return { success: false, error: error.message };
+            }
+            await fetchData();
+            return { success: true, title: projectToDelete.title };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+    
+    const handleDeleteActionForChatbot = async ({ title }) => {
+        try {
+            const actionToDelete = actions.find(a => a.title.toLowerCase() === title.toLowerCase());
+            if (!actionToDelete) {
+                return { success: false, error: `اقدام "${title}" یافت نشد.` };
+            }
+            const { error } = await supabase.from('actions').delete().eq('id', actionToDelete.id);
+            if (error) {
+                handleSupabaseError(error, 'deleting action from chatbot');
+                return { success: false, error: error.message };
+            }
+            await fetchData();
+            return { success: true, title: actionToDelete.title };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+    
+    const handleDeleteActivityForChatbot = async ({ title, project_name }) => {
+        try {
+            let activityToDelete = null;
+            let parentProjectTitle = '';
+    
+            for (const p of projects) {
+                if (!project_name || p.title.toLowerCase().includes(project_name.toLowerCase())) {
+                    const foundActivity = p.activities.find((a:any) => a.title.toLowerCase() === title.toLowerCase());
+                    if (foundActivity) {
+                        activityToDelete = foundActivity;
+                        parentProjectTitle = p.title;
+                        break;
+                    }
+                }
+            }
+    
+            if (!activityToDelete) {
+                return { success: false, error: `فعالیت "${title}" در پروژه مشخص شده یافت نشد.` };
+            }
+    
+            const { error } = await supabase.from('activities').delete().eq('id', activityToDelete.id);
+            if (error) {
+                handleSupabaseError(error, 'deleting activity from chatbot');
+                return { success: false, error: error.message };
+            }
+    
+            await fetchData();
+            return { success: true, title: activityToDelete.title, parent: parentProjectTitle };
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    };
+
     const badgeCounts = {
         tasks: notStartedTasksCount,
         approvals: pendingApprovalsCount,
@@ -1211,6 +1461,7 @@ const App = () => {
                             onViewDetails={handleViewDetails}
                             onDirectStatusUpdate={handleDirectStatusUpdate}
                             onSendForApproval={handleRequestSendForApproval}
+                            onOpenNotesModal={handleOpenNotesModal}
                         />;
             case 'approvals':
                 return <ApprovalsPage 
@@ -1222,6 +1473,7 @@ const App = () => {
                             onViewDetails={handleViewDetails}
                             onShowInfo={handleShowInfo}
                             users={users}
+                            onOpenNotesModal={handleOpenNotesModal}
                         />;
             case 'settings':
                 return <SettingsPage 
@@ -1461,6 +1713,23 @@ const supabaseAnonKey = '...';`}
                 taskItems={taskItems}
                 approvalItems={approvalItems}
                 teamMembers={currentUserTeam}
+                onCreateProject={handleCreateProjectForChatbot}
+                onCreateAction={handleCreateActionForChatbot}
+                onCreateActivity={handleCreateActivityForChatbot}
+                onAddTeamMember={handleAddTeamMemberForChatbot}
+                onRemoveTeamMember={handleRemoveTeamMemberForChatbot}
+                onDeleteProject={handleDeleteProjectForChatbot}
+                onDeleteAction={handleDeleteActionForChatbot}
+                onDeleteActivity={handleDeleteActivityForChatbot}
+            />
+            <NotesModal
+                isOpen={notesModalProps.isOpen}
+                onClose={handleCloseNotesModal}
+                item={notesModalProps.item}
+                viewMode={notesModalProps.viewMode}
+                currentUser={loggedInUser}
+                users={users}
+                readOnly={notesModalProps.viewMode === 'approver'}
             />
         </div>
     );

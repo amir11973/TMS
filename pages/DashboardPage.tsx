@@ -4,7 +4,9 @@
 */
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
-import { PieChart, BarChart, StatCard, AnimatedNumber, DashboardDataTable } from '../components/dashboard';
+import { PieChart, BarChart, StatCard, AnimatedNumber } from '../components/dashboard';
+// FIX: Corrected import path for DashboardListModal to avoid conflict with the modals.tsx file.
+import { DashboardListModal } from '../modals/index';
 
 export const DashboardPage = ({ projects, actions, currentUser, users, teams, onViewDetails }: {
     projects: any[];
@@ -14,17 +16,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     teams: Record<string, TeamMember[]>;
     onViewDetails: (item: any) => void;
 }) => {
-    const [filters, setFilters] = useState({
-        type: 'all',
-        responsible: 'all',
-        status: 'all',
-    });
-
-    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFilters(prev => ({ ...prev, [name]: value }));
-    };
-
+    const [isListModalOpen, setIsListModalOpen] = useState(false);
+    const [modalItems, setModalItems] = useState<any[]>([]);
+    const [modalTitle, setModalTitle] = useState('');
+    
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     const combinedItems = useMemo(() => {
@@ -81,22 +76,18 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [combinedItems, currentUser, teams]);
 
 
-    const filteredItems = useMemo(() => {
-        return userVisibleItems.filter(item => {
-            return (
-                (filters.type === 'all' || item.type === filters.type) &&
-                (filters.responsible === 'all' || item.responsible === filters.responsible) &&
-                (filters.status === 'all' || item.status === filters.status)
-            );
-        });
-    }, [userVisibleItems, filters]);
+    const allItems = userVisibleItems;
     
     const notStartedCount = useMemo(() => {
-        return filteredItems.filter(item => item.status === 'شروع نشده').length;
-    }, [filteredItems]);
+        return allItems.filter(item => item.status === 'شروع نشده').length;
+    }, [allItems]);
+
+    const inProgressCount = useMemo(() => {
+        return allItems.filter(item => item.status === 'در حال اجرا').length;
+    }, [allItems]);
     
     const typeData = useMemo(() => {
-        const counts = filteredItems.reduce((acc: Record<string, number>, item) => {
+        const counts = allItems.reduce((acc: Record<string, number>, item) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
         }, {});
@@ -104,10 +95,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
             { name: 'پروژه', value: counts['پروژه'] || 0, color: '#e94560' },
             { name: 'اقدام', value: counts['اقدام'] || 0, color: '#17a2b8' },
         ];
-    }, [filteredItems]);
+    }, [allItems]);
 
     const statusData = useMemo(() => {
-        const counts = filteredItems.reduce((acc: Record<string, number>, item) => {
+        const counts = allItems.reduce((acc: Record<string, number>, item) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
@@ -117,17 +108,17 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
             { name: 'در حال اجرا', value: counts['در حال اجرا'] || 0, color: '#ffc107' },
             { name: 'خاتمه یافته', value: counts['خاتمه یافته'] || 0, color: '#28a745' },
         ];
-    }, [filteredItems]);
+    }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        const counts = filteredItems.reduce<Record<string, number>>((acc, item) => {
+        const counts = allItems.reduce<Record<string, number>>((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
         }, {});
         return Object.entries(counts).map(([name, value]) => ({ name: userMap.get(name) || name, value })).sort((a,b) => b.value - a.value);
-    }, [filteredItems, userMap]);
+    }, [allItems, userMap]);
 
     const delayData = useMemo(() => {
         const today = new Date();
@@ -136,7 +127,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
         let delayedCount = 0;
         let notDelayedCount = 0;
 
-        filteredItems.forEach(item => {
+        allItems.forEach(item => {
             const endDate = new Date(item.endDate);
             if (item.status !== 'خاتمه یافته' && endDate < today) {
                 delayedCount++;
@@ -149,62 +140,79 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
             { name: 'دارای تاخیر', value: delayedCount, color: '#dc3545' },
             { name: 'فاقد تاخیر', value: notDelayedCount, color: '#28a745' },
         ];
-    }, [filteredItems]);
+    }, [allItems]);
 
+    const handleChartClick = (filterType: string, filterValue: string) => {
+        let filtered: any[] = [];
+        let title = '';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-    const filterStatusOptions = ['شروع نشده', 'در حال اجرا', 'خاتمه یافته'];
-    const responsibleOptions = useMemo(() => {
-        const responsibles = [...new Set(userVisibleItems.map(item => item.responsible).filter(Boolean))];
-        return responsibles.map(r => ({ value: r, label: userMap.get(r) || r }));
-    }, [userVisibleItems, userMap]);
-
+        switch (filterType) {
+            case 'status':
+                filtered = userVisibleItems.filter(item => item.status === filterValue);
+                title = `لیست موارد با وضعیت: ${filterValue}`;
+                break;
+            case 'type':
+                filtered = userVisibleItems.filter(item => item.type === filterValue);
+                title = `لیست موارد از نوع: ${filterValue}`;
+                break;
+            case 'delay':
+                if (filterValue === 'دارای تاخیر') {
+                    filtered = userVisibleItems.filter(item => item.status !== 'خاتمه یافته' && new Date(item.endDate) < today);
+                    title = 'لیست موارد دارای تاخیر';
+                } else { // 'فاقد تاخیر'
+                    filtered = userVisibleItems.filter(item => item.status === 'خاتمه یافته' || new Date(item.endDate) >= today);
+                    title = 'لیست موارد فاقد تاخیر';
+                }
+                break;
+            case 'responsible':
+                const username = Array.from(userMap.entries()).find(([, val]) => val === filterValue)?.[0] || filterValue;
+                filtered = userVisibleItems.filter(item => item.responsible === username);
+                title = `لیست موارد مسئول: ${filterValue}`;
+                break;
+        }
+        
+        setModalItems(filtered);
+        setModalTitle(title);
+        setIsListModalOpen(true);
+    };
 
     return (
         <div className="dashboard-page-container">
-            <div className="dashboard-filters">
-                <div className="filter-group">
-                    <label htmlFor="type-filter">نوع</label>
-                    <select id="type-filter" name="type" value={filters.type} onChange={handleFilterChange}>
-                        <option value="all">همه</option>
-                        <option value="پروژه">پروژه</option>
-                        <option value="اقدام">اقدام</option>
-                    </select>
-                </div>
-                <div className="filter-group">
-                    <label htmlFor="responsible-filter">مسئول</label>
-                    <select id="responsible-filter" name="responsible" value={filters.responsible} onChange={handleFilterChange}>
-                        <option value="all">همه</option>
-                        {responsibleOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                    </select>
-                </div>
-                <div className="filter-group">
-                    <label htmlFor="status-filter">وضعیت</label>
-                    <select id="status-filter" name="status" value={filters.status} onChange={handleFilterChange}>
-                        <option value="all">همه</option>
-                        {filterStatusOptions.map(status => <option key={status} value={status}>{status}</option>)}
-                    </select>
-                </div>
-            </div>
             <div className="dashboard-grid">
                 <StatCard title="خلاصه وضعیت">
                     <div className="stat-split-container">
                         <div className="stat-split-item">
                             <h4>تعداد کل</h4>
-                            <AnimatedNumber value={filteredItems.length} />
+                            <AnimatedNumber value={allItems.length} />
                         </div>
                         <div className="stat-split-divider"></div>
                         <div className="stat-split-item">
                             <h4>شروع نشده</h4>
                             <AnimatedNumber value={notStartedCount} />
                         </div>
+                        <div className="stat-split-divider"></div>
+                        <div className="stat-split-item">
+                            <h4>در حال اجرا</h4>
+                            <AnimatedNumber value={inProgressCount} />
+                        </div>
                     </div>
                 </StatCard>
-                <PieChart data={statusData} isDonut={true} title="تفکیک بر اساس وضعیت" />
-                <PieChart data={typeData} title="تفکیک بر اساس نوع" />
-                <PieChart data={delayData} title="نمودار تاخیرات" />
-                <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" orientation="horizontal" />
+                <PieChart data={statusData} isDonut={true} title="تفکیک بر اساس وضعیت" onSegmentClick={(name) => handleChartClick('status', name)} />
+                <PieChart data={typeData} title="تفکیک بر اساس نوع" onSegmentClick={(name) => handleChartClick('type', name)} />
+                <PieChart data={delayData} title="نمودار تاخیرات" onSegmentClick={(name) => handleChartClick('delay', name)} />
+                <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" orientation="horizontal" onBarClick={(name) => handleChartClick('responsible', name)} />
             </div>
-            <DashboardDataTable items={filteredItems} onViewDetails={onViewDetails} projects={projects} actions={actions}/>
+            <DashboardListModal
+                isOpen={isListModalOpen}
+                onClose={() => setIsListModalOpen(false)}
+                title={modalTitle}
+                items={modalItems}
+                onViewDetails={onViewDetails}
+                projects={projects}
+                actions={actions}
+            />
         </div>
     );
 };

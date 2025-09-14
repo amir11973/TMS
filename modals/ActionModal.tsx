@@ -51,7 +51,12 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
             if (actionToEdit) {
                 setAction({ ...freshInitialState, ...actionToEdit });
             } else {
-                setAction({...freshInitialState, owner: currentUser.username });
+                setAction({
+                    ...freshInitialState, 
+                    owner: currentUser.username,
+                    responsible: currentUser.username,
+                    approver: currentUser.username
+                });
             }
         }
     }, [isOpen, actionToEdit, currentUser, sections]);

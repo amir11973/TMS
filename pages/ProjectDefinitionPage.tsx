@@ -109,7 +109,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                 const projectWithOwner = { 
                     ...initialProjectState, 
                     ...projectToEdit,
-                    owner: projectToEdit.isNew ? currentUser!.username : projectToEdit.owner
+                    owner: projectToEdit.isNew ? currentUser!.username : projectToEdit.owner,
+                    projectManager: projectToEdit.isNew ? currentUser!.username : projectToEdit.projectManager
                 };
                 setProject(projectWithOwner);
     
@@ -117,7 +118,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     setActiveTab(projectToEdit.initialTab || 'main');
                 }
             } else { // New project logic, just in case
-                setProject({...initialProjectState, owner: currentUser!.username });
+                setProject({...initialProjectState, owner: currentUser!.username, projectManager: currentUser!.username });
                 setActiveTab('main');
             }
         }
@@ -455,6 +456,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     isProjectOwner={canManageActivities}
                     responsibleUsers={activityResponsibleUsers}
                     approverUsers={activityApproverUsers}
+                    currentUser={currentUser}
                 />
             </div>
         </div>
