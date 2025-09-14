@@ -527,7 +527,7 @@ const App = () => {
                     });
                 }
             } else {
-                const { activities, type, readOnly, initialTab, isNew, ...updatePayload } = projectToSave;
+                const { activities, type, readOnly, initialTab, isNew, responsible, ...updatePayload } = projectToSave;
                 const { data, error } = await supabase.from('projects').update(updatePayload).eq('id', projectToSave.id).select().single();
                 handleSupabaseError(error, 'updating project');
                 if (data) {
