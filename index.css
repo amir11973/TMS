@@ -1,3 +1,5 @@
+
+
 /* General Resets and Base Styles */
 :root {
   /* Dark Theme Colors */
@@ -858,7 +860,7 @@ body {
 
 .modal-content.project-modal-content {
     max-width: 59.375rem;
-    max-height: 90vh;
+    max-height: 80vh; /* Reduced from 85vh for better mobile fit */
 }
 
 .project-modal-content .modal-body {
@@ -1892,6 +1894,163 @@ body {
     transform: scale(0.95);
 }
 
+/* AI Analysis FAB */
+.ai-fab {
+    position: fixed;
+    bottom: 4.5rem;
+    left: 1.25rem; /* Position on the left */
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background-color: var(--c-info); /* Different color to distinguish */
+    color: white;
+    border: none;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 101;
+    transition: all 0.2s ease-in-out;
+}
+
+.ai-fab svg {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+.ai-fab:hover {
+    background-color: #138496;
+    transform: scale(1.05);
+}
+
+.ai-fab:active {
+    transform: scale(0.95);
+}
+
+/* AI Analysis Modal Results */
+@keyframes slideInFromRight {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.ai-analysis-results {
+    width: 100%;
+    text-align: right;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.ai-analysis-results-simple {
+     font-size: 1.1rem;
+     text-align: center;
+     color: var(--c-success);
+     font-weight: 500;
+}
+
+.ai-analysis-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--c-border);
+}
+
+.ai-analysis-header-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background-color: var(--c-primary);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ai-analysis-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--c-primary);
+}
+
+.ai-analysis-card-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+}
+
+.ai-analysis-card {
+    background-color: var(--c-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(20px);
+    animation: slideInFromRight 0.5s ease-out forwards;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.ai-analysis-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.ai-analysis-card-header {
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.ai-analysis-card-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ai-analysis-card-body h4 {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--c-text);
+    margin: 0;
+    /* Clamp title to 2 lines for uniform card height */
+    line-height: 1.5;
+    height: 3em; /* 2 lines * 1.5 line-height */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.ai-analysis-card-body p {
+    font-size: 0.9rem;
+    color: var(--c-text-muted);
+    margin: 0;
+}
+
+.ai-analysis-text {
+    margin-bottom: 1rem;
+}
+
+.ai-analysis-text:last-of-type {
+     margin-top: 1.5rem;
+     font-style: italic;
+     color: var(--c-text-muted);
+}
+
+
 /* Chatbot Modal Styles */
 .chatbot-modal-container {
     position: fixed;
@@ -2164,7 +2323,12 @@ body {
     }
 
     .fab {
-        display: none; /* Hide on desktop */
+        display: none; /* Hide center FAB on desktop */
+    }
+
+    .ai-fab {
+        bottom: 1.25rem;
+        left: 1.25rem;
     }
     
     .chatbot-fab {
@@ -2255,6 +2419,10 @@ body {
 
     .dashboard-grid > .dashboard-card {
         grid-column: span 3;
+    }
+
+    .ai-analysis-card-container {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     /* Custom Column Widths for Desktop */

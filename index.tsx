@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -8,7 +9,7 @@ import moment from 'moment-jalaali';
 import { User, TeamMember, TeamMemberRole } from './types';
 import { menuItems, getTodayString } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
-import { PlusIcon, ChatbotIcon } from './icons';
+import { PlusIcon, ChatbotIcon, AiAnalysisIcon } from './icons';
 // FIX: Import 'toPersianDigits' to resolve 'Cannot find name' errors.
 import { toPersianDigits } from './utils';
 
@@ -38,7 +39,8 @@ import {
     SendApprovalModal,
     ChatbotModal,
     DashboardListModal,
-    NotesModal
+    NotesModal,
+    AiAnalysisModal
 } from './modals/index';
 import { UserInfoModal } from './modals';
 
@@ -101,6 +103,7 @@ const App = () => {
     const [userInfoUser, setUserInfoUser] = useState<User | null>(null);
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+    const [isAiAnalysisModalOpen, setIsAiAnalysisModalOpen] = useState(false);
 
     const [notesModalProps, setNotesModalProps] = useState({ isOpen: false, item: null as any, viewMode: 'responsible' as 'responsible' | 'approver' });
 
@@ -1606,6 +1609,15 @@ const supabaseAnonKey = '...';`}
             >
                 <PlusIcon />
             </button>
+            
+            <button
+                className="ai-fab"
+                title="تحلیل هوشمند وظایف"
+                onClick={() => setIsAiAnalysisModalOpen(true)}
+                aria-label="باز کردن تحلیل هوشمند وظایف"
+            >
+                <AiAnalysisIcon />
+            </button>
 
             <button
                 className="chatbot-fab"
@@ -1730,6 +1742,11 @@ const supabaseAnonKey = '...';`}
                 currentUser={loggedInUser}
                 users={users}
                 readOnly={notesModalProps.viewMode === 'approver'}
+            />
+            <AiAnalysisModal
+                isOpen={isAiAnalysisModalOpen}
+                onClose={() => setIsAiAnalysisModalOpen(false)}
+                taskItems={taskItems}
             />
         </div>
     );
