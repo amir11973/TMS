@@ -1036,7 +1036,7 @@ body {
 /* Details Modal */
 .details-modal-content {
     max-width: 50rem;
-    max-height: 90vh;
+    max-height: 80vh; /* Reduced from 90vh for better mobile fit */
 }
 
 .detail-grid {
@@ -1929,13 +1929,6 @@ body {
 }
 
 /* AI Analysis Modal Results */
-@keyframes slideInFromRight {
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
 .ai-analysis-results {
     width: 100%;
     text-align: right;
@@ -1995,14 +1988,11 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
-    opacity: 0;
-    transform: translateX(20px);
-    animation: slideInFromRight 0.5s ease-out forwards;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .ai-analysis-card:hover {
-    transform: translateY(-4px) scale(1.02);
+    transform: translateY(-4px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
@@ -2044,10 +2034,34 @@ body {
     margin-bottom: 1rem;
 }
 
-.ai-analysis-text:last-of-type {
+.ai-analysis-text.outro {
      margin-top: 1.5rem;
      font-style: italic;
      color: var(--c-text-muted);
+}
+
+/* Staged animation for AI Analysis */
+.ai-analysis-results.animated .ai-analysis-text,
+.ai-analysis-results.animated .ai-analysis-header-number,
+.ai-analysis-results.animated .ai-analysis-header h4,
+.ai-analysis-results.animated .ai-analysis-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.ai-analysis-results.animated .visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.analysis-section-wrapper {
+    transition: filter 0.7s ease-in-out, opacity 0.7s ease-in-out;
+}
+
+.analysis-section-wrapper.blurred {
+    filter: blur(4px);
+    opacity: 0.6;
 }
 
 

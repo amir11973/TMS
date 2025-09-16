@@ -4,11 +4,30 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import moment from 'moment-jalaali';
 import { getAiAnalysis } from '../aiAnalysisService';
 import { AiAnalysisIcon } from '../icons';
 import { toPersianDigits } from '../utils';
+
+interface AnalysisCard {
+    priority: string;
+    title: string;
+    endDate: string;
+}
+
+interface AnalysisSection {
+    title: string;
+    cards: AnalysisCard[];
+}
+
+interface ParsedAnalysis {
+    type: 'simple' | 'structured';
+    text?: string;
+    intro?: string[];
+    sections?: AnalysisSection[];
+    outro?: string;
+}
 
 const getPriorityStyle = (priority: string): React.CSSProperties => {
     switch (priority) {
@@ -31,12 +50,68 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
     const [isLoading, setIsLoading] = useState(false);
     const [analysisResult, setAnalysisResult] = useState('');
     const [error, setError] = useState('');
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [activeSectionIndex, setActiveSectionIndex] = useState(-1);
+    const modalBodyRef = useRef<HTMLDivElement>(null);
+    const elementRefs = useRef(new Map<string, HTMLElement>());
+
+    const animationTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+    const parsedResult = useMemo((): ParsedAnalysis | null => {
+        if (!analysisResult) return null;
+        if (!analysisResult.includes('SECTION_HEADER:') && !analysisResult.includes('LIST_ITEM:')) {
+            return { type: 'simple', text: analysisResult };
+        }
+
+        const lines = analysisResult.split('\n').filter(line => line.trim() !== '');
+        const intro: string[] = [];
+        const sections: AnalysisSection[] = [];
+        let outro = '';
+        let currentSection: AnalysisSection | null = null;
+
+        for (const line of lines) {
+            if (line.startsWith('SECTION_HEADER:')) {
+                if (currentSection) sections.push(currentSection);
+                currentSection = { title: line.replace('SECTION_HEADER:', '').trim(), cards: [] };
+            } else if (line.startsWith('LIST_ITEM:')) {
+                if (currentSection) {
+                    const [priority, title, endDate] = line.replace('LIST_ITEM:', '').trim().split('|');
+                    currentSection.cards.push({ priority, title, endDate });
+                }
+            } else if (line.includes('موفق باشید')) {
+                outro = line;
+            } else {
+                if (sections.length === 0 && !currentSection) {
+                    intro.push(line);
+                }
+            }
+        }
+        if (currentSection) sections.push(currentSection);
+
+        return { type: 'structured', intro, sections, outro };
+    }, [analysisResult]);
+
+    const [visibleElements, setVisibleElements] = useState({
+        intro: [] as boolean[],
+        sections: [] as { number: boolean, title: boolean, cards: boolean[] }[],
+        outro: false
+    });
+
+    useEffect(() => {
+        // Cleanup timeouts on unmount or when modal is closed
+        return () => {
+            animationTimeouts.current.forEach(clearTimeout);
+            animationTimeouts.current = [];
+        };
+    }, []);
 
     useEffect(() => {
         if (!isOpen) {
-            // Reset state when modal is closed
             setAnalysisResult('');
             setError('');
+            setIsAnimating(false);
+            animationTimeouts.current.forEach(clearTimeout);
+            animationTimeouts.current = [];
             return;
         }
 
@@ -97,7 +172,6 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
                     .sort(sortTask)
                     .map(mapTask);
 
-
                 const result = await getAiAnalysis(overdueNotStarted, overdueInProgress, onTimeNotStarted, onTimeInProgress);
                 setAnalysisResult(result);
 
@@ -113,6 +187,109 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
 
     }, [isOpen, taskItems]);
 
+    useEffect(() => {
+        if (!parsedResult || parsedResult.type !== 'structured') {
+            setIsAnimating(false);
+            return;
+        }
+
+        elementRefs.current.clear();
+
+        const scrollToElement = (elementKey: string) => {
+            const element = elementRefs.current.get(elementKey);
+            if (element && modalBodyRef.current) {
+                const modalRect = modalBodyRef.current.getBoundingClientRect();
+                const elementRect = element.getBoundingClientRect();
+
+                if (elementRect.bottom > modalRect.bottom || elementRect.top < modalRect.top) {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                    });
+                }
+            }
+        };
+
+        const { intro = [], sections = [], outro } = parsedResult;
+        
+        const initialVisibility = {
+            intro: Array(intro.length).fill(false),
+            sections: sections.map(sec => ({
+                number: false,
+                title: false,
+                cards: Array(sec.cards.length).fill(false)
+            })),
+            outro: false
+        };
+        setVisibleElements(initialVisibility);
+        setActiveSectionIndex(-1);
+        setIsAnimating(true);
+
+        let delay = 0;
+        animationTimeouts.current.forEach(clearTimeout);
+        animationTimeouts.current = [];
+
+        intro.forEach((_, index) => {
+            animationTimeouts.current.push(setTimeout(() => {
+                setVisibleElements(prev => {
+                    const newIntro = [...prev.intro];
+                    newIntro[index] = true;
+                    return { ...prev, intro: newIntro };
+                });
+                scrollToElement(`intro-${index}`);
+            }, delay));
+            delay += 1000;
+        });
+
+        sections.forEach((section, sectionIndex) => {
+            delay += 2000;
+            animationTimeouts.current.push(setTimeout(() => {
+                setActiveSectionIndex(sectionIndex);
+                setVisibleElements(prev => {
+                    const newSections = [...prev.sections];
+                    newSections[sectionIndex].number = true;
+                    return { ...prev, sections: newSections };
+                });
+                scrollToElement(`section-header-${sectionIndex}`);
+            }, delay));
+
+            delay += 1000;
+            animationTimeouts.current.push(setTimeout(() => {
+                setVisibleElements(prev => {
+                    const newSections = [...prev.sections];
+                    newSections[sectionIndex].title = true;
+                    return { ...prev, sections: newSections };
+                });
+                scrollToElement(`section-header-${sectionIndex}`);
+            }, delay));
+
+            section.cards.forEach((_, cardIndex) => {
+                delay += 1000;
+                animationTimeouts.current.push(setTimeout(() => {
+                    setVisibleElements(prev => {
+                        const newSections = JSON.parse(JSON.stringify(prev.sections));
+                        newSections[sectionIndex].cards[cardIndex] = true;
+                        return { ...prev, sections: newSections };
+                    });
+                    scrollToElement(`card-${sectionIndex}-${cardIndex}`);
+                }, delay));
+            });
+        });
+
+        if (outro) {
+            delay += 1500;
+            animationTimeouts.current.push(setTimeout(() => {
+                setActiveSectionIndex(-1);
+                setVisibleElements(prev => ({ ...prev, outro: true }));
+                setIsAnimating(false);
+                scrollToElement('outro');
+            }, delay));
+        } else {
+            setIsAnimating(false);
+        }
+
+    }, [parsedResult]);
+
     const renderContent = () => {
         if (isLoading) {
             return (
@@ -125,77 +302,74 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
         if (error) {
             return <p className="error-message">{error}</p>;
         }
-        if (analysisResult) {
-            if (!analysisResult.includes('SECTION_HEADER:') && !analysisResult.includes('LIST_ITEM:')) {
-                return <p className="ai-analysis-results-simple">{analysisResult}</p>;
+        if (parsedResult) {
+            if (parsedResult.type === 'simple') {
+                return <p className="ai-analysis-results-simple">{parsedResult.text}</p>;
             }
 
-            const lines = analysisResult.split('\n').filter(line => line.trim() !== '');
-            let itemCounter = 0;
-            let currentSectionContent: React.ReactNode[] = [];
-            const renderedSections: React.ReactNode[] = [];
-            let sectionCounter = 0;
-
-            const renderSection = (title: string, content: React.ReactNode[]) => {
-                if (content.length > 0) {
-                    sectionCounter++;
-                    renderedSections.push(
-                        <div key={title}>
-                            <div className="ai-analysis-header">
-                                <span className="ai-analysis-header-number">{toPersianDigits(sectionCounter)}</span>
-                                <h4>{title}</h4>
+            if (parsedResult.type === 'structured') {
+                const { intro = [], sections = [], outro } = parsedResult;
+                return (
+                    <div className="ai-analysis-results animated">
+                        {intro.map((line, index) => (
+                             <p 
+                                key={`intro-${index}`}
+                                // FIX: Corrected the `ref` prop callback to not return a value, resolving a TypeScript error.
+                                ref={el => { if (el) elementRefs.current.set(`intro-${index}`, el); }}
+                                className={`ai-analysis-text ${visibleElements.intro[index] ? 'visible' : ''}`}
+                            >
+                                {line}
+                            </p>
+                        ))}
+    
+                        {sections.map((section, sectionIndex) => (
+                            <div 
+                                key={section.title} 
+                                className={`analysis-section-wrapper ${activeSectionIndex > -1 && activeSectionIndex !== sectionIndex ? 'blurred' : ''}`}
+                            >
+                                <div 
+                                    className="ai-analysis-header"
+                                    // FIX: Corrected the `ref` prop callback to not return a value, resolving a TypeScript error.
+                                    ref={el => { if (el) elementRefs.current.set(`section-header-${sectionIndex}`, el); }}
+                                >
+                                    <span className={`ai-analysis-header-number ${visibleElements.sections[sectionIndex]?.number ? 'visible' : ''}`}>
+                                        {toPersianDigits(sectionIndex + 1)}
+                                    </span>
+                                    <h4 className={visibleElements.sections[sectionIndex]?.title ? 'visible' : ''}>{section.title}</h4>
+                                </div>
+                                <div className="ai-analysis-card-container">
+                                    {section.cards.map((card, cardIndex) => (
+                                         <div 
+                                            key={`${section.title}-${cardIndex}`} 
+                                            // FIX: Corrected the `ref` prop callback to not return a value, resolving a TypeScript error.
+                                            ref={el => { if (el) elementRefs.current.set(`card-${sectionIndex}-${cardIndex}`, el); }}
+                                            className={`ai-analysis-card ${visibleElements.sections[sectionIndex]?.cards[cardIndex] ? 'visible' : ''}`}
+                                        >
+                                            <div className="ai-analysis-card-header" style={getPriorityStyle(card.priority)}>
+                                                اهمیت: {card.priority}
+                                            </div>
+                                            <div className="ai-analysis-card-body">
+                                                <h4>{card.title || 'عنوان نامشخص'}</h4>
+                                                <p>تاریخ پایان: {card.endDate || 'نامشخص'}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="ai-analysis-card-container">
-                                {content}
-                            </div>
-                        </div>
-                    );
-                }
-            };
-            
-            let currentSectionTitle = '';
-
-            lines.forEach((line, index) => {
-                if (line.startsWith('SECTION_HEADER:')) {
-                    if (currentSectionTitle) {
-                        renderSection(currentSectionTitle, currentSectionContent);
-                    }
-                    currentSectionTitle = line.replace('SECTION_HEADER:', '').trim();
-                    currentSectionContent = [];
-                } else if (line.startsWith('LIST_ITEM:')) {
-                    const content = line.replace('LIST_ITEM:', '').trim();
-                    itemCounter++;
-                    const [priority, title, endDate] = content.split('|');
-                    
-                    currentSectionContent.push(
-                        <div 
-                            key={index} 
-                            className="ai-analysis-card" 
-                            style={{ animationDelay: `${itemCounter * 100}ms` }}
-                        >
-                            <div className="ai-analysis-card-header" style={getPriorityStyle(priority)}>
-                                اهمیت: {priority}
-                            </div>
-                            <div className="ai-analysis-card-body">
-                                <h4>{title || 'عنوان نامشخص'}</h4>
-                                <p>تاریخ پایان: {endDate || 'نامشخص'}</p>
-                            </div>
-                        </div>
-                    );
-                } else {
-                     renderedSections.push(<p key={index} className="ai-analysis-text">{line}</p>);
-                }
-            });
-
-            if (currentSectionTitle) {
-                renderSection(currentSectionTitle, currentSectionContent);
+                        ))}
+                        
+                        {outro && (
+                            <p 
+                                // FIX: Corrected the `ref` prop callback to not return a value, resolving a TypeScript error.
+                                ref={el => { if (el) elementRefs.current.set('outro', el); }}
+                                className={`ai-analysis-text outro ${visibleElements.outro ? 'visible' : ''}`}
+                            >
+                                {outro}
+                            </p>
+                        )}
+                    </div>
+                );
             }
-
-            return (
-                <div className="ai-analysis-results">
-                    {renderedSections}
-                </div>
-            );
         }
         return null;
     };
@@ -212,11 +386,11 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
                     </div>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
-                <div className="modal-body" style={{ minHeight: '200px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                <div ref={modalBodyRef} className="modal-body" style={{ minHeight: '200px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                     {renderContent()}
                 </div>
                 <div className="modal-footer">
-                    <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>
+                    <button type="button" className="cancel-btn" onClick={onClose} disabled={isAnimating}>بستن</button>
                 </div>
             </div>
         </div>
