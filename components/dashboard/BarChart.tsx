@@ -6,9 +6,9 @@ import React from 'react';
 import { toPersianDigits } from '../../utils';
 
 export const BarChart = ({ data, title, color, orientation = 'vertical', onBarClick }: { 
-    data: { name: string; value: number }[], 
+    data: { name: string; value: number; color?: string; }[], 
     title: string, 
-    color: string, 
+    color?: string, 
     orientation?: 'vertical' | 'horizontal',
     onBarClick?: (barName: string) => void 
 }) => {
@@ -40,15 +40,18 @@ export const BarChart = ({ data, title, color, orientation = 'vertical', onBarCl
                                 className="bar" 
                                 style={{ 
                                     [orientation === 'vertical' ? 'height' : 'width']: maxValue > 0 ? `${(item.value / maxValue) * 100}%` : '0%',
-                                    backgroundColor: color,
+                                    backgroundColor: item.color || color,
                                     animationDelay: `${index * 75}ms`
                                 }}
                                 title={`${item.name}: ${toPersianDigits(item.value)}`}
                             >
-                                {item.value > 0 && <span className="bar-value">{toPersianDigits(item.value)}</span>}
+                                {orientation === 'vertical' && item.value > 0 && <span className="bar-value">{toPersianDigits(item.value)}</span>}
                             </div>
                         </div>
-                        <span className="bar-label">{item.name}</span>
+                        <span className="bar-label">
+                            {item.name}
+                            {orientation === 'horizontal' && ` (${toPersianDigits(item.value)})`}
+                        </span>
                     </div>
                 ))}
             </div>

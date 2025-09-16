@@ -7,3 +7,4 @@ export * from './BarChart';
 export * from './DashboardDataTable';
 export * from './PieChart';
 export * from './StatCard';
+export * from './GaugeChart';

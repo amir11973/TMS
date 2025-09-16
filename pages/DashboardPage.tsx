@@ -4,9 +4,15 @@
 */
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
-import { PieChart, BarChart, StatCard, AnimatedNumber } from '../components/dashboard';
+import { PieChart, BarChart, StatCard, AnimatedNumber, GaugeChart } from '../components/dashboard';
 // FIX: Corrected import path for DashboardListModal to avoid conflict with the modals.tsx file.
 import { DashboardListModal } from '../modals/index';
+
+const colorPalette = [
+    '#e94560', '#17a2b8', '#ffc107', '#28a745', '#8e44ad',
+    '#3498db', '#e67e22', '#f1c40f', '#2ecc71', '#9b59b6',
+    '#1abc9c', '#d35400'
+];
 
 export const DashboardPage = ({ projects, actions, currentUser, users, teams, onViewDetails }: {
     projects: any[];
@@ -117,7 +123,11 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
             }
             return acc;
         }, {});
-        return Object.entries(counts).map(([name, value]) => ({ name: userMap.get(name) || name, value })).sort((a,b) => b.value - a.value);
+        return Object.entries(counts).map(([name, value], index) => ({ 
+            name: userMap.get(name) || name, 
+            value,
+            color: colorPalette[index % colorPalette.length]
+        })).sort((a,b) => b.value - a.value);
     }, [allItems, userMap]);
 
     const delayData = useMemo(() => {
@@ -140,6 +150,14 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
             { name: 'دارای تاخیر', value: delayedCount, color: '#dc3545' },
             { name: 'فاقد تاخیر', value: notDelayedCount, color: '#28a745' },
         ];
+    }, [allItems]);
+    
+    const completionPercentage = useMemo(() => {
+        if (allItems.length === 0) {
+            return 0;
+        }
+        const completedCount = allItems.filter(item => item.status === 'خاتمه یافته').length;
+        return Math.round((completedCount / allItems.length) * 100);
     }, [allItems]);
 
     const handleChartClick = (filterType: string, filterValue: string) => {
@@ -199,10 +217,11 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
                         </div>
                     </div>
                 </StatCard>
-                <PieChart data={statusData} isDonut={true} title="تفکیک بر اساس وضعیت" onSegmentClick={(name) => handleChartClick('status', name)} />
+                <GaugeChart value={completionPercentage} title="درصد تکمیل کارها" />
                 <PieChart data={typeData} title="تفکیک بر اساس نوع" onSegmentClick={(name) => handleChartClick('type', name)} />
                 <PieChart data={delayData} title="نمودار تاخیرات" onSegmentClick={(name) => handleChartClick('delay', name)} />
-                <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" color="#17a2b8" orientation="horizontal" onBarClick={(name) => handleChartClick('responsible', name)} />
+                <PieChart data={statusData} isDonut={true} title="تفکیک بر اساس وضعیت" onSegmentClick={(name) => handleChartClick('status', name)} />
+                <BarChart data={responsibleData} title="تفکیک بر اساس مسئول" orientation="horizontal" onBarClick={(name) => handleChartClick('responsible', name)} />
             </div>
             <DashboardListModal
                 isOpen={isListModalOpen}

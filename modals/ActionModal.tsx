@@ -20,7 +20,8 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     onRequestAlert: (props: any) => void;
 }) => {
     // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
-    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, use_workflow: true };
+    // FIX: Add 'requestedStatus' and 'approvalStatus' to the initial state to prevent type errors.
+    const initialActionState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, requestedStatus: null, approvalStatus: null, use_workflow: true };
     const [action, setAction] = useState(initialActionState);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
@@ -47,7 +48,8 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
     useEffect(() => {
         if (isOpen) {
             // FIX: Add `underlyingStatus` to initial state to match the object shape used later.
-            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, use_workflow: true };
+            // FIX: Add 'requestedStatus' and 'approvalStatus' to the initial state to prevent type errors.
+            const freshInitialState = { title: '', owner: '', startDate: getTodayString(), endDate: getTodayString(), unit: sections[0] || '', responsible: '', approver: '', status: 'شروع نشده', priority: 'متوسط', underlyingStatus: null, requestedStatus: null, approvalStatus: null, use_workflow: true };
             if (actionToEdit) {
                 setAction({ ...freshInitialState, ...actionToEdit });
             } else {
@@ -81,6 +83,12 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
             updatedAction.endDate = value;
         }
         
+        if (name === 'status' && currentUser?.username === 'mahmoudi.pars@gmail.com') {
+            updatedAction.underlyingStatus = null;
+            updatedAction.requestedStatus = null;
+            updatedAction.approvalStatus = null;
+        }
+
         setAction(updatedAction);
     };
 
@@ -96,6 +104,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
 
     const isOwner = currentUser.username === action.owner;
     const isNew = !actionToEdit;
+    const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
@@ -158,10 +167,9 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                             </div>
                              <div className="input-group">
                                 <label htmlFor="action-status">وضعیت</label>
-                                <select name="status" id="action-status" value={displayStatus} onChange={handleChange} disabled>
+                                <select name="status" id="action-status" value={displayStatus} onChange={handleChange} disabled={!isAdmin}>
                                     <option value="شروع نشده">شروع نشده</option>
                                     <option value="در حال اجرا">در حال اجرا</option>
-                                    <option value="ارسال برای تایید">ارسال برای تایید</option>
                                     <option value="خاتمه یافته">خاتمه یافته</option>
                                 </select>
                             </div>

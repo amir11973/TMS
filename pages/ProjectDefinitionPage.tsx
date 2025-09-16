@@ -167,33 +167,6 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         });
     };
 
-    const handleDirectActivityStatusChange = async (activityId: number, newStatus: string) => {
-        const activityToUpdate = project.activities.find((a: any) => a.id === activityId);
-        if (!activityToUpdate || !currentUser) return;
-
-        const historyEntry = {
-            status: newStatus,
-            user: currentUser.username,
-            date: new Date().toISOString(),
-            details: `وضعیت به صورت دستی به "${newStatus}" تغییر یافت.`
-        };
-
-        const updatePayload = {
-            status: newStatus,
-            history: [...(activityToUpdate.history || []), historyEntry]
-        };
-
-        const { data, error } = await supabase.from('activities').update(updatePayload).eq('id', activityId).select().single();
-        handleSupabaseError(error, 'updating activity status directly');
-
-        if (data) {
-            const updatedActivities = project.activities.map((act: any) => act.id === activityId ? data : act);
-            const updatedProject = { ...project, activities: updatedActivities };
-            setProject(updatedProject); // Update local state for the modal
-            onUpdateProject(updatedProject); // Update global state in App
-        }
-    };
-
     const handleDeleteActivity = (activityId: number) => {
          const activityToDelete = project.activities.find((a:any) => a.id === activityId);
          onRequestConfirmation({
@@ -383,53 +356,56 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                         </tr>
                                     </thead>
                                     <tbody>
-                                       {(project.activities || []).map((activity: any) => (
-                                           <tr key={activity.id}>
-                                               <td>
-                                                    <div className="title-cell-content">
-                                                        {activity.status === 'خاتمه یافته' ? (
-                                                            <span className="completed-indicator" title="تکمیل شده">
-                                                                <ApproveIcon />
-                                                            </span>
-                                                        ) : (
-                                                            <span 
-                                                                className={`delay-indicator-dot ${isDelayed(activity.status, activity.endDate) ? 'delayed' : 'on-time'}`}
-                                                                title={isDelayed(activity.status, activity.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                            ></span>
-                                                        )}
-                                                        <span>{activity.title}</span>
-                                                    </div>
-                                               </td>
-                                               <td>{renderPriorityBadge(activity.priority)}</td>
-                                               <td>
-                                                    {activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status}
-                                                </td>
-                                               <td>
-                                                    <div className="action-buttons-grid">
-                                                        <div className="action-buttons-row">
-                                                            <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
-                                                                <DetailsIcon />
-                                                            </button>
-                                                            {canManageActivities && (
-                                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
-                                                                    <EditIcon />
-                                                                </button>
+                                       {(project.activities || []).map((activity: any) => {
+                                            const displayStatus = activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status;
+                                            return (
+                                               <tr key={activity.id}>
+                                                   <td>
+                                                        <div className="title-cell-content">
+                                                            {activity.status === 'خاتمه یافته' ? (
+                                                                <span className="completed-indicator" title="تکمیل شده">
+                                                                    <ApproveIcon />
+                                                                </span>
+                                                            ) : (
+                                                                <span 
+                                                                    className={`delay-indicator-dot ${isDelayed(activity.status, activity.endDate) ? 'delayed' : 'on-time'}`}
+                                                                    title={isDelayed(activity.status, activity.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                                ></span>
                                                             )}
+                                                            <span>{activity.title}</span>
                                                         </div>
-                                                        <div className="action-buttons-row">
-                                                            {canManageActivities && (
-                                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
-                                                                    <DeleteIcon />
+                                                   </td>
+                                                   <td>{renderPriorityBadge(activity.priority)}</td>
+                                                   <td>
+                                                        {displayStatus}
+                                                    </td>
+                                                   <td>
+                                                        <div className="action-buttons-grid">
+                                                            <div className="action-buttons-row">
+                                                                <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
+                                                                    <DetailsIcon />
                                                                 </button>
-                                                            )}
-                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
-                                                                <HistoryIcon />
-                                                            </button>
+                                                                {canManageActivities && (
+                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
+                                                                        <EditIcon />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <div className="action-buttons-row">
+                                                                {canManageActivities && (
+                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
+                                                                        <DeleteIcon />
+                                                                    </button>
+                                                                )}
+                                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
+                                                                    <HistoryIcon />
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                               </td>
-                                           </tr>
-                                       ))}
+                                                   </td>
+                                               </tr>
+                                           )
+                                       })}
                                     </tbody>
                                 </table>
                             </div>

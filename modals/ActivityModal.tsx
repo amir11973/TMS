@@ -20,7 +20,8 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
     approverUsers: User[];
     currentUser: User | null;
 }) => {
-    const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط' };
+    // FIX: Add 'underlyingStatus', 'requestedStatus', and 'approvalStatus' to prevent type errors.
+    const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط', status: 'شروع نشده', underlyingStatus: null, requestedStatus: null, approvalStatus: null };
     
     const [activity, setActivity] = useState(initialActivityState);
     
@@ -59,6 +60,13 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
         if (name === 'startDate' && moment(updatedActivity.endDate).isBefore(value)) {
             updatedActivity.endDate = value;
         }
+        
+        if (name === 'status' && currentUser?.username === 'mahmoudi.pars@gmail.com') {
+            updatedActivity.underlyingStatus = null;
+            updatedActivity.requestedStatus = null;
+            updatedActivity.approvalStatus = null;
+        }
+
 
         setActivity(updatedActivity);
     };
@@ -69,6 +77,10 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
     };
 
     const modalTitle = activityToEdit ? "ویرایش فعالیت" : "تعریف فعالیت جدید";
+    const displayStatus = (activity.status === 'ارسال برای تایید' && activity.underlyingStatus) 
+        ? activity.underlyingStatus 
+        : (activity.status || 'شروع نشده');
+    const isAdmin = currentUser?.username === 'mahmoudi.pars@gmail.com';
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
@@ -103,18 +115,28 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
                                 <JalaliDatePicker name="endDate" id="endDate" value={activity.endDate} onChange={handleChange} required />
                             </div>
                         </div>
-                        <div className="input-group">
-                            <label htmlFor="responsible">مسئول انجام</label>
-                            <select name="responsible" id="responsible" value={activity.responsible} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
-                                <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
-                            </select>
+                        <div className="input-grid-col-2">
+                            <div className="input-group">
+                                <label htmlFor="responsible">مسئول انجام</label>
+                                <select name="responsible" id="responsible" value={activity.responsible} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
+                                    <option value="" disabled>یک کاربر انتخاب کنید</option>
+                                    {responsibleUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="approver">تایید کننده</label>
+                                <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
+                                    <option value="" disabled>یک کاربر انتخاب کنید</option>
+                                    {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
+                                </select>
+                            </div>
                         </div>
-                        <div className="input-group">
-                            <label htmlFor="approver">تایید کننده</label>
-                            <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
-                                <option value="" disabled>یک کاربر انتخاب کنید</option>
-                                {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
+                         <div className="input-group">
+                            <label htmlFor="activity-status">وضعیت</label>
+                            <select name="status" id="activity-status" value={displayStatus} onChange={handleChange} disabled={!isAdmin}>
+                                <option value="شروع نشده">شروع نشده</option>
+                                <option value="در حال اجرا">در حال اجرا</option>
+                                <option value="خاتمه یافته">خاتمه یافته</option>
                             </select>
                         </div>
                     </div>

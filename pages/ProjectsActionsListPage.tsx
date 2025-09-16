@@ -208,6 +208,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
 
                                             const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
                                             const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                            const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
 
                                             return (
                                                 <tr key={`action-${item.id}`}>
@@ -227,7 +228,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                             <span>{item.title}</span>
                                                         </div>
                                                     </td>
-                                                    <td>{item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status}</td>
+                                                    <td>
+                                                        {displayStatus}
+                                                    </td>
                                                     <td>{renderPriorityBadge(item.priority)}</td>
                                                     <td>
                                                         <div className="action-buttons-grid">

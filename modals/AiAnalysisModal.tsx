@@ -9,6 +9,7 @@ import moment from 'moment-jalaali';
 import { getAiAnalysis } from '../aiAnalysisService';
 import { AiAnalysisIcon } from '../icons';
 import { toPersianDigits } from '../utils';
+import { User } from '../types';
 
 interface AnalysisCard {
     priority: string;
@@ -42,10 +43,11 @@ const getPriorityStyle = (priority: string): React.CSSProperties => {
     }
 };
 
-export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
+export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
     isOpen: boolean;
     onClose: () => void;
     taskItems: any[];
+    currentUser: User | null;
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [analysisResult, setAnalysisResult] = useState('');
@@ -349,6 +351,7 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
                                                 اهمیت: {card.priority}
                                             </div>
                                             <div className="ai-analysis-card-body">
+                                                <p style={{ color: 'var(--c-info)', fontSize: '0.8rem', fontWeight: 'bold', margin: '0 0 0.25rem 0' }}>{section.title}</p>
                                                 <h4>{card.title || 'عنوان نامشخص'}</h4>
                                                 <p>تاریخ پایان: {card.endDate || 'نامشخص'}</p>
                                             </div>
@@ -380,9 +383,18 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems }: {
         <div className="modal-backdrop" onClick={onClose}>
             <div className="modal-content details-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--c-info)'}}>
-                         <AiAnalysisIcon />
-                         <h3>تحلیل هوشمند وظایف</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--c-info)', minWidth: 0 }}>
+                         <div style={{ width: '24px', height: '24px', flexShrink: 0 }}>
+                            <AiAnalysisIcon />
+                         </div>
+                         <h3 style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'nowrap', whiteSpace: 'nowrap', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <span>تحلیل هوشمند وظایف</span>
+                            {currentUser && (
+                                <span style={{ color: 'var(--c-primary)', fontSize: '0.9em', fontWeight: 400, whiteSpace: 'nowrap' }}>
+                                    {currentUser.full_name}
+                                </span>
+                            )}
+                         </h3>
                     </div>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>

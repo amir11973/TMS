@@ -1514,11 +1514,11 @@ body {
 
 .bar-chart-container.horizontal .bar-label {
     order: 2;
-    width: 6.25rem;
+    width: 9rem;
     flex-shrink: 0;
     text-align: right;
-    font-size: 0.8rem;
-    color: var(--c-text-muted);
+    font-size: 0.9rem;
+    color: var(--c-text);
     transition: color 0.2s;
     overflow-wrap: break-word;
 }
@@ -1530,7 +1530,6 @@ body {
     flex-direction: row;
     height: 1.5rem;
     border-radius: 0.25rem;
-    background-color: var(--c-header);
     overflow: hidden;
 }
 
@@ -1562,6 +1561,53 @@ body {
 }
 
 .bar-chart-container.horizontal .bar-item:hover .bar-label {
+    color: var(--c-text);
+}
+
+/* Gauge Chart */
+.gauge-chart-card {
+    justify-content: space-between;
+}
+
+.gauge-container {
+    width: 100%;
+    max-width: 15.625rem;
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.gauge-svg {
+    width: 100%;
+    height: auto;
+    transform: rotateX(180deg); /* Flip SVG for correct arc direction */
+}
+
+.gauge-progress-arc {
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gauge-needle-group {
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gauge-text {
+    fill: var(--c-text-muted);
+    font-size: 0.625rem;
+    font-family: var(--font-family);
+    transform: rotateX(180deg);
+}
+
+.gauge-value-text {
+    position: absolute;
+    top: 85%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--c-text);
 }
 
@@ -2274,8 +2320,8 @@ body {
 .projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
 
 /* --- Dashboard Page --- */
-.dashboard-data-table th:nth-child(1) { width: 10%; }
-.dashboard-data-table th:nth-child(2) { width: 40%; }
+.dashboard-data-table th:nth-child(1) { width: 15%; }
+.dashboard-data-table th:nth-child(2) { width: 35%; }
 .dashboard-data-table th:nth-child(3) { width: 15%; }
 .dashboard-data-table th:nth-child(4) { width: 15%; }
 .dashboard-data-table th:nth-child(5) { width: 20%; }
@@ -2465,12 +2511,12 @@ body {
     }
 
 
-    /* --- Dashboard Page Grid Widths (5/65/10/10/10) --- */
+    /* --- Dashboard Page Grid Widths (10/60/10/10/10) --- */
     .dashboard-data-table th:nth-child(1) {
-        width: 5%; /* Row number */
+        width: 10%; /* Row number */
     }
     .dashboard-data-table th:nth-child(2) {
-        width: 65%; /* Title column */
+        width: 60%; /* Title column */
     }
     .dashboard-data-table th:nth-child(3) {
         width: 10%; /* Status */
@@ -2518,15 +2564,7 @@ body {
 }
 
 @media (min-width: 1200px) {
-    .dashboard-grid > .dashboard-card:nth-child(-n+3) {
+    .dashboard-grid > .dashboard-card {
         grid-column: span 2;
-    }
-
-    .dashboard-grid > .dashboard-card:nth-child(n+4) {
-        grid-column: span 3;
-    }
-
-    .dashboard-grid > .dashboard-card.bar-chart-card.horizontal {
-        grid-column: span 3;
     }
 }

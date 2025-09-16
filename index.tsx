@@ -1,4 +1,3 @@
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -1747,6 +1746,7 @@ const supabaseAnonKey = '...';`}
                 isOpen={isAiAnalysisModalOpen}
                 onClose={() => setIsAiAnalysisModalOpen(false)}
                 taskItems={taskItems}
+                currentUser={loggedInUser}
             />
         </div>
     );
