@@ -15,6 +15,7 @@ interface AnalysisCard {
     priority: string;
     title: string;
     endDate: string;
+    roles?: string;
 }
 
 interface AnalysisSection {
@@ -43,10 +44,10 @@ const getPriorityStyle = (priority: string): React.CSSProperties => {
     }
 };
 
-export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
+export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }: {
     isOpen: boolean;
     onClose: () => void;
-    taskItems: any[];
+    analysisItems: any[];
     currentUser: User | null;
 }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -77,8 +78,8 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
                 currentSection = { title: line.replace('SECTION_HEADER:', '').trim(), cards: [] };
             } else if (line.startsWith('LIST_ITEM:')) {
                 if (currentSection) {
-                    const [priority, title, endDate] = line.replace('LIST_ITEM:', '').trim().split('|');
-                    currentSection.cards.push({ priority, title, endDate });
+                    const [priority, title, endDate, roles] = line.replace('LIST_ITEM:', '').trim().split('|');
+                    currentSection.cards.push({ priority, title, endDate, roles });
                 }
             } else if (line.includes('موفق باشید')) {
                 outro = line;
@@ -125,18 +126,14 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                const overdueTasks = taskItems.filter(item => {
+                const activeItems = analysisItems.filter(item => {
                     const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
-                    const isOverdue = new Date(item.endDate) < today;
-                    return isOverdue && (displayStatus === 'شروع نشده' || displayStatus === 'در حال اجرا');
-                });
-                
-                const onTimeTasks = taskItems.filter(item => {
-                    const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
-                    const isOverdue = new Date(item.endDate) < today;
-                    return !isOverdue && (displayStatus === 'شروع نشده' || displayStatus === 'در حال اجرا');
+                     return displayStatus === 'شروع نشده' || displayStatus === 'در حال اجرا';
                 });
 
+                const overdueTasks = activeItems.filter(item => new Date(item.endDate) < today);
+                const onTimeTasks = activeItems.filter(item => new Date(item.endDate) >= today);
+                
                 if (overdueTasks.length === 0 && onTimeTasks.length === 0) {
                     setAnalysisResult("عالی! شما هیچ وظیفه فعالی در کارتابل خود ندارید. به همین روند ادامه دهید!");
                     setIsLoading(false);
@@ -146,10 +143,17 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
                 const mapTask = (t: any) => ({ 
                     title: t.title, 
                     priority: t.priority,
-                    endDate: moment(t.endDate).format('jYYYY/jMM/jDD')
+                    endDate: moment(t.endDate).format('jYYYY/jMM/jDD'),
+                    startDate: moment(t.startDate).format('jYYYY/jMM/jDD'),
+                    roles: t.roles,
                 });
-
+                
                 const sortTask = (a: any, b: any) => {
+                    const dateA = moment(a.startDate, 'YYYY-MM-DD');
+                    const dateB = moment(b.startDate, 'YYYY-MM-DD');
+                    if (dateA.isBefore(dateB)) return -1;
+                    if (dateA.isAfter(dateB)) return 1;
+                
                     const priorityOrder = { 'زیاد': 1, 'متوسط': 2, 'کم': 3 };
                     return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
                 };
@@ -187,7 +191,7 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
 
         analyzeTasks();
 
-    }, [isOpen, taskItems]);
+    }, [isOpen, analysisItems]);
 
     useEffect(() => {
         if (!parsedResult || parsedResult.type !== 'structured') {
@@ -353,6 +357,7 @@ export const AiAnalysisModal = ({ isOpen, onClose, taskItems, currentUser }: {
                                             <div className="ai-analysis-card-body">
                                                 <p style={{ color: 'var(--c-info)', fontSize: '0.8rem', fontWeight: 'bold', margin: '0 0 0.25rem 0' }}>{section.title}</p>
                                                 <h4>{card.title || 'عنوان نامشخص'}</h4>
+                                                <p>نقش شما: <span style={{ fontWeight: 'bold' }}>{card.roles || 'نامشخص'}</span></p>
                                                 <p>تاریخ پایان: {card.endDate || 'نامشخص'}</p>
                                             </div>
                                         </div>

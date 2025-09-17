@@ -20,7 +20,7 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams }: {
+export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams, onSetIsActionLoading }: {
     users: User[];
     sections: string[];
     onSave: (project: any) => void;
@@ -35,6 +35,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     onClose: () => void;
     onViewDetails: (item: any) => void;
     onRequestAlert: (props: any) => void;
+    onSetIsActionLoading: (isLoading: boolean) => void;
 }) => {
     const initialProjectState = {
         title: '', projectManager: '', unit: sections[0] || '', priority: 'متوسط',
@@ -173,19 +174,25 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
             title: 'حذف فعالیت',
             message: `آیا از حذف فعالیت "${activityToDelete?.title}" اطمینان دارید؟`,
             onConfirm: async () => {
-                const { error } = await supabase.from('activities').delete().eq('id', activityId);
-                handleSupabaseError(error, 'deleting activity');
-                if (!error) {
-                    const updatedActivities = project.activities.filter((a:any) => a.id !== activityId);
-                    const updatedProject = { ...project, activities: updatedActivities };
-                    setProject(updatedProject);
-                    onUpdateProject(updatedProject);
+                onSetIsActionLoading(true);
+                try {
+                    const { error } = await supabase.from('activities').delete().eq('id', activityId);
+                    handleSupabaseError(error, 'deleting activity');
+                    if (!error) {
+                        const updatedActivities = project.activities.filter((a:any) => a.id !== activityId);
+                        const updatedProject = { ...project, activities: updatedActivities };
+                        setProject(updatedProject);
+                        onUpdateProject(updatedProject);
+                    }
+                } finally {
+                    onSetIsActionLoading(false);
                 }
             }
         });
     };
 
     const handleSaveActivity = async (activityToSave: any) => {
+        onSetIsActionLoading(true);
         try {
             let updatedProject;
             let success = false;
@@ -239,6 +246,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                 title: 'خطا در ذخیره‌سازی',
                 message: `اطلاعات فعالیت ذخیره نشد. لطفا دوباره تلاش کنید. (${e.message})`
             });
+        } finally {
+            onSetIsActionLoading(false);
         }
     };
     

@@ -31,7 +31,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
 }) => {
     const [titleFilter, setTitleFilter] = useState('');
     const [responsibleFilter, setResponsibleFilter] = useState('all');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('active');
 
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     const allResponsibles = useMemo(() => [...new Set([...projects.map(p => p.projectManager), ...actions.map(a => a.responsible)])].filter(Boolean), [projects, actions]);
@@ -73,7 +73,15 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                 : (item.status === 'ارسال برای تایید' ? (item.underlyingStatus || item.status) : item.status);
             const titleMatch = !titleFilter || item.title.toLowerCase().includes(titleFilter.toLowerCase());
             const responsibleMatch = responsibleFilter === 'all' || item.responsible === responsibleFilter;
-            const statusMatch = statusFilter === 'all' || displayStatus === statusFilter;
+            
+            const statusMatch = (() => {
+                if (statusFilter === 'all') return true;
+                if (statusFilter === 'active') {
+                    return displayStatus === 'در حال اجرا' || displayStatus === 'شروع نشده';
+                }
+                return displayStatus === statusFilter;
+            })();
+
             return titleMatch && responsibleMatch && statusMatch;
         });
 
@@ -118,6 +126,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                     <label htmlFor="status-filter">وضعیت</label>
                     <select id="status-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                         <option value="all">همه</option>
+                        <option value="active">جاری و شروع نشده</option>
                         {allStatuses.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>

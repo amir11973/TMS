@@ -24,9 +24,8 @@ export const GaugeChart = ({ value, title }: { value: number; title: string }) =
             cancelAnimationFrame(animationFrameRef.current);
         }
 
-        // Animate percentage text from previous value to new value
         let startTime: number | null = null;
-        const duration = 2500; // Slower animation
+        const duration = 1500; // Unified animation duration
 
         const animate = (timestamp: number) => {
             if (!startTime) startTime = timestamp;
@@ -36,18 +35,22 @@ export const GaugeChart = ({ value, title }: { value: number; title: string }) =
 
             const animatedValue = Math.round(startValue + (endValue - startValue) * percentage);
 
+            // Synchronized update for both number and needle
+            setDisplayValue(animatedValue);
+            const currentRotation = 90 - (animatedValue / 100) * 180;
+            setRotation(currentRotation);
+
+
             if (progress < duration) {
-                setDisplayValue(animatedValue);
                 animationFrameRef.current = requestAnimationFrame(animate);
             } else {
+                // Ensure final state is exact
                 setDisplayValue(endValue);
+                const finalRotation = 90 - (endValue / 100) * 180;
+                setRotation(finalRotation);
             }
         };
         animationFrameRef.current = requestAnimationFrame(animate);
-
-        // Set needle rotation for right-to-left sweep (0% at 90deg, 100% at -90deg)
-        const targetRotation = 90 - (value / 100) * 180;
-        setRotation(targetRotation);
 
         return () => {
             if (animationFrameRef.current) {

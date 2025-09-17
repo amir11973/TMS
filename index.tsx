@@ -1423,6 +1423,55 @@ const App = () => {
         return { projects: visibleProjects, actions: visibleActions };
     }, [projects, actions, loggedInUser, teams, isAdmin]);
 
+    const analysisItems = useMemo(() => {
+        if (!loggedInUser) return [];
+        const username = loggedInUser.username;
+        const items = [];
+    
+        // Activities
+        for (const project of projects) {
+            for (const activity of project.activities) {
+                const roles = new Set<string>();
+                if (project.owner === username) roles.add('مالک پروژه');
+                if (project.projectManager === username) roles.add('مدیر پروژه');
+                if (activity.responsible === username) roles.add('مسئول');
+                if (activity.approver === username) roles.add('تائید کننده');
+    
+                if (roles.size > 0) {
+                    items.push({
+                        ...activity,
+                        type: 'activity',
+                        parentName: project.title,
+                        use_workflow: project.use_workflow,
+                        roles: Array.from(roles).join('، ')
+                    });
+                }
+            }
+        }
+    
+        // Actions
+        for (const action of actions) {
+            const roles = new Set<string>();
+            if (action.owner === username) roles.add('مالک');
+            if (action.responsible === username) roles.add('مسئول');
+            if (action.approver === username) roles.add('تائید کننده');
+    
+            if (roles.size > 0) {
+                items.push({
+                    ...action,
+                    type: 'action',
+                    parentName: 'اقدام مستقل',
+                    roles: Array.from(roles).join('، ')
+                });
+            }
+        }
+    
+        // Remove duplicates by ID and type, just in case
+        const uniqueItems = Array.from(new Map(items.map(item => [`${item.type}-${item.id}`, item])).values());
+        
+        return uniqueItems;
+    }, [projects, actions, loggedInUser]);
+
     const renderContent = () => {
         switch(view) {
             // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
@@ -1642,6 +1691,7 @@ const supabaseAnonKey = '...';`}
                 teams={teams}
                 onUpdateProject={handleUpdateProjectState}
                 onViewDetails={handleViewDetails}
+                onSetIsActionLoading={setIsActionLoading}
             />
             <ActionModal 
                 isOpen={isActionModalOpen}
@@ -1745,7 +1795,7 @@ const supabaseAnonKey = '...';`}
             <AiAnalysisModal
                 isOpen={isAiAnalysisModalOpen}
                 onClose={() => setIsAiAnalysisModalOpen(false)}
-                taskItems={taskItems}
+                analysisItems={analysisItems}
                 currentUser={loggedInUser}
             />
         </div>
