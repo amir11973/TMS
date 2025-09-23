@@ -77,7 +77,6 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
             <div className="add-user-form">
                 <h3>افزودن عضو به تیم</h3>
                 <div className="input-group">
-                    <label htmlFor="team-user-input">انتخاب کاربر</label>
                      <input 
                         id="team-user-input"
                         list="team-user-suggestions"

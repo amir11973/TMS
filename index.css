@@ -2145,10 +2145,21 @@ body {
 .chatbot-header-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    min-width: 0;
 }
 .chatbot-header-title svg {
     color: var(--c-primary);
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+
+.chatbot-header-title h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
 }
 
 .chat-messages {
@@ -2232,6 +2243,7 @@ body {
 
 .chat-input-form {
     display: flex;
+    align-items: center;
     padding: 0.75rem;
     border-top: 1px solid var(--c-border);
     background-color: var(--c-surface);
@@ -2261,6 +2273,34 @@ body {
 }
 .chat-input-form button:disabled {
     color: var(--c-text-muted);
+    cursor: not-allowed;
+}
+
+.chat-input-form .mic-button {
+    background: none;
+    border: none;
+    color: var(--c-text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: color 0.2s, background-color 0.2s;
+    margin-right: 0.5rem;
+}
+
+.chat-input-form .mic-button:hover:not(:disabled) {
+    background-color: var(--c-header);
+}
+
+.chat-input-form .mic-button.recording {
+    color: #3498db; /* Blue */
+    background-color: rgba(52, 152, 219, 0.15);
+}
+
+.chat-input-form .mic-button:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
 }
 

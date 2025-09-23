@@ -1,0 +1,247 @@
+/* Mobile-First Table Column Widths */
+.dashboard-data-table,
+.projects-actions-list-page .user-list-table,
+.tasks-page .user-list-table,
+.approvals-page .user-list-table,
+.mass-delegate-table,
+.completed-tasks-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* --- Projects & Actions Page --- */
+.projects-actions-list-page .user-list-table th:nth-child(1) { width: 10%; }
+.projects-actions-list-page .user-list-table th:nth-child(2) { width: 40%; }
+.projects-actions-list-page .user-list-table th:nth-child(3) { width: 15%; }
+.projects-actions-list-page .user-list-table th:nth-child(4) { width: 15%; }
+.projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
+
+/* --- Dashboard Page --- */
+.dashboard-data-table th:nth-child(1) { width: 15%; }
+.dashboard-data-table th:nth-child(2) { width: 35%; }
+.dashboard-data-table th:nth-child(3) { width: 15%; }
+.dashboard-data-table th:nth-child(4) { width: 15%; }
+.dashboard-data-table th:nth-child(5) { width: 20%; }
+
+/* --- Tasks Page --- */
+.tasks-page .user-list-table th:nth-child(1) { width: 10%; }
+.tasks-page .user-list-table th:nth-child(2) { width: 30%; }
+.tasks-page .user-list-table th:nth-child(3) { width: 15%; }
+.tasks-page .user-list-table th:nth-child(4) { width: 15%; }
+.tasks-page .user-list-table th:nth-child(5) { width: 30%; }
+
+/* --- Approvals Page --- */
+.approvals-page .user-list-table th:nth-child(1) { width: 10%; }
+.approvals-page .user-list-table th:nth-child(2) { width: 25%; }
+.approvals-page .user-list-table th:nth-child(3) { width: 15%; }
+.approvals-page .user-list-table th:nth-child(4) { width: 20%; }
+.approvals-page .user-list-table th:nth-child(5) { width: 30%; }
+
+/* --- Modal Tables --- */
+.modal-content .mass-delegate-table th:nth-child(1) { width: 25%; } /* پروژه / اقدام */
+.modal-content .mass-delegate-table th:nth-child(2) { width: 35%; } /* فعالیت / عنوان */
+.modal-content .mass-delegate-table th:nth-child(3) { width: 20%; } /* مسئول فعلی */
+.modal-content .mass-delegate-table th:nth-child(4) { width: 20%; } /* مسئول جدید */
+
+.modal-content .completed-tasks-table th:nth-child(1) { width: 30%; } /* عنوان */
+.modal-content .completed-tasks-table th:nth-child(2) { width: 30%; } /* پروژه / اقدام */
+.modal-content .completed-tasks-table th:nth-child(3) { width: 20%; } /* تاریخ تایید نهایی */
+.modal-content .completed-tasks-table th:nth-child(4) { width: 20%; } /* تاریخچه */
+
+.modal-content .completed-tasks-table td:nth-child(3) {
+    white-space: nowrap;
+}
+
+
+/* ============================================== */
+/* Tablet & Desktop Media Queries                 */
+/* ============================================== */
+
+@media (min-width: 768px) {
+    html {
+        font-size: 100%; /* Reset to 16px for desktop */
+    }
+
+    .sidebar {
+        display: flex;
+        width: 15rem;
+        flex-shrink: 0;
+        background-color: var(--c-surface);
+        border-left: 0.0625rem solid var(--c-border);
+        padding: 1rem 0.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        transition: width 0.2s ease-in-out;
+        overflow-x: hidden;
+    }
+
+    .bottom-nav {
+        display: none;
+    }
+
+    .fab {
+        display: none; /* Hide center FAB on desktop */
+    }
+
+    .ai-fab {
+        bottom: 1.25rem;
+        left: 1.25rem;
+    }
+    
+    .chatbot-fab {
+        bottom: 1.25rem;
+        right: 1.25rem;
+    }
+
+    .app-body {
+        padding-bottom: 0;
+    }
+
+    .main-content {
+      padding: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .header h1 {
+        font-size: 1.4rem;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .header-user-info span {
+        display: inline;
+        font-size: 0.9rem;
+    }
+
+    .login-form {
+        padding: 2.5rem;
+        width: 100%;
+    }
+    
+    /* Reset input font sizes for desktop */
+    .input-group input,
+    .input-group select,
+    .input-group textarea {
+        font-size: 1rem;
+    }
+    .modal-body .input-group input,
+    .modal-body .input-group select,
+    .modal-body .input-group textarea {
+        font-size: 0.85rem;
+    }
+    .add-user-form .input-group input,
+    .add-user-form .input-group select {
+        font-size: 0.9rem;
+    }
+    .dashboard-filters .filter-group select,
+    .dashboard-filters .filter-group input {
+        font-size: 0.9rem;
+    }
+
+
+    .modal-content {
+        width: 90%;
+        padding: 1.5rem;
+    }
+    
+    /* Widen specific modals on desktop */
+    .modal-content.mass-delegate-modal {
+        max-width: 55rem; /* ~880px */
+    }
+
+    .modal-content.completed-tasks-modal {
+        max-width: 65rem; /* ~1040px */
+    }
+
+    .modal-footer {
+        flex-direction: row;
+        gap: 0.75rem;
+    }
+    .modal-footer button {
+        width: auto;
+    }
+
+    .add-user-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+        align-items: flex-end;
+        padding: 1.5rem;
+    }
+    
+    .add-user-form .add-user-button {
+        grid-column: auto;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .input-grid-col-2 {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .modal-content .project-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dashboard-filters {
+        padding: 1.25rem;
+        gap: 1.25rem;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .dashboard-grid > .dashboard-card {
+        grid-column: span 3;
+    }
+
+    .ai-analysis-card-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Custom Column Widths for Desktop */
+    .dashboard-data-table,
+    .projects-actions-list-page .user-list-table,
+    .tasks-page .user-list-table,
+    .approvals-page .user-list-table {
+        table-layout: fixed;
+    }
+
+    /* --- Projects & Actions Page Grid Widths (5/55/10/10/20) --- */
+    .projects-actions-list-page .user-list-table th:nth-child(1) { width: 5%; }
+    .projects-actions-list-page .user-list-table th:nth-child(2) { width: 55%; }
+    .projects-actions-list-page .user-list-table th:nth-child(3) { width: 10%; }
+    .projects-actions-list-page .user-list-table th:nth-child(4) { width: 10%; }
+    .projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
+
+    /* --- Dashboard Page Grid Widths (10/60/10/10/10) --- */
+    .dashboard-data-table th:nth-child(1) { width: 10%; }
+    .dashboard-data-table th:nth-child(2) { width: 60%; }
+    .dashboard-data-table th:nth-child(3) { width: 10%; }
+    .dashboard-data-table th:nth-child(4) { width: 10%; }
+    .dashboard-data-table th:nth-child(5) { width: 10%; }
+    
+    /* --- Tasks Page Grid Widths (5/50/10/10/25) --- */
+    .tasks-page .user-list-table th:nth-child(1) { width: 5%; }
+    .tasks-page .user-list-table th:nth-child(2) { width: 50%; }
+    .tasks-page .user-list-table th:nth-child(3) { width: 10%; }
+    .tasks-page .user-list-table th:nth-child(4) { width: 10%; }
+    .tasks-page .user-list-table th:nth-child(5) { width: 25%; }
+
+    /* --- Approvals Page Grid Widths (5/40/15/15/25) --- */
+    .approvals-page .user-list-table th:nth-child(1) { width: 5%; }
+    .approvals-page .user-list-table th:nth-child(2) { width: 40%; }
+    .approvals-page .user-list-table th:nth-child(3) { width: 15%; }
+    .approvals-page .user-list-table th:nth-child(4) { width: 15%; }
+    .approvals-page .user-list-table th:nth-child(5) { width: 25%; }
+}
+
+@media (min-width: 1200px) {
+    .dashboard-grid > .dashboard-card {
+        grid-column: span 2;
+    }
+}

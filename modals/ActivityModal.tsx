@@ -8,7 +8,7 @@ import { User } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers, currentUser }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers, currentUser, projectUseWorkflow }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
@@ -19,6 +19,7 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
     responsibleUsers: User[];
     approverUsers: User[];
     currentUser: User | null;
+    projectUseWorkflow: boolean;
 }) => {
     // FIX: Add 'underlyingStatus', 'requestedStatus', and 'approvalStatus' to prevent type errors.
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط', status: 'شروع نشده', underlyingStatus: null, requestedStatus: null, approvalStatus: null };
@@ -125,7 +126,7 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
                             </div>
                             <div className="input-group">
                                 <label htmlFor="approver">تایید کننده</label>
-                                <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required disabled={!isProjectOwner && !!activityToEdit}>
+                                <select name="approver" id="approver" value={activity.approver} onChange={handleChange} required disabled={(!isProjectOwner && !!activityToEdit) || !projectUseWorkflow}>
                                     <option value="" disabled>یک کاربر انتخاب کنید</option>
                                     {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                                 </select>

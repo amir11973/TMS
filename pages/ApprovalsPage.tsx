@@ -73,50 +73,53 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                             {Object.keys(groupedPendingApprovals).length > 0 ? (
                                  // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
                                  Object.entries(groupedPendingApprovals).map(([groupName, tasks]: [string, any[]]) => (
-                                    <CollapsibleTableSection key={groupName} title={groupName} count={tasks.length} defaultOpen={true}>
-                                        {tasks.map((item, index) => (
-                                            <tr key={item.id}>
-                                                <td>{toPersianDigits(index + 1)}</td>
-                                                <td>
-                                                    <div className="title-cell-content">
-                                                        <span 
-                                                            className={`delay-indicator-dot ${isDelayed(item.underlyingStatus, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                            title={isDelayed(item.underlyingStatus, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                        ></span>
-                                                        <span>{item.title}</span>
-                                                    </div>
-                                                </td>
-                                                <td>{userMap.get(item.responsible) || item.responsible}</td>
-                                                <td>{item.requestedStatus}</td>
-                                                <td>
-                                                    <div className="action-buttons-grid">
-                                                        <div className="action-buttons-row">
-                                                            <button className="icon-btn" style={{color: 'var(--c-info)'}} title="اطلاعات ارسال" onClick={() => onShowInfo(item)}>
-                                                                <DocumentIcon />
-                                                            </button>
-                                                            <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
-                                                                <DetailsIcon />
-                                                            </button>
-                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                                <HistoryIcon />
-                                                            </button>
-                                                            <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'approver')}>
-                                                                <NotesIcon />
-                                                            </button>
+                                    // FIX: Wrapped CollapsibleTableSection in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component.
+                                    <React.Fragment key={groupName}>
+                                        <CollapsibleTableSection title={groupName} count={tasks.length} defaultOpen={true}>
+                                            {tasks.map((item, index) => (
+                                                <tr key={item.id}>
+                                                    <td>{toPersianDigits(index + 1)}</td>
+                                                    <td>
+                                                        <div className="title-cell-content">
+                                                            <span 
+                                                                className={`delay-indicator-dot ${isDelayed(item.underlyingStatus, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                                title={isDelayed(item.underlyingStatus, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                            ></span>
+                                                            <span>{item.title}</span>
                                                         </div>
-                                                        <div className="action-buttons-row">
-                                                            <button className="icon-btn approve-btn" title="تایید" onClick={() => onApprovalDecision(item, 'approved')}>
-                                                                <ApproveIcon />
-                                                            </button>
-                                                            <button className="icon-btn reject-btn" title="رد" onClick={() => onApprovalDecision(item, 'rejected')}>
-                                                                <RejectIcon />
-                                                            </button>
+                                                    </td>
+                                                    <td>{userMap.get(item.responsible) || item.responsible}</td>
+                                                    <td>{item.requestedStatus}</td>
+                                                    <td>
+                                                        <div className="action-buttons-grid">
+                                                            <div className="action-buttons-row">
+                                                                <button className="icon-btn" style={{color: 'var(--c-info)'}} title="اطلاعات ارسال" onClick={() => onShowInfo(item)}>
+                                                                    <DocumentIcon />
+                                                                </button>
+                                                                <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
+                                                                    <DetailsIcon />
+                                                                </button>
+                                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                    <HistoryIcon />
+                                                                </button>
+                                                                <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'approver')}>
+                                                                    <NotesIcon />
+                                                                </button>
+                                                            </div>
+                                                            <div className="action-buttons-row">
+                                                                <button className="icon-btn approve-btn" title="تایید" onClick={() => onApprovalDecision(item, 'approved')}>
+                                                                    <ApproveIcon />
+                                                                </button>
+                                                                <button className="icon-btn reject-btn" title="رد" onClick={() => onApprovalDecision(item, 'rejected')}>
+                                                                    <RejectIcon />
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </CollapsibleTableSection>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </CollapsibleTableSection>
+                                    </React.Fragment>
                                  ))
                             ) : (
                                 <tr>

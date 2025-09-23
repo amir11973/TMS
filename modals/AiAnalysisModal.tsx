@@ -244,11 +244,11 @@ export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }:
                 });
                 scrollToElement(`intro-${index}`);
             }, delay));
-            delay += 1000;
+            delay += 1500;
         });
 
         sections.forEach((section, sectionIndex) => {
-            delay += 2000;
+            delay += 2500;
             animationTimeouts.current.push(setTimeout(() => {
                 setActiveSectionIndex(sectionIndex);
                 setVisibleElements(prev => {
@@ -259,7 +259,7 @@ export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }:
                 scrollToElement(`section-header-${sectionIndex}`);
             }, delay));
 
-            delay += 1000;
+            delay += 1500;
             animationTimeouts.current.push(setTimeout(() => {
                 setVisibleElements(prev => {
                     const newSections = [...prev.sections];
@@ -270,7 +270,7 @@ export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }:
             }, delay));
 
             section.cards.forEach((_, cardIndex) => {
-                delay += 1000;
+                delay += 2000;
                 animationTimeouts.current.push(setTimeout(() => {
                     setVisibleElements(prev => {
                         const newSections = JSON.parse(JSON.stringify(prev.sections));
@@ -283,7 +283,7 @@ export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }:
         });
 
         if (outro) {
-            delay += 1500;
+            delay += 2500;
             animationTimeouts.current.push(setTimeout(() => {
                 setActiveSectionIndex(-1);
                 setVisibleElements(prev => ({ ...prev, outro: true }));
@@ -291,7 +291,9 @@ export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }:
                 scrollToElement('outro');
             }, delay));
         } else {
-            setIsAnimating(false);
+             animationTimeouts.current.push(setTimeout(() => {
+                setIsAnimating(false);
+            }, delay));
         }
 
     }, [parsedResult]);

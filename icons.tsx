@@ -167,6 +167,12 @@ export const SendChatIcon = () => (
     </svg>
 );
 
+export const MicrophoneIcon = () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="24" height="24">
+        <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+    </svg>
+);
+
 export const NotesIcon = () => (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
         <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />

@@ -9,7 +9,8 @@ import { toPersianDigits } from '../utils';
 export const CollapsibleTableSection = ({ title, count, children, iconType = 'plus-minus', defaultOpen = false, level = 0 }: {
     title: string;
     count: number;
-    children: React.ReactNode;
+    // FIX: Made 'children' prop optional to resolve TypeScript errors in multiple files.
+    children?: React.ReactNode;
     iconType?: 'plus-minus' | 'equals-minus';
     defaultOpen?: boolean;
     level?: number;

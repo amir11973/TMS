@@ -147,130 +147,136 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                         {filteredItems.length > 0 && currentUser ? (
                             <>
                                 {sortedProjects.length > 0 && (
-                                    <CollapsibleTableSection key="projects-section" title="پروژه‌ها" count={sortedProjects.length} defaultOpen>
-                                        {sortedProjects.map((item, index) => {
-                                            const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                            const itemOwnerUsername = item.owner;
-                                            const ownerTeam = teams[itemOwnerUsername] || [];
-                                            const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
-                                                member => member.username === currentUser.username && member.role === 'ادمین'
-                                            );
-                                            
-                                            const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                            const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                            
-                                            return (
-                                                <tr key={`project-${item.id}`}>
-                                                    <td>{toPersianDigits(index + 1)}</td>
-                                                    <td>
-                                                        <div className="title-cell-content">
-                                                            {item.status === 'خاتمه یافته' ? (
-                                                                <span className="completed-indicator" title="تکمیل شده">
-                                                                    <ApproveIcon />
-                                                                </span>
-                                                            ) : (
-                                                                <span 
-                                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.projectEndDate) ? 'delayed' : 'on-time'}`}
-                                                                    title={isDelayed(item.status, item.projectEndDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                                ></span>
-                                                            )}
-                                                            <span>{item.title}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>{item.status}</td>
-                                                    <td>{renderPriorityBadge(item.priority)}</td>
-                                                    <td>
-                                                        <div className="action-buttons-grid">
-                                                            <div className="action-buttons-row">
-                                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                                    <DetailsIcon />
-                                                                </button>
-                                                                {canEdit && (
-                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
-                                                                        <EditIcon />
-                                                                    </button>
+                                    // FIX: Wrapped CollapsibleTableSection in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component.
+                                    <React.Fragment key="projects-section">
+                                        <CollapsibleTableSection title="پروژه‌ها" count={sortedProjects.length} defaultOpen>
+                                            {sortedProjects.map((item, index) => {
+                                                const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+                                                const itemOwnerUsername = item.owner;
+                                                const ownerTeam = teams[itemOwnerUsername] || [];
+                                                const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+                                                    member => member.username === currentUser.username && member.role === 'ادمین'
+                                                );
+                                                
+                                                const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                
+                                                return (
+                                                    <tr key={`project-${item.id}`}>
+                                                        <td>{toPersianDigits(index + 1)}</td>
+                                                        <td>
+                                                            <div className="title-cell-content">
+                                                                {item.status === 'خاتمه یافته' ? (
+                                                                    <span className="completed-indicator" title="تکمیل شده">
+                                                                        <ApproveIcon />
+                                                                    </span>
+                                                                ) : (
+                                                                    <span 
+                                                                        className={`delay-indicator-dot ${isDelayed(item.status, item.projectEndDate) ? 'delayed' : 'on-time'}`}
+                                                                        title={isDelayed(item.status, item.projectEndDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                                    ></span>
                                                                 )}
+                                                                <span>{item.title}</span>
                                                             </div>
-                                                            <div className="action-buttons-row">
-                                                                {canDelete && (
-                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
-                                                                        <DeleteIcon />
+                                                        </td>
+                                                        <td>{item.status}</td>
+                                                        <td>{renderPriorityBadge(item.priority)}</td>
+                                                        <td>
+                                                            <div className="action-buttons-grid">
+                                                                <div className="action-buttons-row">
+                                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                        <DetailsIcon />
                                                                     </button>
-                                                                )}
+                                                                    {canEdit && (
+                                                                        <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditProject(item)}>
+                                                                            <EditIcon />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="action-buttons-row">
+                                                                    {canDelete && (
+                                                                        <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteProject(item.id)}>
+                                                                            <DeleteIcon />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </CollapsibleTableSection>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </CollapsibleTableSection>
+                                    </React.Fragment>
                                 )}
                                  {sortedActions.length > 0 && (
-                                    <CollapsibleTableSection key="actions-section" title="اقدامات" count={sortedActions.length} defaultOpen>
-                                        {sortedActions.map((item, index) => {
-                                            const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
-                                            const itemOwnerUsername = item.owner;
-                                            const ownerTeam = teams[itemOwnerUsername] || [];
-                                            const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
-                                                member => member.username === currentUser.username && member.role === 'ادمین'
-                                            );
+                                    // FIX: Wrapped CollapsibleTableSection in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component.
+                                    <React.Fragment key="actions-section">
+                                        <CollapsibleTableSection title="اقدامات" count={sortedActions.length} defaultOpen>
+                                            {sortedActions.map((item, index) => {
+                                                const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
+                                                const itemOwnerUsername = item.owner;
+                                                const ownerTeam = teams[itemOwnerUsername] || [];
+                                                const isCurrentUserAdminInOwnersTeam = ownerTeam.some(
+                                                    member => member.username === currentUser.username && member.role === 'ادمین'
+                                                );
 
-                                            const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                            const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
-                                            const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+                                                const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
+                                                const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
 
-                                            return (
-                                                <tr key={`action-${item.id}`}>
-                                                    <td>{toPersianDigits(index + 1)}</td>
-                                                    <td>
-                                                        <div className="title-cell-content">
-                                                            {item.status === 'خاتمه یافته' ? (
-                                                                <span className="completed-indicator" title="تکمیل شده">
-                                                                    <ApproveIcon />
-                                                                </span>
-                                                            ) : (
-                                                                <span 
-                                                                    className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                                    title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                                ></span>
-                                                            )}
-                                                            <span>{item.title}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        {displayStatus}
-                                                    </td>
-                                                    <td>{renderPriorityBadge(item.priority)}</td>
-                                                    <td>
-                                                        <div className="action-buttons-grid">
-                                                            <div className="action-buttons-row">
-                                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
-                                                                    <DetailsIcon />
-                                                                </button>
-                                                                {canEdit && (
-                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
-                                                                        <EditIcon />
-                                                                    </button>
+                                                return (
+                                                    <tr key={`action-${item.id}`}>
+                                                        <td>{toPersianDigits(index + 1)}</td>
+                                                        <td>
+                                                            <div className="title-cell-content">
+                                                                {item.status === 'خاتمه یافته' ? (
+                                                                    <span className="completed-indicator" title="تکمیل شده">
+                                                                        <ApproveIcon />
+                                                                    </span>
+                                                                ) : (
+                                                                    <span 
+                                                                        className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                                        title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                                    ></span>
                                                                 )}
+                                                                <span>{item.title}</span>
                                                             </div>
-                                                            <div className="action-buttons-row">
-                                                                {canDelete && (
-                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
-                                                                        <DeleteIcon />
+                                                        </td>
+                                                        <td>
+                                                            {displayStatus}
+                                                        </td>
+                                                        <td>{renderPriorityBadge(item.priority)}</td>
+                                                        <td>
+                                                            <div className="action-buttons-grid">
+                                                                <div className="action-buttons-row">
+                                                                    <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => onViewDetails(item)}>
+                                                                        <DetailsIcon />
                                                                     </button>
-                                                                )}
-                                                                {item.history && (
-                                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
-                                                                        <HistoryIcon />
-                                                                    </button>
-                                                                )}
+                                                                    {canEdit && (
+                                                                        <button className="icon-btn edit-btn" title="ویرایش" onClick={() => onEditAction(item)}>
+                                                                            <EditIcon />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="action-buttons-row">
+                                                                    {canDelete && (
+                                                                        <button className="icon-btn delete-btn" title="حذف" onClick={() => onDeleteAction(item.id)}>
+                                                                            <DeleteIcon />
+                                                                        </button>
+                                                                    )}
+                                                                    {item.history && (
+                                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                            <HistoryIcon />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </CollapsibleTableSection>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </CollapsibleTableSection>
+                                    </React.Fragment>
                                 )}
                             </>
                         ) : (

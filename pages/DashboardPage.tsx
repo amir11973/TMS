@@ -93,10 +93,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
     
     const typeData = useMemo(() => {
-        const counts = allItems.reduce((acc: Record<string, number>, item) => {
+        const counts = allItems.reduce((acc, item) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return [
             { name: 'پروژه', value: counts['پروژه'] || 0, color: '#e94560' },
             { name: 'اقدام', value: counts['اقدام'] || 0, color: '#17a2b8' },
@@ -104,25 +104,27 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const statusData = useMemo(() => {
-        const counts = allItems.reduce((acc: Record<string, number>, item) => {
+        const counts = allItems.reduce((acc, item) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
          return [
             { name: 'شروع نشده', value: counts['شروع نشده'] || 0, color: '#888' },
             { name: 'در حال اجرا', value: counts['در حال اجرا'] || 0, color: '#ffc107' },
-            { name: 'خاتمه یافته', value: counts['خاتمه یافته'] || 0, color: '#28a745' },
+            { name: 'خاتمه یافته', value: counts['خاتمه یافته'] || 0, color: '#8e44ad' },
         ];
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        const counts = allItems.reduce<Record<string, number>>((acc, item) => {
+        // FIX: The `reduce` function's initial value is now explicitly typed as `Record<string, number>`
+        // to ensure `counts` is correctly inferred, resolving the downstream type error in the `sort` method.
+        const counts = allItems.reduce((acc, item: any) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,

@@ -1,0 +1,187 @@
+/* General Resets and Base Styles */
+:root {
+  /* Dark Theme Colors */
+  --c-bg: #1a1a2e;
+  --c-surface: #16213e;
+  --c-header: #0f3460;
+  --c-primary: #e94560;
+  --c-text: #dcdcdc;
+  --c-text-muted: #888;
+  --c-border: #0f3460;
+  --c-hover-bg: rgba(233, 69, 96, 0.2);
+  --c-success: #28a745;
+  --c-danger: #dc3545;
+  --c-warning: #ffc107;
+  --c-info: #17a2b8;
+  --font-family: 'Vazirmatn', sans-serif;
+  --c-table-header-bg: #0f3460;
+  --c-table-group-header-bg-level-0: #1c2a4c;
+  --c-table-group-header-bg-level-1: #2a3b5f;
+  --c-table-row-bg: #34456c;
+}
+
+body.theme-light {
+  /* Light Theme Colors */
+  --c-bg: #fdfaf6;
+  --c-surface: #fdfaf6;
+  --c-header: #fdfaf6;
+  --c-primary: #e94560;
+  --c-text: #2c3e50;
+  --c-text-muted: #6c757d;
+  --c-border: #edeae4;
+  --c-hover-bg: rgba(233, 69, 96, 0.1);
+  --c-table-header-bg: #f8f6f2;
+  --c-table-group-header-bg-level-0: #f8f6f2;
+  --c-table-group-header-bg-level-1: #fbf9f7;
+  --c-table-row-bg: #fdfaf6;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 70%; /* Base font size for mobile (11.2px), ~20% smaller */
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  direction: rtl;
+  overflow-x: hidden;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#root {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+/* Loading Container */
+.loading-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: var(--c-primary);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(0.25rem);
+    animation: fadeIn 0.2s;
+}
+
+.loading-box {
+    background-color: var(--c-surface);
+    color: var(--c-text);
+    padding: 1.875rem 3.125rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 1.2rem;
+    box-shadow: 0 0.3125rem 0.9375rem rgba(0,0,0,0.3);
+}
+
+.spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 0.25rem solid var(--c-border);
+    border-top-color: var(--c-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Config Error Screen */
+.config-error-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.config-error-container .login-form {
+    max-width: 34.375rem;
+}
+
+.config-error-container p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.code-snippet {
+    background-color: var(--c-bg);
+    border: 0.0625rem solid var(--c-border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: right; /* RTL */
+    font-family: monospace;
+}
+
+.code-snippet p {
+    text-align: right;
+    font-family: var(--font-family);
+    margin-bottom: 0.5rem;
+}
+
+.code-snippet pre {
+    direction: ltr; /* Code is LTR */
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* General Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(0.625rem); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-1.875rem); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(2rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

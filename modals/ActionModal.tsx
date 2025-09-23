@@ -160,7 +160,7 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                             </div>
                             <div className="input-group">
                                 <label htmlFor="action-approver">تایید کننده</label>
-                                <select name="approver" id="action-approver" value={action.approver} onChange={handleChange} required disabled={!isOwner && !isNew}>
+                                <select name="approver" id="action-approver" value={action.approver} onChange={handleChange} required disabled={(!isOwner && !isNew) || !action.use_workflow}>
                                     <option value="" disabled>یک کاربر انتخاب کنید</option>
                                     {approverUsers.map(user => <option key={user.username} value={user.username}>{userMap.get(user.username) || user.username}</option>)}
                                 </select>

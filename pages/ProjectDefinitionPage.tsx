@@ -51,6 +51,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     const [activeTab, setActiveTab] = useState('main'); // main or activities
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [editingActivity, setEditingActivity] = useState(null);
+    const [activityStatusFilter, setActivityStatusFilter] = useState('active');
 
     const { readOnly = false } = projectToEdit || {};
     
@@ -117,6 +118,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     
                 if (isDifferentProject) { 
                     setActiveTab(projectToEdit.initialTab || 'main');
+                    setActivityStatusFilter('active');
                 }
             } else { // New project logic, just in case
                 setProject({...initialProjectState, owner: currentUser!.username, projectManager: currentUser!.username });
@@ -125,6 +127,20 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         }
     }, [projectToEdit, isOpen, currentUser]);
     
+    const filteredActivities = useMemo(() => {
+        const activities = project.activities || [];
+        if (activityStatusFilter === 'all') {
+            return activities;
+        }
+        return activities.filter((activity: any) => {
+            const displayStatus = activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status;
+            if (activityStatusFilter === 'active') {
+                return displayStatus === 'در حال اجرا' || displayStatus === 'شروع نشده';
+            }
+            return displayStatus === activityStatusFilter;
+        });
+    }, [project.activities, activityStatusFilter]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
 
@@ -348,11 +364,29 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                         <div className="tab-content" style={{ backgroundColor: 'transparent', padding: '12px 0' }}>
                             <div className="activities-header">
                                 <h3>لیست فعالیت‌ها</h3>
-                                {canManageActivities && (
-                                     <button className="add-activity-btn" onClick={handleAddActivity}>
-                                        افزودن فعالیت
-                                    </button>
-                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <div className="filter-group" style={{ margin: 0, minWidth: '180px' }}>
+                                        <select 
+                                            id="activity-status-filter" 
+                                            className="status-select" 
+                                            value={activityStatusFilter} 
+                                            onChange={e => setActivityStatusFilter(e.target.value)}
+                                            style={{width: '100%', height: 'auto', padding: '0.5rem'}}
+                                            aria-label="فیلتر وضعیت فعالیت‌ها"
+                                        >
+                                            <option value="active">جاری و شروع نشده</option>
+                                            <option value="all">همه</option>
+                                            <option value="شروع نشده">شروع نشده</option>
+                                            <option value="در حال اجرا">در حال اجرا</option>
+                                            <option value="خاتمه یافته">خاتمه یافته</option>
+                                        </select>
+                                    </div>
+                                    {canManageActivities && (
+                                         <button className="add-activity-btn" onClick={handleAddActivity}>
+                                            افزودن فعالیت
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             <div className="table-wrapper">
                                 <table className="user-list-table">
@@ -365,7 +399,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                         </tr>
                                     </thead>
                                     <tbody>
-                                       {(project.activities || []).map((activity: any) => {
+                                       {filteredActivities.length > 0 ? filteredActivities.map((activity: any) => {
                                             const displayStatus = activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status;
                                             return (
                                                <tr key={activity.id}>
@@ -414,7 +448,11 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                    </td>
                                                </tr>
                                            )
-                                       })}
+                                       }) : (
+                                        <tr>
+                                            <td colSpan={4} style={{ textAlign: 'center' }}>فعالیتی با این فیلتر یافت نشد.</td>
+                                        </tr>
+                                       )}
                                     </tbody>
                                 </table>
                             </div>
@@ -442,6 +480,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     responsibleUsers={activityResponsibleUsers}
                     approverUsers={activityApproverUsers}
                     currentUser={currentUser}
+                    projectUseWorkflow={project.use_workflow}
                 />
             </div>
         </div>

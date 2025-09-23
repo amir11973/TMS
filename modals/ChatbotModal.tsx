@@ -1,11 +1,19 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
-import { SendChatIcon, ChatbotIcon } from '../icons';
+import { SendChatIcon, ChatbotIcon, MicrophoneIcon } from '../icons';
 import { getChatbotResponse } from '../chatbotService';
+
+declare global {
+    interface Window {
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
+    }
+}
 
 interface Message {
     id: number;
@@ -64,7 +72,63 @@ export const ChatbotModal = ({
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const recognitionRef = useRef<any>(null);
+    const baseTextRef = useRef('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.warn("Speech recognition not supported in this browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'fa-IR';
+
+        recognition.onresult = (event: any) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            setInput(baseTextRef.current + finalTranscript + interimTranscript);
+        };
+
+        recognition.onend = () => {
+            setIsRecording(false);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Speech recognition error', event.error);
+             if (event.error === 'not-allowed') {
+                const newBotMessage: Message = { id: Date.now() + 1, text: "برای استفاده از این قابلیت، لطفا به این برنامه اجازه دسترسی به میکروفون را بدهید. ممکن است لازم باشد صفحه را مجددا بارگذاری کنید.", sender: 'bot' };
+                setMessages(prev => [...prev, newBotMessage]);
+            } else if (event.error === 'no-speech') {
+                const newBotMessage: Message = { id: Date.now() + 1, text: "متاسفانه صدایی تشخیص داده نشد. لطفا دوباره تلاش کنید.", sender: 'bot' };
+                setMessages(prev => [...prev, newBotMessage]);
+            }
+            if (isRecording) {
+                setIsRecording(false);
+            }
+        };
+        
+        recognitionRef.current = recognition;
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -157,6 +221,20 @@ export const ChatbotModal = ({
     const handleChipClick = (question: string) => {
         handleSend(question);
     };
+    
+    const handleMicPress = () => {
+        if (recognitionRef.current && !isRecording) {
+            baseTextRef.current = input ? input + ' ' : '';
+            recognitionRef.current.start();
+            setIsRecording(true);
+        }
+    };
+
+    const handleMicRelease = () => {
+        if (recognitionRef.current && isRecording) {
+            recognitionRef.current.stop();
+        }
+    };
 
     return (
         <div className={`chatbot-modal-container ${isOpen ? 'open' : ''}`}>
@@ -191,6 +269,19 @@ export const ChatbotModal = ({
                     <div ref={messagesEndRef} />
                 </div>
                 <form className="chat-input-form" onSubmit={handleFormSubmit}>
+                    <button
+                        type="button"
+                        className={`mic-button ${isRecording ? 'recording' : ''}`}
+                        onMouseDown={handleMicPress}
+                        onMouseUp={handleMicRelease}
+                        onTouchStart={handleMicPress}
+                        onTouchEnd={handleMicRelease}
+                        aria-label="ضبط صدا"
+                        title="نگه دارید تا صحبت کنید"
+                        disabled={!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)}
+                    >
+                        <MicrophoneIcon />
+                    </button>
                     <input
                         type="text"
                         value={input}

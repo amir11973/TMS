@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User } from '../types';
 
 export const DelegateTaskModal = ({ isOpen, onClose, onDelegate, item, users }: {
@@ -13,6 +13,8 @@ export const DelegateTaskModal = ({ isOpen, onClose, onDelegate, item, users }: 
     users: User[];
 }) => {
     const [selectedUser, setSelectedUser] = useState('');
+
+    const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     useEffect(() => {
         if (item && users) {
@@ -54,7 +56,7 @@ export const DelegateTaskModal = ({ isOpen, onClose, onDelegate, item, users }: 
                                 required
                             >
                                 {availableUsers.map(user => (
-                                    <option key={user.id} value={user.username}>{user.username}</option>
+                                    <option key={user.id} value={user.username}>{userMap.get(user.username) || user.username}</option>
                                 ))}
                             </select>
                         </div>

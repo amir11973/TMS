@@ -72,66 +72,72 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                     </thead>
                     <tbody>
                         {projectItems.length > 0 && (
-                            <CollapsibleTableSection key="dashboard-projects" title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
-                                {projectItems.map((item, index) => (
-                                    <tr key={item.id}>
-                                        <td>{toPersianDigits(index + 1)}</td>
-                                        <td>
-                                            <div className="title-cell-content">
-                                                {item.status === 'خاتمه یافته' ? (
-                                                    <span className="completed-indicator" title="تکمیل شده">
-                                                        <ApproveIcon />
-                                                    </span>
-                                                ) : (
-                                                    <span 
-                                                        className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                        title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                    ></span>
-                                                )}
-                                                <span>{item.name}</span>
-                                            </div>
-                                        </td>
-                                        <td>{item.status}</td>
-                                        <td>{renderPriorityBadge(item.priority)}</td>
-                                        <td>
-                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
-                                                <DetailsIcon />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </CollapsibleTableSection>
+                            // FIX: Wrapped CollapsibleTableSection in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component.
+                            <React.Fragment key="dashboard-projects">
+                                <CollapsibleTableSection title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
+                                    {projectItems.map((item, index) => (
+                                        <tr key={item.id}>
+                                            <td>{toPersianDigits(index + 1)}</td>
+                                            <td>
+                                                <div className="title-cell-content">
+                                                    {item.status === 'خاتمه یافته' ? (
+                                                        <span className="completed-indicator" title="تکمیل شده">
+                                                            <ApproveIcon />
+                                                        </span>
+                                                    ) : (
+                                                        <span 
+                                                            className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                            title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                        ></span>
+                                                    )}
+                                                    <span>{item.name}</span>
+                                                </div>
+                                            </td>
+                                            <td>{item.status}</td>
+                                            <td>{renderPriorityBadge(item.priority)}</td>
+                                            <td>
+                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
+                                                    <DetailsIcon />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </CollapsibleTableSection>
+                            </React.Fragment>
                         )}
                         {actionItems.length > 0 && (
-                             <CollapsibleTableSection key="dashboard-actions" title="اقدامات" count={actionItems.length} defaultOpen={true}>
-                                {actionItems.map((item, index) => (
-                                    <tr key={item.id}>
-                                        <td>{toPersianDigits(index + 1)}</td>
-                                        <td>
-                                            <div className="title-cell-content">
-                                                 {item.status === 'خاتمه یافته' ? (
-                                                    <span className="completed-indicator" title="تکمیل شده">
-                                                        <ApproveIcon />
-                                                    </span>
-                                                ) : (
-                                                    <span 
-                                                        className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
-                                                        title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
-                                                    ></span>
-                                                )}
-                                                <span>{item.name}</span>
-                                            </div>
-                                        </td>
-                                        <td>{item.status}</td>
-                                        <td>{renderPriorityBadge(item.priority)}</td>
-                                        <td>
-                                            <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
-                                                <DetailsIcon />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </CollapsibleTableSection>
+                            // FIX: Wrapped CollapsibleTableSection in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component.
+                            <React.Fragment key="dashboard-actions">
+                                 <CollapsibleTableSection title="اقدامات" count={actionItems.length} defaultOpen={true}>
+                                    {actionItems.map((item, index) => (
+                                        <tr key={item.id}>
+                                            <td>{toPersianDigits(index + 1)}</td>
+                                            <td>
+                                                <div className="title-cell-content">
+                                                     {item.status === 'خاتمه یافته' ? (
+                                                        <span className="completed-indicator" title="تکمیل شده">
+                                                            <ApproveIcon />
+                                                        </span>
+                                                    ) : (
+                                                        <span 
+                                                            className={`delay-indicator-dot ${isDelayed(item.status, item.endDate) ? 'delayed' : 'on-time'}`}
+                                                            title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
+                                                        ></span>
+                                                    )}
+                                                    <span>{item.name}</span>
+                                                </div>
+                                            </td>
+                                            <td>{item.status}</td>
+                                            <td>{renderPriorityBadge(item.priority)}</td>
+                                            <td>
+                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
+                                                    <DetailsIcon />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </CollapsibleTableSection>
+                            </React.Fragment>
                         )}
                     </tbody>
                 </table>
