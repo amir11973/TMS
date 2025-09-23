@@ -2276,34 +2276,6 @@ body {
     cursor: not-allowed;
 }
 
-.chat-input-form .mic-button {
-    background: none;
-    border: none;
-    color: var(--c-text-muted);
-    cursor: pointer;
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: color 0.2s, background-color 0.2s;
-    margin-right: 0.5rem;
-}
-
-.chat-input-form .mic-button:hover:not(:disabled) {
-    background-color: var(--c-header);
-}
-
-.chat-input-form .mic-button.recording {
-    color: #3498db; /* Blue */
-    background-color: rgba(52, 152, 219, 0.15);
-}
-
-.chat-input-form .mic-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 /* Word wrapping for table cells */
 .user-list-table td {
     word-wrap: break-word; /* Ensure content wrapping */
