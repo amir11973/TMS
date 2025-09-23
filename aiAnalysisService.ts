@@ -19,7 +19,7 @@ export const getAiAnalysis = async (
     onTimeNotStarted: AnalysisTask[],
     onTimeInProgress: AnalysisTask[]
 ): Promise<string> => {
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
         throw new Error("کلید API برای سرویس هوش مصنوعی پیکربندی نشده است. لطفاً از تنظیم صحیح آن در محیط خود اطمینان حاصل کنید.");
     }

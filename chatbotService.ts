@@ -135,7 +135,7 @@ const simplifyDataForAI = (projects: any[], actions: any[], users: User[], curre
 };
 
 export const getChatbotResponse = async (question: string, projects: any[], actions: any[], users: User[], currentUser: User, taskItems: any[], approvalItems: any[], teamMembers: any[]): Promise<{ type: 'text'; text: string } | { type: 'tool_call'; calls: Array<{ tool_name: string; args: any }> }> => {
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
         return { type: 'text', text: "سرویس دستیار هوشمند به دلیل عدم وجود کلید API پیکربندی نشده است. لطفاً با مدیر سیستم تماس بگیرید." };
     }
