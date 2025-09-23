@@ -164,7 +164,7 @@
     background-color: transparent;
     color: var(--c-text);
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 1.43rem; /* ~16px to prevent iOS auto-zoom */
     padding: 0.5rem;
 }
 .chat-input-form input:focus {
