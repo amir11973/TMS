@@ -23,11 +23,13 @@ export const getAiAnalysis = async (
     if (!apiKey) {
         throw new Error("کلید API برای سرویس هوش مصنوعی پیکربندی نشده است. لطفاً از تنظیم صحیح آن در محیط خود اطمینان حاصل کنید.");
     }
-    const ai = new GoogleGenAI({ apiKey });
     
-    const todayJalali = moment().format('jYYYY/jMM/jDD');
-    
-    const systemInstruction = `You are an expert project management analyst named "تحلیلگر هوشمند پارس". Your task is to analyze a list of tasks for a user and provide a concise, prioritized summary in Persian. The frontend will handle the visual display.
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        
+        const todayJalali = moment().format('jYYYY/jMM/jDD');
+        
+        const systemInstruction = `You are an expert project management analyst named "تحلیلگر هوشمند پارس". Your task is to analyze a list of tasks for a user and provide a concise, prioritized summary in Persian. The frontend will handle the visual display.
 Your tone should be professional, helpful, and motivating.
 You MUST structure your response as follows, using these exact markers:
 1.  Start with a brief, encouraging opening like "سلام! بر اساس تحلیل وظایف شما، موارد زیر باتوجه به اولویت آنها، نیاز به توجه ویژه دارند:".
@@ -45,40 +47,39 @@ LIST_ITEM:زیاد|طراحی صفحه اصلی|1403/05/10|مسئول
 
 Your final response must be a single string with newlines separating each part. Do not use any markdown.`;
 
-    let userPrompt = `Here is a list of my tasks. Please analyze them and provide a summary. Today's date is ${todayJalali}.\n\n`;
+        let userPrompt = `Here is a list of my tasks. Please analyze them and provide a summary. Today's date is ${todayJalali}.\n\n`;
 
-    if (notStarted.length > 0) {
-        userPrompt += "Overdue Not Started Tasks (sorted by start date, then priority):\n";
-        notStarted.forEach(task => {
-            userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
-        });
-        userPrompt += "\n";
-    }
+        if (notStarted.length > 0) {
+            userPrompt += "Overdue Not Started Tasks (sorted by start date, then priority):\n";
+            notStarted.forEach(task => {
+                userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
+            });
+            userPrompt += "\n";
+        }
 
-    if (inProgress.length > 0) {
-        userPrompt += "Overdue In Progress Tasks (sorted by start date, then priority):\n";
-        inProgress.forEach(task => {
-            userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
-        });
-        userPrompt += "\n";
-    }
-    
-    if (onTimeNotStarted.length > 0) {
-        userPrompt += "On-Time Not Started Tasks (sorted by start date, then priority):\n";
-        onTimeNotStarted.forEach(task => {
-            userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
-        });
-        userPrompt += "\n";
-    }
+        if (inProgress.length > 0) {
+            userPrompt += "Overdue In Progress Tasks (sorted by start date, then priority):\n";
+            inProgress.forEach(task => {
+                userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
+            });
+            userPrompt += "\n";
+        }
+        
+        if (onTimeNotStarted.length > 0) {
+            userPrompt += "On-Time Not Started Tasks (sorted by start date, then priority):\n";
+            onTimeNotStarted.forEach(task => {
+                userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
+            });
+            userPrompt += "\n";
+        }
 
-    if (onTimeInProgress.length > 0) {
-        userPrompt += "On-Time In Progress Tasks (sorted by start date, then priority):\n";
-        onTimeInProgress.forEach(task => {
-            userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
-        });
-    }
+        if (onTimeInProgress.length > 0) {
+            userPrompt += "On-Time In Progress Tasks (sorted by start date, then priority):\n";
+            onTimeInProgress.forEach(task => {
+                userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
+            });
+        }
 
-    try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: userPrompt,

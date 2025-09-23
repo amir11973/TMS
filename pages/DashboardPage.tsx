@@ -117,16 +117,15 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        // FIX: The type of the accumulator in `reduce` was not being correctly inferred,
-        // leading to `counts` having values of type `any`. This caused a type error in
-        // the subsequent `.sort()` method. Explicitly typing the accumulator `acc`
-        // ensures that `counts` is correctly typed as `Record<string, number>`.
-        const counts = allItems.reduce((acc: Record<string, number>, item) => {
+        // FIX: The type of the accumulator in `reduce` was incorrectly inferred because the initial value `{}` did not match the accumulator's type annotation.
+        // This caused `counts` to have values of type `any`, leading to a type error in the subsequent `.sort()` method.
+        // By casting the initial value to `Record<string, number>`, the type is correctly inferred, resolving the error.
+        const counts = allItems.reduce((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,

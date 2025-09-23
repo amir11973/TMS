@@ -42,7 +42,7 @@
   background-color: var(--c-bg);
   color: var(--c-text);
   font-family: inherit;
-  font-size: 1.43rem; /* Prevent iOS zoom. This equals ~16px on mobile. */
+  font-size: 0.9rem; /* Same as labels */
 }
 
 .input-grid-col-2 {

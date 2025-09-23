@@ -139,9 +139,9 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
     if (!apiKey) {
         return { type: 'text', text: "سرویس دستیار هوشمند به دلیل عدم وجود کلید API پیکربندی نشده است. لطفاً با مدیر سیستم تماس بگیرید." };
     }
-    const ai = new GoogleGenAI({ apiKey });
 
     try {
+        const ai = new GoogleGenAI({ apiKey });
         const contextData = simplifyDataForAI(projects, actions, users, currentUser, taskItems, approvalItems, teamMembers);
         const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
         const todayJalali = moment().format('jYYYY/jMM/jDD');
