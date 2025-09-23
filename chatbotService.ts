@@ -6,10 +6,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { User } from './types';
 import moment from 'moment-jalaali';
 
-// This is a placeholder for the API key.
-// In a real application, this should be handled securely.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const creationToolSchema = {
     type: Type.OBJECT,
     properties: {
@@ -139,6 +135,12 @@ const simplifyDataForAI = (projects: any[], actions: any[], users: User[], curre
 };
 
 export const getChatbotResponse = async (question: string, projects: any[], actions: any[], users: User[], currentUser: User, taskItems: any[], approvalItems: any[], teamMembers: any[]): Promise<{ type: 'text'; text: string } | { type: 'tool_call'; calls: Array<{ tool_name: string; args: any }> }> => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        return { type: 'text', text: "سرویس دستیار هوشمند به دلیل عدم وجود کلید API پیکربندی نشده است. لطفاً با مدیر سیستم تماس بگیرید." };
+    }
+    const ai = new GoogleGenAI({ apiKey });
+
     try {
         const contextData = simplifyDataForAI(projects, actions, users, currentUser, taskItems, approvalItems, teamMembers);
         const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';

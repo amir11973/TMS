@@ -181,9 +181,9 @@ export const AiAnalysisModal = ({ isOpen, onClose, analysisItems, currentUser }:
                 const result = await getAiAnalysis(overdueNotStarted, overdueInProgress, onTimeNotStarted, onTimeInProgress);
                 setAnalysisResult(result);
 
-            } catch (e) {
+            } catch (e: any) {
                 console.error("AI analysis failed:", e);
-                setError("متاسفانه تحلیل هوشمند با خطا مواجه شد. لطفا بعدا تلاش کنید.");
+                setError(e.message || "متاسفانه تحلیل هوشمند با خطا مواجه شد. لطفا بعدا تلاش کنید.");
             } finally {
                 setIsLoading(false);
             }

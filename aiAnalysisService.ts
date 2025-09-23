@@ -5,8 +5,6 @@
 import { GoogleGenAI } from "@google/genai";
 import moment from 'moment-jalaali';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 interface AnalysisTask {
     title: string;
     priority: string;
@@ -21,6 +19,12 @@ export const getAiAnalysis = async (
     onTimeNotStarted: AnalysisTask[],
     onTimeInProgress: AnalysisTask[]
 ): Promise<string> => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        throw new Error("کلید API برای سرویس هوش مصنوعی پیکربندی نشده است. لطفاً از تنظیم صحیح آن در محیط خود اطمینان حاصل کنید.");
+    }
+    const ai = new GoogleGenAI({ apiKey });
+    
     const todayJalali = moment().format('jYYYY/jMM/jDD');
     
     const systemInstruction = `You are an expert project management analyst named "تحلیلگر هوشمند پارس". Your task is to analyze a list of tasks for a user and provide a concise, prioritized summary in Persian. The frontend will handle the visual display.
