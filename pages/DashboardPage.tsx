@@ -117,9 +117,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        // FIX: The `reduce` function's initial value is now explicitly typed as `Record<string, number>`
-        // to ensure `counts` is correctly inferred, resolving the downstream type error in the `sort` method.
-        const counts = allItems.reduce((acc, item: any) => {
+        // FIX: The original `reduce` call was causing type inference issues, leading to an
+        // error in the `.sort()` method. By explicitly casting the initial accumulator
+        // to `Record<string, number>`, we ensure `counts` is correctly typed, resolving the error.
+        const counts = allItems.reduce((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }

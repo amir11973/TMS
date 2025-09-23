@@ -222,7 +222,8 @@ export const ChatbotModal = ({
         handleSend(question);
     };
     
-    const handleMicPress = () => {
+    const handleMicPress = (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
         if (recognitionRef.current && !isRecording) {
             baseTextRef.current = input ? input + ' ' : '';
             recognitionRef.current.start();
