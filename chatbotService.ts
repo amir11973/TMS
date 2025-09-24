@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { User } from './types';
 import moment from 'moment-jalaali';
 
@@ -135,13 +135,7 @@ const simplifyDataForAI = (projects: any[], actions: any[], users: User[], curre
 };
 
 export const getChatbotResponse = async (question: string, projects: any[], actions: any[], users: User[], currentUser: User, taskItems: any[], approvalItems: any[], teamMembers: any[]): Promise<{ type: 'text'; text: string } | { type: 'tool_call'; calls: Array<{ tool_name: string; args: any }> }> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-        return { type: 'text', text: "سرویس دستیار هوشمند به دلیل عدم وجود کلید API پیکربندی نشده است. لطفاً با مدیر سیستم تماس بگیرید." };
-    }
-
     try {
-        const ai = new GoogleGenAI({ apiKey });
         const contextData = simplifyDataForAI(projects, actions, users, currentUser, taskItems, approvalItems, teamMembers);
         const isAdmin = currentUser.username === 'mahmoudi.pars@gmail.com';
         const todayJalali = moment().format('jYYYY/jMM/jDD');
@@ -158,7 +152,7 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
         "من به عنوان دستیار هوشمند شما می‌توانم در انجام کارهای زیر به شما کمک کنم:
         - **پاسخ به سوالات:** می‌توانم به سوالات شما در مورد وضعیت پروژه‌ها، اقدامات، وظایف در دست اجرا یا موارد دارای تاخیر پاسخ دهم. کافیست سوال خود را به زبان فارسی بپرسید.
         - **ایجاد موارد جدید:** می‌توانید از من بخواهید تا یک پروژه، اقدام مستقل یا فعالیت جدید برایتان ایجاد کنم. فقط کافیست اطلاعات لازم مانند عنوان را به من بدهید. برای مثال: 'یک پروژه جدید با عنوان بهینه‌سازی فرایند فروش ایجاد کن'.
-        - **حذف موارد:** اگر نیاز به حذف یک پروژه، اقدام یا فعالیت دارید، می‌توانید از من بخواهید تا آن را برایتان حذف کنم. برای مثال: 'پروژه تست را حذف کن'.
+        - **حذف موارد:** اگر نیاز به حذف یک پروژه، اقدام یا فعالیت دارید، می‌توانید از من بخواهایید تا آن را برایتان حذف کنم. برای مثال: 'پروژه تست را حذف کن'.
         - **مدیریت تیم:** می‌توانید اعضای جدیدی را به تیم خود اضافه کنید یا اعضای فعلی را حذف نمایید. برای مثال: 'کاربر رضا احمدی را به تیم من اضافه کن'.
         به طور خلاصه، من اینجا هستم تا مدیریت وظایف و پروژه‌های شما را سریع‌تر و آسان‌تر کنم!"
         
@@ -211,17 +205,43 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
         Here is the data:
         ${contextData}`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: question,
-            config: {
-                systemInstruction,
-                responseMimeType: "application/json",
-                responseSchema: creationToolSchema,
-            },
+        const proxyResponse = await fetch('/api/gemini-proxy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'gemini-2.5-flash',
+                contents: question,
+                config: {
+                    systemInstruction,
+                    responseMimeType: "application/json",
+                    responseSchema: creationToolSchema,
+                },
+            }),
         });
 
-        const jsonResponse = JSON.parse(response.text);
+        if (!proxyResponse.ok) {
+            const errorData = await proxyResponse.json();
+            throw new Error(errorData.error?.message || `Proxy request failed with status ${proxyResponse.status}`);
+        }
+
+        // Handle streaming response
+        if (!proxyResponse.body) {
+            throw new Error("Streaming response not available.");
+        }
+        const reader = proxyResponse.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break;
+            }
+            fullText += decoder.decode(value, { stream: true });
+        }
+        fullText += decoder.decode(); // Final flush
+
+        const jsonResponse = JSON.parse(fullText);
 
         if (jsonResponse.tool_calls && jsonResponse.tool_calls.length > 0) {
             return {
@@ -239,10 +259,14 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
         }
 
     } catch (error) {
-        console.error("Error getting response from Gemini:", error);
+        console.error("Error calling Gemini proxy for chatbot:", error);
         let errorMessage = "متاسفانه در حال حاضر امکان پاسخگویی وجود ندارد. لطفا بعدا تلاش کنید.";
-        if (error.message && error.message.includes("JSON")) {
-            errorMessage = "پاسخ از سرویس هوش مصنوعی قابل پردازش نبود. لطفا سوال خود را واضح‌تر بپرسید.";
+        if (error instanceof Error) {
+            if (error.message.includes("JSON")) {
+                errorMessage = "پاسخ از سرویس هوش مصنوعی قابل پردازش نبود. لطفا سوال خود را واضح‌تر بپرسید.";
+            } else if (error.message.includes("API key")) {
+                 errorMessage = "سرویس دستیار هوشمند به دلیل عدم وجود کلید API پیکربندی نشده است. لطفاً با مدیر سیستم تماس بگیرید.";
+            }
         }
         return { type: 'text', text: errorMessage };
     }

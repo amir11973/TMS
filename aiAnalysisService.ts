@@ -2,7 +2,6 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { GoogleGenAI } from "@google/genai";
 import moment from 'moment-jalaali';
 
 interface AnalysisTask {
@@ -19,14 +18,7 @@ export const getAiAnalysis = async (
     onTimeNotStarted: AnalysisTask[],
     onTimeInProgress: AnalysisTask[]
 ): Promise<string> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-        throw new Error("کلید API برای سرویس هوش مصنوعی پیکربندی نشده است. لطفاً از تنظیم صحیح آن در محیط خود اطمینان حاصل کنید.");
-    }
-    
     try {
-        const ai = new GoogleGenAI({ apiKey });
-        
         const todayJalali = moment().format('jYYYY/jMM/jDD');
         
         const systemInstruction = `You are an expert project management analyst named "تحلیلگر هوشمند پارس". Your task is to analyze a list of tasks for a user and provide a concise, prioritized summary in Persian. The frontend will handle the visual display.
@@ -79,17 +71,47 @@ Your final response must be a single string with newlines separating each part. 
                 userPrompt += `- Title: ${task.title}, Priority: ${task.priority}, Start Date: ${task.startDate}, End Date: ${task.endDate}, Roles: ${task.roles}\n`;
             });
         }
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: userPrompt,
-            config: {
-                systemInstruction: systemInstruction,
-            },
+        
+        const proxyResponse = await fetch('/api/gemini-proxy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'gemini-2.5-flash',
+                contents: userPrompt,
+                config: {
+                    systemInstruction: systemInstruction,
+                },
+            }),
         });
-        return response.text;
+
+        if (!proxyResponse.ok) {
+            const errorData = await proxyResponse.json();
+            throw new Error(errorData.error?.message || `Proxy request failed with status ${proxyResponse.status}`);
+        }
+
+        if (!proxyResponse.body) {
+            throw new Error("Streaming response not available.");
+        }
+        const reader = proxyResponse.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break;
+            }
+            fullText += decoder.decode(value, { stream: true });
+        }
+        fullText += decoder.decode(); // Final flush
+
+        return fullText;
+        
     } catch (error) {
-        console.error("Error generating AI analysis:", error);
+        console.error("Error generating AI analysis via proxy:", error);
+         if (error instanceof Error && error.message.includes("API key")) {
+            throw new Error("کلید API برای سرویس هوش مصنوعی پیکربندی نشده است. لطفاً از تنظیم صحیح آن در محیط خود اطمینان حاصل کنید.");
+        }
         throw new Error("Failed to communicate with the AI service.");
     }
 };
