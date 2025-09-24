@@ -1,11 +1,13 @@
 
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useRef, useEffect } from 'react';
-import { User } from '../types';
-import { SendChatIcon, ChatbotIcon } from '../icons';
+// FIX: Import 'SpeechRecognition' type to resolve 'Cannot find name' error.
+import { User, SpeechRecognition } from '../types';
+import { SendChatIcon, ChatbotIcon, MicrophoneIcon } from '../icons';
 import { getChatbotResponse } from '../chatbotService';
 
 interface Message {
@@ -65,6 +67,8 @@ export const ChatbotModal = ({
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -72,17 +76,83 @@ export const ChatbotModal = ({
             setMessages([
                 { id: 1, text: 'سلام! من دستیار هوشمند شما هستم. چطور می‌توانم کمکتان کنم؟ می‌توانید یکی از سوالات زیر را انتخاب کنید یا سوال خود را تایپ کنید.', sender: 'bot' }
             ]);
+        } else {
+             // Stop listening if modal is closed
+            if (isListening) {
+                recognitionRef.current?.stop();
+                setIsListening(false);
+            }
         }
     }, [isOpen]);
     
+    useEffect(() => {
+        // Setup Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.warn("Speech Recognition API is not supported in this browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'fa-IR';
+
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            setInput(transcript);
+        };
+
+        recognition.onerror = (event) => {
+            // FIX: Gracefully handle the common 'no-speech' error.
+            if (event.error === 'no-speech') {
+                // This is a common case when the user doesn't speak.
+                // We can simply stop listening without logging a disruptive error.
+                console.log("No speech detected, stopping recognition.");
+            } else {
+                console.error('Speech recognition error', event.error);
+            }
+            setIsListening(false);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+        
+        recognitionRef.current = recognition;
+
+        return () => {
+            recognition.stop();
+        };
+    }, []);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, isLoading]);
 
     if (!isOpen || !currentUser) return null;
 
+    const handleToggleListen = () => {
+        if (!recognitionRef.current) return;
+        
+        if (isListening) {
+            recognitionRef.current.stop();
+        } else {
+            setInput('');
+            recognitionRef.current.start();
+        }
+        setIsListening(!isListening);
+    };
+
     const handleSend = async (question: string) => {
         if (!question.trim() || isLoading) return;
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+        }
 
         const newUserMessage: Message = { id: Date.now(), text: question, sender: 'user' };
         setMessages(prev => [...prev, newUserMessage]);
@@ -192,11 +262,21 @@ export const ChatbotModal = ({
                     <div ref={messagesEndRef} />
                 </div>
                 <form className="chat-input-form" onSubmit={handleFormSubmit}>
+                    <button
+                        type="button"
+                        className={`mic-button ${isListening ? 'active' : ''}`}
+                        onClick={handleToggleListen}
+                        title={isListening ? 'توقف ضبط صدا' : 'شروع ضبط صدا'}
+                        aria-label={isListening ? 'توقف ضبط صدا' : 'شروع ضبط صدا'}
+                        disabled={!recognitionRef.current}
+                    >
+                        <MicrophoneIcon />
+                    </button>
                     <input
                         type="text"
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        placeholder="پیام خود را تایپ کنید..."
+                        placeholder="پیام خود را تایپ یا ضبط کنید..."
                         disabled={isLoading}
                         aria-label="پیام خود را تایپ کنید"
                     />

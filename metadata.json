@@ -1,5 +1,7 @@
 {
   "name": "Task Management System with Supabase",
   "description": "An issue tracker application to manage tasks and projects.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
