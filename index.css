@@ -2353,15 +2353,15 @@ body {
 .approvals-page .user-list-table th:nth-child(5) { width: 30%; }
 
 /* --- Modal Tables --- */
-.modal-content .mass-delegate-table th:nth-child(1) { width: 25%; } /* پروژه / اقدام */
-.modal-content .mass-delegate-table th:nth-child(2) { width: 35%; } /* فعالیت / عنوان */
+.modal-content .mass-delegate-table th:nth-child(1) { width: 40%; } /* پروژه / اقدام */
+.modal-content .mass-delegate-table th:nth-child(2) { width: 20%; } /* فعالیت / عنوان */
 .modal-content .mass-delegate-table th:nth-child(3) { width: 20%; } /* مسئول فعلی */
 .modal-content .mass-delegate-table th:nth-child(4) { width: 20%; } /* مسئول جدید */
 
-.modal-content .completed-tasks-table th:nth-child(1) { width: 30%; } /* عنوان */
-.modal-content .completed-tasks-table th:nth-child(2) { width: 30%; } /* پروژه / اقدام */
-.modal-content .completed-tasks-table th:nth-child(3) { width: 20%; } /* تاریخ تایید نهایی */
-.modal-content .completed-tasks-table th:nth-child(4) { width: 20%; } /* تاریخچه */
+.modal-content .completed-tasks-table th:nth-child(1) { width: 50%; } /* عنوان */
+.modal-content .completed-tasks-table th:nth-child(2) { width: 20%; } /* پروژه / اقدام */
+.modal-content .completed-tasks-table th:nth-child(3) { width: 15%; } /* تاریخ تایید نهایی */
+.modal-content .completed-tasks-table th:nth-child(4) { width: 15%; } /* تاریخچه */
 
 .modal-content .completed-tasks-table td:nth-child(3) {
     white-space: nowrap;

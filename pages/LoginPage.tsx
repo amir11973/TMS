@@ -47,7 +47,7 @@ export const LoginPage = ({ onLogin, onSignUp }: {
 
                     if (updateError) {
                         // Log the error but don't block login
-                        console.error('Failed to update last login time:', updateError);
+                        console.error('Failed to update last login time:', updateError.message);
                     }
                     
                     const { password_hash, ...userToLogin } = user;

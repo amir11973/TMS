@@ -63,7 +63,7 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                 <table className="user-list-table dashboard-data-table">
                     <thead>
                         <tr>
-                            <th>ردیف</th>
+                            <th>#</th>
                             <th>عنوان</th>
                             <th>وضعیت</th>
                             <th>اهمیت</th>

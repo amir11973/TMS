@@ -807,10 +807,32 @@ const App = () => {
         const history: any[] = [];
         allItems.forEach(item => {
             if (item.history) {
-                item.history.forEach(entry => {
-                    if ((entry.approvalDecision === 'approved' || entry.approvalDecision === 'rejected') && entry.user === loggedInUser.username) {
-                        history.push({ ...entry, parentTitle: item.parentTitle });
+                const decisions = item.history.filter((entry: any) => 
+                    (entry.approvalDecision === 'approved' || entry.approvalDecision === 'rejected') && entry.user === loggedInUser.username
+                );
+                
+                decisions.forEach((decisionEntry: any) => {
+                    const decisionIndex = item.history.findIndex((h: any) => h === decisionEntry);
+                    let requestEntry = null;
+
+                    if (decisionIndex > -1) {
+                         // Find the most recent 'send for approval' before this decision
+                         for (let i = decisionIndex - 1; i >= 0; i--) {
+                            if (item.history[i].status === 'ارسال برای تایید') {
+                                requestEntry = item.history[i];
+                                break;
+                            }
+                        }
                     }
+
+                    const enhancedEntry = { 
+                        ...decisionEntry, 
+                        parentTitle: item.parentTitle,
+                        requestComment: requestEntry?.comment,
+                        requestFileUrl: requestEntry?.fileUrl,
+                        requestFileName: requestEntry?.fileName,
+                    };
+                    history.push(enhancedEntry);
                 });
             }
         });

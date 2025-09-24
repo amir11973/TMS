@@ -46,7 +46,7 @@ export const DashboardListModal = ({ isOpen, onClose, title, items, onViewDetail
                         <table className="user-list-table dashboard-data-table">
                             <thead>
                                 <tr>
-                                    <th>ردیف</th>
+                                    <th>#</th>
                                     <th>عنوان</th>
                                     <th>نوع</th>
                                     <th>وضعیت</th>

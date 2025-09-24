@@ -19,7 +19,7 @@ export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: bool
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
                 <div className="modal-body">
-                    {history && history.slice().reverse().map((entry, index) => {
+                    {history && history.map((entry, index) => {
                          let approvalStatusText = '';
                          if (entry?.status === 'ارسال برای تایید') {
                              approvalStatusText = 'ارسال شده برای تایید';
@@ -30,6 +30,7 @@ export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: bool
                          }
                         
                         const userName = userMap.get(entry?.user) || entry?.user || 'نامشخص';
+                        const isDecisionEntry = entry.hasOwnProperty('requestComment');
                         
                         return (
                             <div className="history-detail-item" key={index}>
@@ -38,9 +39,18 @@ export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: bool
                                {approvalStatusText && <p><strong>وضعیت تایید:</strong> {approvalStatusText}</p>}
                                <p><strong>نام کاربر:</strong> {userName}</p>
                                <p><strong>تاریخ:</strong> {entry?.date ? moment(entry.date).format('jYYYY/jMM/jDD HH:mm') : 'نامشخص'}</p>
-                               {entry?.comment && <p><strong>توضیحات:</strong> {entry.comment}</p>}
+                               {entry.requestComment && <p><strong>توضیحات ارسال کننده:</strong> {entry.requestComment}</p>}
+                               {entry.requestFileName && entry.requestFileUrl && (
+                                    <p>
+                                        <strong>فایل ارسال کننده:</strong>
+                                        <a href={entry.requestFileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-primary)', textDecoration: 'none', marginRight: '5px' }}>
+                                            {entry.requestFileName}
+                                        </a>
+                                    </p>
+                                )}
+                               {entry?.comment && <p><strong>{isDecisionEntry ? 'توضیحات شما (تایید کننده):' : 'توضیحات:'}</strong> {entry.comment}</p>}
                                {entry?.details && <p><strong>جزئیات:</strong> {entry.details}</p>}
-                               {entry?.fileName && entry?.fileUrl && (
+                               {entry?.fileName && entry?.fileUrl && !entry.requestFileName && (
                                     <p>
                                         <strong>فایل:</strong>
                                         <a href={entry.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-primary)', textDecoration: 'none', marginRight: '5px' }}>

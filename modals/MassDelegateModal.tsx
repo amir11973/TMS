@@ -4,6 +4,7 @@
 */
 import React, { useState, useEffect } from 'react';
 import { User, TeamMember } from '../types';
+import { toPersianDigits } from '../utils';
 
 export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, teamMembers, currentUser, users }: {
     isOpen: boolean;
@@ -90,19 +91,21 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
                         <table className="user-list-table mass-delegate-table">
                             <thead>
                                 <tr>
-                                    <th>پروژه / اقدام</th>
+                                    <th>#</th>
                                     <th>فعالیت / عنوان</th>
+                                    <th>پروژه / اقدام</th>
                                     <th>مسئول فعلی</th>
                                     <th>مسئول جدید</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {delegatableItems.length > 0 ? delegatableItems.map(item => {
+                                {delegatableItems.length > 0 ? delegatableItems.map((item, index) => {
                                     const isPendingApproval = item.status === 'ارسال برای تایید';
                                     return (
                                         <tr key={`${item.type}-${item.id}`}>
-                                            <td>{item.parentName}</td>
+                                            <td>{toPersianDigits(index + 1)}</td>
                                             <td>{item.itemName}</td>
+                                            <td>{item.parentName}</td>
                                             <td>{userMap.get(item.responsible) || item.responsible}</td>
                                             <td>
                                                 <select
@@ -124,7 +127,7 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
                                     );
                                 }) : (
                                     <tr>
-                                        <td colSpan={4} style={{ textAlign: 'center' }}>موردی برای واگذاری یافت نشد.</td>
+                                        <td colSpan={5} style={{ textAlign: 'center' }}>موردی برای واگذاری یافت نشد.</td>
                                     </tr>
                                 )}
                             </tbody>

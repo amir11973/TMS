@@ -136,7 +136,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                 <table className="user-list-table">
                     <thead>
                         <tr>
-                            <th>ردیف</th>
+                            <th>#</th>
                             <th>عنوان</th>
                             <th>وضعیت</th>
                             <th>اهمیت</th>

@@ -5,6 +5,7 @@
 import React from 'react';
 import moment from 'moment-jalaali';
 import { HistoryIcon } from '../icons';
+import { toPersianDigits } from '../utils';
 
 export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: { isOpen: boolean; onClose: () => void; items: any[], onShowHistory: (history: any[]) => void; }) => {
     if (!isOpen) return null;
@@ -21,14 +22,15 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                         <table className="user-list-table completed-tasks-table">
                             <thead>
                                 <tr>
+                                    <th>#</th>
                                     <th>عنوان</th>
-                                    <th>پروژه / اقدام</th>
-                                    <th>تاریخ تایید نهایی</th>
                                     <th>تاریخچه</th>
+                                    <th>تاریخ تایید نهایی</th>
+                                    <th>پروژه / اقدام</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.length > 0 ? items.map(item => {
+                                {items.length > 0 ? items.map((item, index) => {
                                     // First, look for the explicit approval history entry for workflow items
                                     let finalApprovalEntry = item.history?.slice().reverse().find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
                                     
@@ -41,19 +43,20 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                                     
                                     return (
                                         <tr key={`${item.type}-${item.id}`}>
+                                            <td>{toPersianDigits(index + 1)}</td>
                                             <td>{item.title}</td>
-                                            <td>{item.parentName}</td>
-                                            <td>{finalApprovalDate}</td>
                                             <td>
                                                 <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
                                                     <HistoryIcon />
                                                 </button>
                                             </td>
+                                            <td>{finalApprovalDate}</td>
+                                            <td>{item.parentName}</td>
                                         </tr>
                                     );
                                 }) : (
                                     <tr>
-                                        <td colSpan={4} style={{ textAlign: 'center' }}>هیچ فعالیت خاتمه یافته‌ای یافت نشد.</td>
+                                        <td colSpan={5} style={{ textAlign: 'center' }}>هیچ فعالیت خاتمه یافته‌ای یافت نشد.</td>
                                     </tr>
                                 )}
                             </tbody>

@@ -90,7 +90,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                     <table className="user-list-table">
                         <thead>
                             <tr>
-                                <th>ردیف</th>
+                                <th>#</th>
                                 <th>عنوان</th>
                                 <th>وضعیت تائید</th>
                                 <th>وضعیت</th>
