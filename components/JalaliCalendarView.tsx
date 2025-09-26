@@ -80,15 +80,13 @@ export const JalaliCalendarView = ({ items, onViewDetails }: {
                         {day && <span className="day-number">{toPersianDigits(day.jDate())}</span>}
                         <div className="tasks-in-day">
                             {tasks.map(task => (
-                                <div key={`${task.type}-${task.id}`} className={`calendar-task-item ${isDelayed(task) ? 'delayed' : ''}`} title={task.title}>
+                                <div
+                                    key={`${task.type}-${task.id}`}
+                                    className={`calendar-task-item ${isDelayed(task) ? 'delayed' : ''}`}
+                                    title={task.title}
+                                    onClick={() => onViewDetails(task)}
+                                >
                                     <span className="calendar-task-title">{task.title}</span>
-                                    <button
-                                        className="icon-btn details-btn"
-                                        title="مشاهده جزئیات"
-                                        onClick={() => onViewDetails(task)}
-                                    >
-                                        <DetailsIcon />
-                                    </button>
                                 </div>
                             ))}
                         </div>
