@@ -11,6 +11,7 @@ import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon, ApproveIcon } from '../
 import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
+import { toPersianDigits } from '../utils';
 
 const isDelayed = (status: string, endDateStr: string) => {
     if (status === 'خاتمه یافته' || !endDateStr) return false;
@@ -389,9 +390,10 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                 </div>
                             </div>
                             <div className="table-wrapper">
-                                <table className="user-list-table">
+                                <table className="user-list-table activities-table">
                                     <thead>
                                         <tr>
+                                            <th>#</th>
                                             <th>عنوان</th>
                                             <th>اهمیت</th>
                                             <th>وضعیت</th>
@@ -399,12 +401,13 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                         </tr>
                                     </thead>
                                     <tbody>
-                                       {filteredActivities.length > 0 ? filteredActivities.map((activity: any) => {
+                                       {filteredActivities.length > 0 ? filteredActivities.map((activity: any, index: number) => {
                                             const displayStatus = activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status;
                                             return (
                                                <tr key={activity.id}>
                                                    <td>
-                                                        <div className="title-cell-content">
+                                                        <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                            <span>{toPersianDigits(index + 1)}</span>
                                                             {activity.status === 'خاتمه یافته' ? (
                                                                 <span className="completed-indicator" title="تکمیل شده">
                                                                     <ApproveIcon />
@@ -415,9 +418,9 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                                     title={isDelayed(activity.status, activity.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                                 ></span>
                                                             )}
-                                                            <span>{activity.title}</span>
                                                         </div>
                                                    </td>
+                                                   <td>{activity.title}</td>
                                                    <td>{renderPriorityBadge(activity.priority)}</td>
                                                    <td>
                                                         {displayStatus}
@@ -450,7 +453,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                            )
                                        }) : (
                                         <tr>
-                                            <td colSpan={4} style={{ textAlign: 'center' }}>فعالیتی با این فیلتر یافت نشد.</td>
+                                            <td colSpan={5} style={{ textAlign: 'center' }}>فعالیتی با این فیلتر یافت نشد.</td>
                                         </tr>
                                        )}
                                     </tbody>

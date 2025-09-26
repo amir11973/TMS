@@ -2319,7 +2319,8 @@ body {
 .tasks-page .user-list-table,
 .approvals-page .user-list-table,
 .mass-delegate-table,
-.completed-tasks-table {
+.completed-tasks-table,
+.project-modal-content .activities-table {
     table-layout: fixed;
     width: 100%;
 }
@@ -2339,11 +2340,11 @@ body {
 .dashboard-data-table th:nth-child(5) { width: 20%; }
 
 /* --- Tasks Page --- */
-.tasks-page .user-list-table th:nth-child(1) { width: 15%; }
+.tasks-page .user-list-table th:nth-child(1) { width: 10%; }
 .tasks-page .user-list-table th:nth-child(2) { width: 25%; }
 .tasks-page .user-list-table th:nth-child(3) { width: 15%; }
 .tasks-page .user-list-table th:nth-child(4) { width: 15%; }
-.tasks-page .user-list-table th:nth-child(5) { width: 30%; }
+.tasks-page .user-list-table th:nth-child(5) { width: 35%; }
 
 /* --- Approvals Page --- */
 .approvals-page .user-list-table th:nth-child(1) { width: 10%; }
@@ -2353,19 +2354,28 @@ body {
 .approvals-page .user-list-table th:nth-child(5) { width: 25%; }
 
 /* --- Modal Tables --- */
-.modal-content .mass-delegate-table th:nth-child(1) { width: 40%; } /* پروژه / اقدام */
-.modal-content .mass-delegate-table th:nth-child(2) { width: 20%; } /* فعالیت / عنوان */
-.modal-content .mass-delegate-table th:nth-child(3) { width: 20%; } /* مسئول فعلی */
-.modal-content .mass-delegate-table th:nth-child(4) { width: 20%; } /* مسئول جدید */
+.modal-content .mass-delegate-table th:nth-child(1) { width: 10%; } /* # */
+.modal-content .mass-delegate-table th:nth-child(2) { width: 25%; } /* فعالیت / عنوان */
+.modal-content .mass-delegate-table th:nth-child(3) { width: 20%; } /* پروژه / اقدام */
+.modal-content .mass-delegate-table th:nth-child(4) { width: 20%; } /* مسئول فعلی */
+.modal-content .mass-delegate-table th:nth-child(5) { width: 25%; } /* مسئول جدید */
 
-.modal-content .completed-tasks-table th:nth-child(1) { width: 50%; } /* عنوان */
-.modal-content .completed-tasks-table th:nth-child(2) { width: 20%; } /* پروژه / اقدام */
-.modal-content .completed-tasks-table th:nth-child(3) { width: 15%; } /* تاریخ تایید نهایی */
-.modal-content .completed-tasks-table th:nth-child(4) { width: 15%; } /* تاریخچه */
+.modal-content .completed-tasks-table th:nth-child(1) { width: 10%; } /* # */
+.modal-content .completed-tasks-table th:nth-child(2) { width: 35%; } /* عنوان */
+.modal-content .completed-tasks-table th:nth-child(3) { width: 15%; } /* تاریخچه */
+.modal-content .completed-tasks-table th:nth-child(4) { width: 20%; } /* تاریخ تایید نهایی */
+.modal-content .completed-tasks-table th:nth-child(5) { width: 20%; } /* پروژه / اقدام */
 
 .modal-content .completed-tasks-table td:nth-child(3) {
     white-space: nowrap;
 }
+
+/* In ProjectDefinitionPage modal */
+.project-modal-content .activities-table th:nth-child(1) { width: 10%; } /* New '#' column */
+.project-modal-content .activities-table th:nth-child(2) { width: 45%; } /* Title */
+.project-modal-content .activities-table th:nth-child(3) { width: 15%; } /* Importance */
+.project-modal-content .activities-table th:nth-child(4) { width: 15%; } /* Status */
+.project-modal-content .activities-table th:nth-child(5) { width: 15%; } /* Actions */
 
 
 /* ============================================== */
@@ -2436,6 +2446,29 @@ body {
     .login-form {
         padding: 2.5rem;
         width: 100%;
+    }
+
+    /* Reset input font sizes for desktop */
+    .input-group input,
+    .input-group select,
+    .input-group textarea {
+        font-size: 1rem;
+    }
+    .modal-body .input-group input,
+    .modal-body .input-group select,
+    .modal-body .input-group textarea {
+        font-size: 0.9rem;
+    }
+    .add-user-form .input-group input,
+    .add-user-form .input-group select {
+        font-size: 0.9rem;
+    }
+    .chat-input-form input {
+        font-size: 0.9rem;
+    }
+    .dashboard-filters .filter-group select,
+    .dashboard-filters .filter-group input {
+        font-size: 0.9rem;
     }
 
     .modal-content {
@@ -2582,6 +2615,13 @@ body {
     .approvals-page .user-list-table th:nth-child(5) {
         width: 30%; /* Actions */
     }
+
+    /* In ProjectDefinitionPage modal */
+    .project-modal-content .activities-table th:nth-child(1) { width: 5%; }
+    .project-modal-content .activities-table th:nth-child(2) { width: 50%; }
+    .project-modal-content .activities-table th:nth-child(3) { width: 15%; }
+    .project-modal-content .activities-table th:nth-child(4) { width: 15%; }
+    .project-modal-content .activities-table th:nth-child(5) { width: 15%; }
 }
 
 @media (min-width: 1200px) {

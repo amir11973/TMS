@@ -77,9 +77,9 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                 <CollapsibleTableSection title="پروژه‌ها" count={projectItems.length} defaultOpen={true}>
                                     {projectItems.map((item, index) => (
                                         <tr key={item.id}>
-                                            <td>{toPersianDigits(index + 1)}</td>
                                             <td>
-                                                <div className="title-cell-content">
+                                                <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                    <span>{toPersianDigits(index + 1)}</span>
                                                     {item.status === 'خاتمه یافته' ? (
                                                         <span className="completed-indicator" title="تکمیل شده">
                                                             <ApproveIcon />
@@ -90,9 +90,9 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                                             title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                         ></span>
                                                     )}
-                                                    <span>{item.name}</span>
                                                 </div>
                                             </td>
+                                            <td>{item.name}</td>
                                             <td>{item.status}</td>
                                             <td>{renderPriorityBadge(item.priority)}</td>
                                             <td>
@@ -111,9 +111,9 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                  <CollapsibleTableSection title="اقدامات" count={actionItems.length} defaultOpen={true}>
                                     {actionItems.map((item, index) => (
                                         <tr key={item.id}>
-                                            <td>{toPersianDigits(index + 1)}</td>
                                             <td>
-                                                <div className="title-cell-content">
+                                                <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                     <span>{toPersianDigits(index + 1)}</span>
                                                      {item.status === 'خاتمه یافته' ? (
                                                         <span className="completed-indicator" title="تکمیل شده">
                                                             <ApproveIcon />
@@ -124,9 +124,9 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                                             title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                         ></span>
                                                     )}
-                                                    <span>{item.name}</span>
                                                 </div>
                                             </td>
+                                            <td>{item.name}</td>
                                             <td>{item.status}</td>
                                             <td>{renderPriorityBadge(item.priority)}</td>
                                             <td>

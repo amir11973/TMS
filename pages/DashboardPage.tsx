@@ -118,12 +118,12 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
 
     const responsibleData = useMemo(() => {
         // FIX: The type of the accumulator in `reduce` was not correctly inferred because the initial value was an empty object. By explicitly providing a generic type to the `reduce` function, we ensure `counts` is correctly typed as `Record<string, number>`, which resolves the arithmetic error in the `.sort()` method where `value` was not being treated as a number.
-        const counts = allItems.reduce<Record<string, number>>((acc, item) => {
+        const counts = allItems.reduce((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,

@@ -96,16 +96,16 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
 
                                                 return (
                                                     <tr key={item.id}>
-                                                        <td>{toPersianDigits(index + 1)}</td>
                                                         <td>
-                                                            <div className="title-cell-content">
+                                                            <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                                <span>{toPersianDigits(index + 1)}</span>
                                                                 <span 
                                                                     className={`delay-indicator-dot ${isDelayed(item.underlyingStatus, item.endDate) ? 'delayed' : 'on-time'}`}
                                                                     title={isDelayed(item.underlyingStatus, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                                 ></span>
-                                                                <span>{item.title}</span>
                                                             </div>
                                                         </td>
+                                                        <td>{item.title}</td>
                                                         <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                         <td>{item.requestedStatus}</td>
                                                         <td>

@@ -121,16 +121,16 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
 
                                                 return (
                                                     <tr key={item.id}>
-                                                        <td>{toPersianDigits(index + 1)}</td>
                                                         <td>
-                                                            <div className="title-cell-content">
+                                                            <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                                <span>{toPersianDigits(index + 1)}</span>
                                                                 <span 
                                                                     className={`delay-indicator-dot ${isDelayed(displayStatus, item.endDate) ? 'delayed' : 'on-time'}`}
                                                                     title={isDelayed(displayStatus, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                                 ></span>
-                                                                <span>{item.title}</span>
                                                             </div>
                                                         </td>
+                                                        <td>{item.title}</td>
                                                         <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                         <td>{displayStatus}</td>
                                                         <td>

@@ -163,9 +163,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                 
                                                 return (
                                                     <tr key={`project-${item.id}`}>
-                                                        <td>{toPersianDigits(index + 1)}</td>
                                                         <td>
-                                                            <div className="title-cell-content">
+                                                            <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                                <span>{toPersianDigits(index + 1)}</span>
                                                                 {item.status === 'خاتمه یافته' ? (
                                                                     <span className="completed-indicator" title="تکمیل شده">
                                                                         <ApproveIcon />
@@ -176,9 +176,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                                         title={isDelayed(item.status, item.projectEndDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                                     ></span>
                                                                 )}
-                                                                <span>{item.title}</span>
                                                             </div>
                                                         </td>
+                                                        <td>{item.title}</td>
                                                         <td>{item.status}</td>
                                                         <td>{renderPriorityBadge(item.priority)}</td>
                                                         <td>
@@ -226,9 +226,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
 
                                                 return (
                                                     <tr key={`action-${item.id}`}>
-                                                        <td>{toPersianDigits(index + 1)}</td>
                                                         <td>
-                                                            <div className="title-cell-content">
+                                                            <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                                                <span>{toPersianDigits(index + 1)}</span>
                                                                 {item.status === 'خاتمه یافته' ? (
                                                                     <span className="completed-indicator" title="تکمیل شده">
                                                                         <ApproveIcon />
@@ -239,9 +239,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                                         title={isDelayed(item.status, item.endDate) ? 'دارای تاخیر' : 'فاقد تاخیر'}
                                                                     ></span>
                                                                 )}
-                                                                <span>{item.title}</span>
                                                             </div>
                                                         </td>
+                                                        <td>{item.title}</td>
                                                         <td>
                                                             {displayStatus}
                                                         </td>
