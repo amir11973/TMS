@@ -79,7 +79,6 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                 <th>عنوان</th>
                                 <th>مسئول</th>
                                 <th>درخواست برای</th>
-                                <th>پیوست‌ها</th>
                                 <th>عملیات</th>
                             </tr>
                         </thead>
@@ -110,21 +109,6 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                         <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                         <td>{item.requestedStatus}</td>
                                                         <td>
-                                                            <div className="action-buttons-row">
-                                                                {approvalRequestInfo?.comment && (
-                                                                    <button className="icon-btn" style={{color: '#a0a0a0'}} title="مشاهده توضیحات" onClick={() => onShowInfo(item)}>
-                                                                        <NotesIcon />
-                                                                    </button>
-                                                                )}
-                                                                {approvalRequestInfo?.fileUrl && (
-                                                                    <a href={approvalRequestInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="icon-btn" style={{color: 'var(--c-info)'}} title={`فایل پیوست: ${approvalRequestInfo.fileName}`}>
-                                                                        <DocumentIcon />
-                                                                    </a>
-                                                                )}
-                                                                {(!approvalRequestInfo?.comment && !approvalRequestInfo?.fileUrl) && '—'}
-                                                            </div>
-                                                        </td>
-                                                        <td>
                                                             <div className="action-buttons-grid">
                                                                 <div className="action-buttons-row">
                                                                     <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
@@ -136,6 +120,11 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                                     <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'approver')}>
                                                                         <NotesIcon />
                                                                     </button>
+                                                                    {(approvalRequestInfo?.comment || approvalRequestInfo?.fileUrl) && (
+                                                                        <button className="icon-btn" style={{color: 'var(--c-info)'}} title="مشاهده اطلاعات ارسال" onClick={() => onShowInfo(item)}>
+                                                                            <DocumentIcon />
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                                 <div className="action-buttons-row">
                                                                     <button className="icon-btn approve-btn" title="تایید" onClick={() => onApprovalDecision(item, 'approved')}>
@@ -155,7 +144,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                  ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
                                         هیچ موردی در انتظار تایید شما نیست.
                                     </td>
                                 </tr>

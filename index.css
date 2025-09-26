@@ -2346,11 +2346,11 @@ body {
 .tasks-page .user-list-table th:nth-child(5) { width: 30%; }
 
 /* --- Approvals Page --- */
-.approvals-page .user-list-table th:nth-child(1) { width: 15%; }
-.approvals-page .user-list-table th:nth-child(2) { width: 20%; }
-.approvals-page .user-list-table th:nth-child(3) { width: 15%; }
-.approvals-page .user-list-table th:nth-child(4) { width: 20%; }
-.approvals-page .user-list-table th:nth-child(5) { width: 30%; }
+.approvals-page .user-list-table th:nth-child(1) { width: 10%; }
+.approvals-page .user-list-table th:nth-child(2) { width: 30%; }
+.approvals-page .user-list-table th:nth-child(3) { width: 20%; }
+.approvals-page .user-list-table th:nth-child(4) { width: 15%; }
+.approvals-page .user-list-table th:nth-child(5) { width: 25%; }
 
 /* --- Modal Tables --- */
 .modal-content .mass-delegate-table th:nth-child(1) { width: 40%; } /* پروژه / اقدام */
@@ -2566,12 +2566,12 @@ body {
         width: 25%; /* Actions */
     }
 
-    /* --- Approvals Page Grid Widths (8/37/15/15/25) --- */
+    /* --- Approvals Page Grid Widths (5/35/15/15/30) --- */
     .approvals-page .user-list-table th:nth-child(1) {
-        width: 8%; /* Row Number */
+        width: 5%; /* Row Number */
     }
     .approvals-page .user-list-table th:nth-child(2) {
-        width: 37%; /* Title */
+        width: 35%; /* Title */
     }
     .approvals-page .user-list-table th:nth-child(3) {
         width: 15%; /* Responsible */
@@ -2580,7 +2580,7 @@ body {
         width: 15%; /* Requested Status */
     }
     .approvals-page .user-list-table th:nth-child(5) {
-        width: 25%; /* Actions */
+        width: 30%; /* Actions */
     }
 }
 
