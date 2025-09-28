@@ -2,13 +2,29 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React from 'react';
+import React, { useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { HistoryIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 
 export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: { isOpen: boolean; onClose: () => void; items: any[], onShowHistory: (history: any[]) => void; }) => {
     if (!isOpen) return null;
+
+    const sortedItems = useMemo(() => {
+        return [...items].sort((a, b) => {
+            const getCompletionDate = (item: any) => {
+                if (!item.history) return 0;
+                const history = [...item.history].reverse();
+                let entry = history.find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
+                if (!entry) {
+                    entry = history.find(h => h.status === 'خاتمه یافته');
+                }
+                return entry ? new Date(entry.date).getTime() : 0;
+            };
+
+            return getCompletionDate(b) - getCompletionDate(a);
+        });
+    }, [items]);
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
@@ -30,7 +46,7 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.length > 0 ? items.map((item, index) => {
+                                {sortedItems.length > 0 ? sortedItems.map((item, index) => {
                                     // First, look for the explicit approval history entry for workflow items
                                     let finalApprovalEntry = item.history?.slice().reverse().find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
                                     

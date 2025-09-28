@@ -117,13 +117,13 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        // FIX: Replaced type assertion on the initial value with a generic type argument on the `reduce` function. This ensures the accumulator's type is correctly inferred as `Record<string, number>`, resolving the arithmetic error in the subsequent `.sort()` method.
-        const counts = allItems.reduce<Record<string, number>>((acc, item) => {
+        // FIX: Explicitly typed the initial value of the reduce function to ensure the accumulator's type is correctly inferred as Record<string, number>, resolving a potential arithmetic error in the subsequent .sort() method.
+        const counts = allItems.reduce((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,

@@ -19,7 +19,7 @@ export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: bool
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
                 <div className="modal-body">
-                    {history && history.map((entry, index) => {
+                    {history && [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry, index) => {
                          let approvalStatusText = '';
                          if (entry?.status === 'ارسال برای تایید') {
                              approvalStatusText = 'ارسال شده برای تایید';
