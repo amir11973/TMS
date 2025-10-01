@@ -21,6 +21,10 @@ const KanbanCard = ({ item, onCardClick }: { item: any, onCardClick: (item: any)
     const isPending = item.approvalStatus === 'pending';
 
     const handleDragStart = (e: React.DragEvent) => {
+        if (isPending) {
+            e.preventDefault();
+            return;
+        }
         e.dataTransfer.setData('application/json', JSON.stringify(item));
         e.currentTarget.classList.add('dragging');
     };
@@ -35,11 +39,12 @@ const KanbanCard = ({ item, onCardClick }: { item: any, onCardClick: (item: any)
             onClick={() => onCardClick(item)} 
             role="button" 
             tabIndex={0}
-            draggable={true}
+            draggable={!isPending}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             data-id={`${item.type}-${item.id}`}
-            title={item.title}
+            title={isPending ? `${item.title} (غیرقابل جابجایی در وضعیت انتظار تایید)` : item.title}
+            style={{ cursor: isPending ? 'not-allowed' : 'grab' }}
         >
             <div className="kanban-card-title">{item.title}</div>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: '26px'}}>
