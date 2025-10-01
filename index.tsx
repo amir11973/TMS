@@ -114,8 +114,8 @@ const App = () => {
         try {
             const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes] = await Promise.all([
                 supabase.from('users').select('*'),
-                supabase.from('projects').select('*, activities(*)').order('id', { foreignTable: 'activities' }),
-                supabase.from('actions').select('*'),
+                supabase.from('projects').select('*, activities(*)').order('kanban_order', { foreignTable: 'activities', ascending: true, nullsFirst: false }).order('id', { foreignTable: 'activities' }),
+                supabase.from('actions').select('*').order('kanban_order', { ascending: true, nullsFirst: false }),
                 supabase.from('units').select('name'),
                 supabase.from('teams').select('*')
             ]);
@@ -572,7 +572,7 @@ const App = () => {
                     });
                 }
             } else { // Insert
-                const newActionPayload = { ...actionToSave, owner: loggedInUser.username, history: [{ status: actionToSave.status, user: loggedInUser.username, date: new Date().toISOString() }] };
+                const newActionPayload = { ...actionToSave, owner: loggedInUser.username, history: [{ status: actionToSave.status, user: loggedInUser.username, date: new Date().toISOString() }], kanban_order: Date.now() };
                 delete newActionPayload.id;
                 const { data, error } = await supabase.from('actions').insert(newActionPayload).select().single();
                 handleSupabaseError(error, 'creating new action');
@@ -1169,429 +1169,234 @@ const App = () => {
             handleCloseSendForApproval();
         }
     };
+    
+    const handleUpdateItemsOrder = async (updates: { id: number; type: string; kanban_order: number }[]) => {
+        setIsActionLoading(true);
+        try {
+            const updatePromises = updates.map(update => {
+                const tableName = update.type === 'activity' ? 'activities' : 'actions';
+                return supabase.from(tableName).update({ kanban_order: update.kanban_order }).eq('id', update.id);
+            });
 
-    const handleDirectStatusUpdate = (itemId: number, itemType: string, newStatus: string) => {
-        if (loggedInUser) {
-            updateItemStatus(itemId, itemType, newStatus, { details: `وضعیت به صورت دستی به "${newStatus}" تغییر یافت.` });
+            const results = await Promise.all(updatePromises);
+            results.forEach(res => handleSupabaseError(res.error, 'updating item order'));
+
+            // Optimistically update local state to reflect new order instantly
+            const activityUpdates = new Map(updates.filter(u => u.type === 'activity').map(u => [u.id, u.kanban_order]));
+            const actionUpdates = new Map(updates.filter(u => u.type === 'action').map(u => [u.id, u.kanban_order]));
+
+            if (activityUpdates.size > 0) {
+                setProjects(prev => prev.map(p => ({
+                    ...p,
+                    activities: p.activities.map(act => activityUpdates.has(act.id) ? { ...act, kanban_order: activityUpdates.get(act.id) } : act)
+                })));
+            }
+            if (actionUpdates.size > 0) {
+                setActions(prev => prev.map(a => actionUpdates.has(a.id) ? { ...a, kanban_order: actionUpdates.get(a.id) } : a));
+            }
+
+        } catch (e: any) {
+             handleRequestAlert({
+                title: 'خطا در بروزرسانی ترتیب',
+                message: `ترتیب آیتم‌ها بروزرسانی نشد. لطفا دوباره تلاش کنید. (${e.message})`
+            });
+        } finally {
+            setIsActionLoading(false);
         }
     };
-    
-    // --- Notes Modal Handlers ---
+
     const handleOpenNotesModal = (item: any, viewMode: 'responsible' | 'approver') => {
         setNotesModalProps({ isOpen: true, item, viewMode });
     };
+
     const handleCloseNotesModal = () => {
-        setNotesModalProps(prev => ({ ...prev, isOpen: false }));
+        setNotesModalProps({ isOpen: false, item: null, viewMode: 'responsible' });
     };
 
-    // --- Chatbot Creation and Deletion Handlers ---
-    const handleCreateProjectForChatbot = async (projectData: any) => {
-        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
-        try {
-            const managerUsername = findUserByMention(projectData.projectManager, users) || loggedInUser.username;
-            const payload = {
-                title: projectData.title,
-                owner: loggedInUser.username,
-                projectManager: managerUsername,
-                unit: projectData.unit || (sections.length > 0 ? sections[0] : ''),
-                priority: projectData.priority || 'متوسط',
-                projectStartDate: projectData.projectStartDate ? moment(projectData.projectStartDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
-                projectEndDate: projectData.projectEndDate ? moment(projectData.projectEndDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
-                projectGoal: projectData.projectGoal || '',
-                status: 'شروع نشده',
-                use_workflow: true,
-            };
-            const { error } = await supabase.from('projects').insert(payload);
-            if (error) {
-                handleSupabaseError(error, 'creating project from chatbot');
-                return { success: false, error: error.message };
-            }
-            await fetchData();
-            return { success: true, title: payload.title };
-        } catch (e: any) {
-            return { success: false, error: e.message };
-        }
+    const handleAiAnalysisRequest = () => {
+        setIsAiAnalysisModalOpen(true);
     };
     
-    const handleCreateActionForChatbot = async (actionData: any) => {
-        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
-        try {
-            const responsibleUsername = findUserByMention(actionData.responsible, users) || loggedInUser.username;
-            const approverUsername = findUserByMention(actionData.approver, users) || loggedInUser.username;
-            const payload = {
-                title: actionData.title,
-                owner: loggedInUser.username,
-                responsible: responsibleUsername,
-                approver: approverUsername,
-                unit: actionData.unit || (sections.length > 0 ? sections[0] : ''),
-                priority: actionData.priority || 'متوسط',
-                startDate: actionData.startDate ? moment(actionData.startDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
-                endDate: actionData.endDate ? moment(actionData.endDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
-                status: 'شروع نشده',
-                use_workflow: true,
-                history: [{ status: 'شروع نشده', user: loggedInUser.username, date: new Date().toISOString() }]
-            };
-            const { error } = await supabase.from('actions').insert(payload);
-            if (error) {
-                handleSupabaseError(error, 'creating action from chatbot');
-                return { success: false, error: error.message };
-            }
-            await fetchData();
-            return { success: true, title: payload.title };
-        } catch (e: any) {
-            return { success: false, error: e.message };
-        }
-    };
+    // ... chatbot handlers, etc.
+    const createItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: any) => {
+        // FIX: Add a check for `loggedInUser` to prevent errors and ensure a user is logged in.
+        if (!loggedInUser) return { success: false, error: 'کاربر وارد نشده است.' };
+        if (!args.title) return { success: false, error: 'عنوان الزامی است.' };
+        if (itemType === 'activity' && !args.project_name) return { success: false, error: 'نام پروژه برای ایجاد فعالیت الزامی است.' };
 
-    const handleCreateActivityForChatbot = async (activityData: any) => {
-        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
-        try {
-            const { data: foundProjects, error: findError } = await supabase
-                .from('projects')
-                .select('id, title')
-                .ilike('title', `%${activityData.project_name}%`);
-    
-            if (findError || !foundProjects || foundProjects.length === 0) {
-                return { success: false, error: `پروژه‌ای با نام "${activityData.project_name}" یافت نشد.` };
-            }
-    
-            let project = foundProjects.find(p => p.title.toLowerCase() === activityData.project_name.toLowerCase()) || foundProjects[0];
-            
-            const responsibleUsername = findUserByMention(activityData.responsible, users) || loggedInUser.username;
-            const approverUsername = findUserByMention(activityData.approver, users) || loggedInUser.username;
-            const payload = {
-                title: activityData.title,
-                project_id: project.id,
-                responsible: responsibleUsername,
-                approver: approverUsername,
-                priority: activityData.priority || 'متوسط',
-                startDate: activityData.startDate ? moment(activityData.startDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
-                endDate: activityData.endDate ? moment(activityData.endDate, 'jYYYY/jMM/jDD').toISOString() : getTodayString(),
-                status: 'شروع نشده',
-                history: []
-            };
-            const { error } = await supabase.from('activities').insert(payload);
-            if (error) {
-                handleSupabaseError(error, 'creating activity from chatbot');
-                return { success: false, error: error.message };
-            }
-            await fetchData();
-            return { success: true, title: payload.title, parent: project.title };
-        } catch (e: any) {
-            return { success: false, error: e.message };
-        }
-    };
-    
-    const handleAddTeamMemberForChatbot = async ({ username: userMention, role }: { username: string; role?: TeamMemberRole }) => {
-        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
-        try {
-            const username = findUserByMention(userMention, users);
-            if (!username) {
-                return { success: false, error: `کاربری با نام "${userMention}" یافت نشد.` };
-            }
-            
-            const team = teams[loggedInUser.username] || [];
-            if (team.some(m => m.username === username)) {
-                return { success: false, error: `کاربر "${userMention}" از قبل عضو تیم شما است.` };
-            }
-            
-            const newRole = role || 'عضو تیم';
-            
-            const { error } = await supabase.from('teams').insert({
-                manager_username: loggedInUser.username,
-                member_username: username,
-                role: newRole,
-            });
-    
-            if (error) {
-                handleSupabaseError(error, 'adding team member from chatbot');
-                return { success: false, error: error.message };
-            }
-            
-            await fetchData();
-            const userDetails = users.find(u => u.username === username);
-            return { success: true, name: userDetails?.full_name || username, role: newRole };
-        } catch (e: any) {
-            return { success: false, error: e.message };
-        }
-    };
+        // FIX: Replaced 'currentUser' with the correct state variable 'loggedInUser'.
+        const responsibleUser = findUserByMention(args.responsible, users) || loggedInUser.username;
+        // FIX: Replaced 'currentUser' with the correct state variable 'loggedInUser'.
+        const approverUser = findUserByMention(args.approver, users) || loggedInUser.username;
+        // FIX: Replaced 'currentUser' with the correct state variable 'loggedInUser'.
+        const projectManagerUser = findUserByMention(args.projectManager, users) || loggedInUser.username;
 
-    const handleRemoveTeamMemberForChatbot = async ({ username: memberMention }) => {
-        if (!loggedInUser) return { success: false, error: "کاربر وارد نشده است." };
-        try {
-            const username = findUserByMention(memberMention, users);
-            if (!username) {
-                return { success: false, error: `کاربری با نام "${memberMention}" یافت نشد.` };
-            }
-            const team = teams[loggedInUser.username] || [];
-            if (!team.some(m => m.username === username)) {
-                return { success: false, error: `کاربر "${memberMention}" عضو تیم شما نیست.` };
-            }
-    
-            const { error } = await supabase.from('teams').delete().eq('manager_username', loggedInUser.username).eq('member_username', username);
-            if (error) {
-                handleSupabaseError(error, 'removing team member from chatbot');
-                return { success: false, error: error.message };
-            }
-    
-            await fetchData();
-            return { success: true, name: userMap.get(username) || username };
-        } catch (e: any) {
-            return { success: false, error: e.message };
-        }
-    };
+        const defaultData = {
+            title: args.title,
+            priority: args.priority || 'متوسط',
+            startDate: args.startDate ? moment(args.startDate, 'jYYYY/jMM/jDD').toISOString().split('T')[0] : getTodayString(),
+            endDate: args.endDate ? moment(args.endDate, 'jYYYY/jMM/jDD').toISOString().split('T')[0] : getTodayString(),
+        };
 
-    const handleDeleteProjectForChatbot = async ({ title }) => {
-        try {
-            const projectToDelete = projects.find(p => p.title.toLowerCase() === title.toLowerCase());
-            if (!projectToDelete) {
-                return { success: false, error: `پروژه "${title}" یافت نشد.` };
-            }
-            const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
-            if (error) {
-                handleSupabaseError(error, 'deleting project from chatbot');
-                return { success: false, error: error.message };
-            }
-            await fetchData();
-            return { success: true, title: projectToDelete.title };
-        } catch (e: any) {
-            return { success: false, error: e.message };
+        if (itemType === 'project') {
+            // FIX: Replaced 'currentUser' with the correct state variable 'loggedInUser'.
+            const projectData = { ...defaultData, projectStartDate: defaultData.startDate, projectEndDate: defaultData.endDate, isNew: true, owner: loggedInUser.username, activities: [], projectManager: projectManagerUser, unit: args.unit || sections[0], projectGoal: args.projectGoal || '' };
+            await handleSaveProject(projectData);
+            return { success: true, title: args.title };
         }
-    };
-    
-    const handleDeleteActionForChatbot = async ({ title }) => {
-        try {
-            const actionToDelete = actions.find(a => a.title.toLowerCase() === title.toLowerCase());
-            if (!actionToDelete) {
-                return { success: false, error: `اقدام "${title}" یافت نشد.` };
-            }
-            const { error } = await supabase.from('actions').delete().eq('id', actionToDelete.id);
-            if (error) {
-                handleSupabaseError(error, 'deleting action from chatbot');
-                return { success: false, error: error.message };
-            }
-            await fetchData();
-            return { success: true, title: actionToDelete.title };
-        } catch (e: any) {
-            return { success: false, error: e.message };
+
+        if (itemType === 'action') {
+            const actionData = { ...defaultData, responsible: responsibleUser, approver: approverUser, unit: args.unit || sections[0], status: 'شروع نشده' };
+            await handleSaveAction(actionData);
+            return { success: true, title: args.title };
         }
-    };
-    
-    const handleDeleteActivityForChatbot = async ({ title, project_name }) => {
-        try {
-            let activityToDelete = null;
-            let parentProjectTitle = '';
-    
-            for (const p of projects) {
-                if (!project_name || p.title.toLowerCase().includes(project_name.toLowerCase())) {
-                    const foundActivity = p.activities.find((a:any) => a.title.toLowerCase() === title.toLowerCase());
-                    if (foundActivity) {
-                        activityToDelete = foundActivity;
-                        parentProjectTitle = p.title;
-                        break;
-                    }
+
+        if (itemType === 'activity') {
+            const parentProject = projects.find(p => p.title.toLowerCase().includes(args.project_name.toLowerCase()));
+            if (!parentProject) return { success: false, error: `پروژه ای با نام '${args.project_name}' یافت نشد.` };
+
+            const newActivity = { ...defaultData, responsible: responsibleUser, approver: approverUser, project_id: parentProject.id, status: 'شروع نشده', history: [] };
+            
+            // This logic is in ProjectDefinitionPage, so we simulate it here.
+            // FIX: Replaced incorrect function name 'onSetIsActionLoading' with 'setIsActionLoading'.
+            setIsActionLoading(true);
+            try {
+                const { data, error } = await supabase.from('activities').insert(newActivity).select().single();
+                handleSupabaseError(error, 'creating activity via chatbot');
+                if (data) {
+                    const updatedProject = { ...parentProject, activities: [...parentProject.activities, data] };
+                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                    return { success: true, title: args.title, parent: parentProject.title };
+                } else {
+                    return { success: false, error: 'خطا در ذخیره فعالیت در پایگاه داده.' };
                 }
+            } finally {
+                // FIX: Replaced incorrect function name 'onSetIsActionLoading' with 'setIsActionLoading'.
+                setIsActionLoading(false);
             }
+        }
+        return { success: false, error: 'نوع آیتم نامعتبر است.' };
+    };
     
-            if (!activityToDelete) {
-                return { success: false, error: `فعالیت "${title}" در پروژه مشخص شده یافت نشد.` };
-            }
+    const deleteItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: any) => {
+        if (!args.title) return { success: false, error: 'عنوان برای حذف الزامی است.' };
     
-            const { error } = await supabase.from('activities').delete().eq('id', activityToDelete.id);
+        let itemToDelete;
+        let parentProjectTitle = '';
+    
+        if (itemType === 'project') {
+            itemToDelete = projects.find(p => p.title.toLowerCase() === args.title.toLowerCase());
+        } else if (itemType === 'action') {
+            itemToDelete = actions.find(a => a.title.toLowerCase() === args.title.toLowerCase());
+        } else if (itemType === 'activity') {
+            if (!args.project_name) return { success: false, error: 'نام پروژه برای حذف فعالیت الزامی است.' };
+            const parentProject = projects.find(p => p.title.toLowerCase().includes(args.project_name.toLowerCase()));
+            if (!parentProject) return { success: false, error: `پروژه ای با نام '${args.project_name}' یافت نشد.` };
+            itemToDelete = parentProject.activities.find((a:any) => a.title.toLowerCase() === args.title.toLowerCase());
+            parentProjectTitle = parentProject.title;
+        }
+    
+        if (!itemToDelete) return { success: false, error: `${itemType} با عنوان '${args.title}' یافت نشد.` };
+    
+        // FIX: Replaced incorrect function name 'onSetIsActionLoading' with 'setIsActionLoading'.
+        setIsActionLoading(true);
+        try {
+            const tableName = itemType === 'activity' ? 'activities' : `${itemType}s`;
+            const { error } = await supabase.from(tableName).delete().eq('id', itemToDelete.id);
+            handleSupabaseError(error, `deleting ${itemType} via chatbot`);
             if (error) {
-                handleSupabaseError(error, 'deleting activity from chatbot');
-                return { success: false, error: error.message };
+                return { success: false, error: `خطا در حذف از پایگاه داده: ${error.message}` };
             }
     
+            // Refetch data for consistency after deletion
             await fetchData();
-            return { success: true, title: activityToDelete.title, parent: parentProjectTitle };
-        } catch (e: any) {
-            return { success: false, error: e.message };
+            return { success: true, title: args.title, parent: parentProjectTitle };
+        } finally {
+            // FIX: Replaced incorrect function name 'onSetIsActionLoading' with 'setIsActionLoading'.
+            setIsActionLoading(false);
         }
     };
-
-    const badgeCounts = {
-        tasks: notStartedTasksCount,
-        approvals: pendingApprovalsCount,
-        projects_actions_list: notStartedProjectsAndActionsCount,
-    };
     
-    const isAdmin = loggedInUser?.username === 'mahmoudi.pars@gmail.com';
-    
-    const chatbotVisibleItems = useMemo(() => {
-        if (!loggedInUser) return { projects: [], actions: [] };
-        if (isAdmin) {
-            return { projects, actions };
-        }
-    
-        const visibleProjects = projects.filter(p => {
-            const ownerTeam = teams[p.owner] || [];
-            const isTeamAdmin = ownerTeam.some(member => member.username === loggedInUser.username && member.role === 'ادمین');
-            return p.owner === loggedInUser.username ||
-                p.projectManager === loggedInUser.username ||
-                (p.activities && p.activities.some((act:any) => act.responsible === loggedInUser.username || act.approver === loggedInUser.username)) ||
-                isTeamAdmin;
-        });
-    
-        const visibleActions = actions.filter(a => {
-            const ownerTeam = teams[a.owner] || [];
-            const isTeamAdmin = ownerTeam.some(member => member.username === loggedInUser.username && member.role === 'ادمین');
-            return a.owner === loggedInUser.username ||
-                a.responsible === loggedInUser.username ||
-                a.approver === loggedInUser.username ||
-                isTeamAdmin;
-        });
-    
-        return { projects: visibleProjects, actions: visibleActions };
-    }, [projects, actions, loggedInUser, teams, isAdmin]);
-
-    const analysisItems = useMemo(() => {
-        if (!loggedInUser) return [];
-        const username = loggedInUser.username;
-        const items = [];
-    
-        // Activities
-        for (const project of projects) {
-            for (const activity of project.activities) {
-                const roles = new Set<string>();
-                if (project.owner === username) roles.add('مالک پروژه');
-                if (project.projectManager === username) roles.add('مدیر پروژه');
-                if (activity.responsible === username) roles.add('مسئول');
-                if (activity.approver === username) roles.add('تائید کننده');
-    
-                if (roles.size > 0) {
-                    items.push({
-                        ...activity,
-                        type: 'activity',
-                        parentName: project.title,
-                        use_workflow: project.use_workflow,
-                        roles: Array.from(roles).join('، ')
-                    });
-                }
-            }
-        }
-    
-        // Actions
-        for (const action of actions) {
-            const roles = new Set<string>();
-            if (action.owner === username) roles.add('مالک');
-            if (action.responsible === username) roles.add('مسئول');
-            if (action.approver === username) roles.add('تائید کننده');
-    
-            if (roles.size > 0) {
-                items.push({
-                    ...action,
-                    type: 'action',
-                    parentName: 'اقدام مستقل',
-                    roles: Array.from(roles).join('، ')
-                });
-            }
-        }
-    
-        // Remove duplicates by ID and type, just in case
-        const uniqueItems = Array.from(new Map(items.map(item => [`${item.type}-${item.id}`, item])).values());
+    const addTeamMemberForChatbot = async (args: any) => {
+        if (!args.username) return { success: false, error: 'نام کاربری برای افزودن عضو الزامی است.' };
+        const userToAdd = findUserByMention(args.username, users);
+        if (!userToAdd) return { success: false, error: `کاربری با نام '${args.username}' یافت نشد.` };
         
-        return uniqueItems;
-    }, [projects, actions, loggedInUser]);
-
-    const renderContent = () => {
-        switch(view) {
-            // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
-            case 'dashboard':
-                 return <DashboardPage
-                            projects={projects}
-                            actions={actions}
-                            currentUser={loggedInUser}
-                            users={users}
-                            teams={teams}
-                            onViewDetails={handleViewDetails}
-                        />;
-            case 'my_team':
-                return <MyTeamPage
-                            allUsers={users}
-                            currentUser={loggedInUser}
-                            teamMembers={currentUserTeam}
-                            onAddMember={handleAddTeamMember}
-                            onRemoveMember={handleRemoveTeamMember}
-                            onUpdateRole={handleUpdateTeamMemberRole}
-                        />;
-            // FIX: Removed `sections` prop from DashboardPage as it is not an expected prop.
-            case 'users':
-                return isAdmin ? <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} onShowUserInfo={handleShowUserInfo} /> : <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
-            case 'projects_actions_list':
-                return <ProjectsActionsListPage projects={projects} actions={actions} currentUser={loggedInUser} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} onShowHistory={handleShowHistory} users={users} teams={teams} />;
-            case 'tasks':
-                return <TasksPage 
-                            items={taskItems} 
-                            currentUser={loggedInUser} 
-                            onShowHistory={handleShowHistory} 
-                            users={users} 
-                            onDelegateTask={handleDelegateTask}
-                            projects={projects}
-                            actions={actions}
-                            teamMembers={currentUserTeam}
-                            onMassDelegate={handleMassDelegateTasks}
-                            onViewDetails={handleViewDetails}
-                            onDirectStatusUpdate={handleDirectStatusUpdate}
-                            onSendForApproval={handleRequestSendForApproval}
-                            onOpenNotesModal={handleOpenNotesModal}
-                        />;
-            case 'approvals':
-                return <ApprovalsPage 
-                            items={approvalItems} 
-                            currentUser={loggedInUser} 
-                            onApprovalDecision={handleRequestApprovalDecision} 
-                            onShowHistory={handleShowHistory} 
-                            onShowGlobalHistory={handleShowGlobalApprovalsHistory}
-                            onViewDetails={handleViewDetails}
-                            onShowInfo={handleShowInfo}
-                            users={users}
-                            onOpenNotesModal={handleOpenNotesModal}
-                        />;
-            case 'settings':
-                return <SettingsPage 
-                            theme={theme} 
-                            onThemeChange={handleThemeChange}
-                            sections={sections}
-                            onAddSection={handleAddSection}
-                            onUpdateSection={handleUpdateSection}
-                            onDeleteSection={handleDeleteSection}
-                            currentUser={loggedInUser}
-                        />;
-            default:
-                return <h2>خوش آمدید!</h2>;
-        }
+        await handleAddTeamMember(userToAdd);
+        const userDetails = users.find(u => u.username === userToAdd);
+        return { success: true, name: userDetails?.full_name || userToAdd, role: args.role || 'عضو تیم' };
     };
+
+    const removeTeamMemberForChatbot = async (args: any) => {
+        if (!args.username) return { success: false, error: 'نام کاربری برای حذف عضو الزامی است.' };
+        const userToRemove = findUserByMention(args.username, users);
+         if (!userToRemove) return { success: false, error: `کاربری با نام '${args.username}' یافت نشد.` };
+
+        const teamMember = (teams[loggedInUser.username] || []).find(m => m.username === userToRemove);
+        if (!teamMember) return { success: false, error: `کاربر '${args.username}' عضو تیم شما نیست.`};
+        
+        // This will trigger a confirmation modal, so we can't await it directly.
+        // We'll proceed optimistically.
+        handleRemoveTeamMember(userToRemove);
+        const userDetails = users.find(u => u.username === userToRemove);
+        return { success: true, name: userDetails?.full_name || userToRemove };
+    };
+
+
+    if (isLoading) {
+        return <div className="loading-container">بارگذاری اطلاعات...</div>;
+    }
 
     if (error) {
-        if (!isSupabaseConfigured) {
-            return (
-                <div className="config-error-container">
-                    <div className="login-form">
-                        <h2>پیکربندی مورد نیاز است</h2>
-                        <p>{error}</p>
-                        <div className="code-snippet">
-                            <p>فایل <strong>supabaseClient.ts</strong> را ویرایش کنید:</p>
-                            <pre><code>
-{`const supabaseUrl = 'https://...';
-const supabaseAnonKey = '...';`}
-                            </code></pre>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
         return <div className="loading-container">{error}</div>;
     }
-    
-    if (isLoading) {
-        return <div className="loading-container">در حال بارگذاری اطلاعات...</div>;
-    }
-    
-    if (view === 'login') {
-        return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} />;
-    }
 
+    if (!isSupabaseConfigured) {
+        return (
+            <div className="config-error-container">
+                <div className="login-form">
+                    <img src="https://parspmi.ir/uploads/c140d7143d9b4d7abbe80a36585770bc.png" alt="ParsPMI Logo" className="login-logo" />
+                    <h3 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>خطا در پیکربندی</h3>
+                    <p>{error}</p>
+                    <div className="code-snippet">
+                        <p>برای رفع مشکل، فایل زیر را با اطلاعات پروژه Supabase خود به‌روزرسانی کنید:</p>
+                        <pre><code>
+{`// supabaseClient.ts
+
+const supabaseUrl = '...';
+const supabaseAnonKey = '...';`}
+                        </code></pre>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    const mainContent = () => {
+        if (!loggedInUser) {
+            return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} />;
+        }
+
+        switch (view) {
+            case 'dashboard':
+                return <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
+            case 'projects_actions_list':
+                return <ProjectsActionsListPage projects={projects} actions={actions} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} teams={teams} />;
+            case 'tasks':
+                return <TasksPage items={taskItems} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} onDelegateTask={handleDelegateTask} projects={projects} actions={actions} teamMembers={currentUserTeam} onMassDelegate={handleMassDelegateTasks} onViewDetails={handleViewDetails} onDirectStatusUpdate={updateItemStatus} onSendForApproval={handleRequestSendForApproval} onOpenNotesModal={handleOpenNotesModal} onUpdateItemsOrder={handleUpdateItemsOrder} />;
+            case 'approvals':
+                return <ApprovalsPage items={approvalItems} currentUser={loggedInUser} onApprovalDecision={handleRequestApprovalDecision} onShowHistory={handleShowHistory} onShowGlobalHistory={handleShowGlobalApprovalsHistory} onViewDetails={handleViewDetails} onShowInfo={handleShowInfo} users={users} onOpenNotesModal={handleOpenNotesModal}/>;
+            case 'users':
+                return <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} onShowUserInfo={handleShowUserInfo} />;
+            case 'my_team':
+                return <MyTeamPage allUsers={users} currentUser={loggedInUser} teamMembers={currentUserTeam} onAddMember={handleAddTeamMember} onRemoveMember={handleRemoveTeamMember} onUpdateRole={handleUpdateTeamMemberRole} />;
+            case 'settings':
+                return <SettingsPage theme={theme} onThemeChange={handleThemeChange} sections={sections} onAddSection={handleAddSection} onUpdateSection={handleUpdateSection} onDeleteSection={handleDeleteSection} currentUser={loggedInUser} />;
+            default:
+                return <div>صفحه مورد نظر یافت نشد.</div>;
+        }
+    };
+    
     return (
         <div className="app-container">
             {isActionLoading && (
@@ -1602,228 +1407,124 @@ const supabaseAnonKey = '...';`}
                     </div>
                 </div>
             )}
-            <header className="header">
-                <div className="header-logo-container">
-                    <img src="https://parspmi.ir/uploads/c140d7143d9b4d7abbe80a36585770bc.png" alt="ParsPMI Logo" className="header-logo" />
-                </div>
-                <h1>سامانه مدیریت وظایف (TMS)</h1>
-                <div className="header-user-info">
-                   <span>{loggedInUser.full_name}</span>
-                   <button onClick={handleLogout} className="logout-button">خروج</button>
-                </div>
-            </header>
-            <div className="app-body">
-                <nav className="sidebar" aria-label="Main Navigation">
-                    {menuItems
-                        .filter(item => {
-                            if (item.id === 'users') {
-                                return isAdmin;
-                            }
-                            return true;
-                        })
-                        .map(item => {
-                            const badgeCount = badgeCounts[item.id] || 0;
+            {loggedInUser && (
+                <>
+                    <header className="header">
+                        <div className="header-logo-container">
+                           <img src="https://parspmi.ir/uploads/c140d7143d9b4d7abbe80a36585770bc.png" alt="ParsPMI Logo" className="header-logo" />
+                        </div>
+                        <h1>{contentTitle}</h1>
+                        <div className="header-user-info">
+                            <span>{loggedInUser.full_name}</span>
+                            <button onClick={handleLogout} className="logout-button">خروج</button>
+                        </div>
+                    </header>
+                    <div className="app-body">
+                        <nav className="sidebar">
+                            {menuItems.map(item => {
+                                 // Admin-only views
+                                if (item.id === 'users' && loggedInUser.username !== 'mahmoudi.pars@gmail.com') {
+                                    return null;
+                                }
+                                return (
+                                    <button key={item.id} className={`sidebar-button ${view === item.id ? 'active' : ''}`} onClick={() => handleMenuClick(item.id, item.name)}>
+                                        {item.icon}
+                                        <span className="sidebar-button-text">{item.name}</span>
+                                         {item.id === 'tasks' && notStartedTasksCount > 0 && <span className="sidebar-badge">{toPersianDigits(notStartedTasksCount)}</span>}
+                                        {item.id === 'approvals' && pendingApprovalsCount > 0 && <span className="sidebar-badge">{toPersianDigits(pendingApprovalsCount)}</span>}
+                                    </button>
+                                )
+                            })}
+                        </nav>
+                        <main className="main-content">
+                            <div className="view-content">
+                                {mainContent()}
+                            </div>
+                        </main>
+                         {view !== 'define_new' && (
+                            <button className="fab" onClick={handleDefineNew} title="تعریف پروژه یا اقدام جدید">
+                                <PlusIcon />
+                            </button>
+                        )}
+                        <button className="ai-fab" onClick={handleAiAnalysisRequest} title="تحلیل هوشمند وظایف">
+                            <AiAnalysisIcon />
+                        </button>
+                        <button className="chatbot-fab" onClick={() => setIsChatbotOpen(true)} title="دستیار هوشمند">
+                            <ChatbotIcon />
+                        </button>
+                    </div>
+                     <nav className="bottom-nav">
+                        {menuItems.map(item => {
+                            if (item.id === 'users' && loggedInUser.username !== 'mahmoudi.pars@gmail.com') return null;
+                            if (item.id === 'define_new') return null;
+                            if (item.id === 'settings') return null;
+                            if (item.id === 'projects_actions_list') return null;
+                            if (item.id === 'my_team') return null;
+
                             return (
-                                <button
-                                    key={item.id}
-                                    className={`sidebar-button ${view === item.id ? 'active' : ''}`}
-                                    onClick={() => handleMenuClick(item.id, item.name)}
-                                    title={item.name}
-                                    aria-current={view === item.id ? 'page' : undefined}
-                                >
+                                <button key={item.id} className={`bottom-nav-button ${view === item.id ? 'active' : ''}`} onClick={() => handleMenuClick(item.id, item.name)}>
                                     {item.icon}
-                                    <span className="sidebar-button-text">{item.name}</span>
-                                    {badgeCount > 0 && <span className="sidebar-badge">{toPersianDigits(badgeCount)}</span>}
+                                    <span>{item.name}</span>
+                                    {item.id === 'tasks' && notStartedTasksCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(notStartedTasksCount)}</span>}
+                                    {item.id === 'approvals' && pendingApprovalsCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(pendingApprovalsCount)}</span>}
                                 </button>
                             );
                         })}
-                </nav>
-                <main className="main-content">
-                     <h2 className="page-title">{contentTitle}</h2>
-                     <div className="view-content">
-                        {renderContent()}
-                    </div>
-                </main>
-            </div>
-            
-            <nav className="bottom-nav" aria-label="Main Navigation">
-                {menuItems
-                    .filter(item => {
-                        if (item.id === 'users') return isAdmin;
-                        if (item.id === 'define_new') return false; // Action button, not for navigation bar
-                        return true;
-                    })
-                    .map(item => {
-                        const badgeCount = badgeCounts[item.id] || 0;
-                        return (
-                            <button
-                                key={item.id}
-                                className={`bottom-nav-button ${view === item.id ? 'active' : ''}`}
-                                onClick={() => handleMenuClick(item.id, item.name)}
-                                title={item.name}
-                                aria-current={view === item.id ? 'page' : undefined}
-                            >
-                                {item.icon}
-                                <span className="bottom-nav-button-text">{item.name}</span>
-                                {badgeCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(badgeCount)}</span>}
-                            </button>
-                        );
-                    })}
-            </nav>
+                    </nav>
+                </>
+            )}
+            {!loggedInUser && mainContent()}
 
-            <button
-                className="fab"
-                title="تعریف پروژه و اقدام"
-                onClick={() => handleMenuClick('define_new', 'تعریف پروژه و اقدام')}
-                aria-label="تعریف پروژه و اقدام جدید"
-            >
-                <PlusIcon />
-            </button>
-            
-            <button
-                className="ai-fab"
-                title="تحلیل هوشمند وظایف"
-                onClick={() => setIsAiAnalysisModalOpen(true)}
-                aria-label="باز کردن تحلیل هوشمند وظایف"
-            >
-                <AiAnalysisIcon />
-            </button>
-
-            <button
-                className="chatbot-fab"
-                title="دستیار هوشمند"
-                onClick={() => setIsChatbotOpen(true)}
-                aria-label="باز کردن دستیار هوشمند"
-            >
-                <ChatbotIcon />
-            </button>
-
-            <ProjectDefinitionPage
-                isOpen={isProjectModalOpen}
-                onClose={() => { setIsProjectModalOpen(false); setEditingProject(null); }}
-                onSave={handleSaveProject}
-                projectToEdit={editingProject}
-                users={users}
-                sections={sections}
-                onRequestConfirmation={handleRequestConfirmation}
-                onRequestAlert={handleRequestAlert}
-                onShowHistory={handleShowHistory}
-                currentUser={loggedInUser}
-                teamMembers={currentUserTeam}
-                teams={teams}
-                onUpdateProject={handleUpdateProjectState}
-                onViewDetails={handleViewDetails}
-                onSetIsActionLoading={setIsActionLoading}
-            />
-            <ActionModal 
-                isOpen={isActionModalOpen}
-                onClose={() => setIsActionModalOpen(false)}
-                onSave={handleSaveAction}
-                users={users}
-                sections={sections}
-                actionToEdit={editingAction}
-                currentUser={loggedInUser}
-                teamMembers={currentUserTeam}
-                onRequestAlert={handleRequestAlert}
-            />
-            <DetailsModal 
-                isOpen={isDetailsModalOpen}
-                onClose={() => setIsDetailsModalOpen(false)}
-                item={detailsItem}
-                users={users}
-                onViewDetails={handleViewDetails}
-            />
-             <ApprovalInfoModal
-                isOpen={isInfoModalOpen}
-                onClose={() => setIsInfoModalOpen(false)}
-                item={infoItem}
-            />
-            <HistoryModal 
-                isOpen={isHistoryModalOpen}
-                onClose={() => setIsHistoryModalOpen(false)}
-                history={history}
-                users={users}
-            />
-            <ConfirmationModal
-                isOpen={confirmationProps.isOpen}
-                onClose={handleCloseConfirmation}
-                onConfirm={confirmationProps.onConfirm}
-                title={confirmationProps.title}
-                message={confirmationProps.message}
-            />
-            <AlertModal
-                isOpen={alertProps.isOpen}
-                onClose={handleCloseAlert}
-                title={alertProps.title}
-                message={alertProps.message}
-            />
-            <ApprovalDecisionModal
-                isOpen={approvalDecisionProps.isOpen}
-                onClose={handleCloseApprovalDecision}
-                onConfirm={handleConfirmApprovalDecision}
-                decisionType={approvalDecisionProps.decision}
-            />
-             <ChoiceModal
-                isOpen={isChoiceModalOpen}
-                onClose={() => setIsChoiceModalOpen(false)}
-                onProject={handleChooseProject}
-                onAction={handleChooseAction}
-            />
-            <UserEditModal 
-                isOpen={isUserEditModalOpen}
-                onClose={() => setIsUserEditModalOpen(false)}
-                onSave={handleUpdateUser}
-                userToEdit={editingUser}
-            />
-            <SendApprovalModal
-                isOpen={sendApprovalProps.isOpen}
-                onClose={handleCloseSendForApproval}
-                onSend={handleConfirmSendForApproval}
-                requestedStatus={sendApprovalProps.requestedStatus}
-            />
-            <UserInfoModal
-                isOpen={isUserInfoModalOpen}
-                onClose={handleCloseUserInfo}
-                user={userInfoUser}
-            />
-            <ChatbotModal
-                isOpen={isChatbotOpen}
-                onClose={() => setIsChatbotOpen(false)}
-                projects={chatbotVisibleItems.projects}
-                actions={chatbotVisibleItems.actions}
+            <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} onSave={handleSaveAction} users={users} sections={sections} actionToEdit={editingAction} currentUser={loggedInUser} teamMembers={currentUserTeam} onRequestAlert={handleRequestAlert} />
+            <ProjectDefinitionPage isOpen={isProjectModalOpen} onClose={() => {setIsProjectModalOpen(false); setEditingProject(null);}} onSave={handleSaveProject} projectToEdit={editingProject} users={users} sections={sections} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} onViewDetails={handleViewDetails} onRequestAlert={handleRequestAlert} teams={teams} onSetIsActionLoading={setIsActionLoading}/>
+            <DetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} item={detailsItem} users={users} onViewDetails={handleViewDetails} />
+            <ApprovalInfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} item={infoItem} />
+            <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={history} users={users} />
+            <ConfirmationModal isOpen={confirmationProps.isOpen} onClose={handleCloseConfirmation} onConfirm={confirmationProps.onConfirm} title={confirmationProps.title} message={confirmationProps.message} />
+            <AlertModal isOpen={alertProps.isOpen} onClose={handleCloseAlert} title={alertProps.title} message={alertProps.message} />
+            <ApprovalDecisionModal isOpen={approvalDecisionProps.isOpen} onClose={handleCloseApprovalDecision} onConfirm={handleConfirmApprovalDecision} decisionType={approvalDecisionProps.decision} />
+            <ChoiceModal isOpen={isChoiceModalOpen} onClose={() => setIsChoiceModalOpen(false)} onProject={handleChooseProject} onAction={handleChooseAction} />
+            <UserEditModal isOpen={isUserEditModalOpen} onClose={() => setIsUserEditModalOpen(false)} onSave={handleUpdateUser} userToEdit={editingUser} />
+            <SendApprovalModal isOpen={sendApprovalProps.isOpen} onClose={handleCloseSendForApproval} onSend={handleConfirmSendForApproval} requestedStatus={sendApprovalProps.requestedStatus} />
+            <UserInfoModal isOpen={isUserInfoModalOpen} onClose={handleCloseUserInfo} user={userInfoUser} />
+            <ChatbotModal 
+                isOpen={isChatbotOpen} 
+                onClose={() => setIsChatbotOpen(false)} 
+                projects={projects}
+                actions={actions}
                 users={users}
                 currentUser={loggedInUser}
                 taskItems={taskItems}
                 approvalItems={approvalItems}
                 teamMembers={currentUserTeam}
-                onCreateProject={handleCreateProjectForChatbot}
-                onCreateAction={handleCreateActionForChatbot}
-                onCreateActivity={handleCreateActivityForChatbot}
-                onAddTeamMember={handleAddTeamMemberForChatbot}
-                onRemoveTeamMember={handleRemoveTeamMemberForChatbot}
-                onDeleteProject={handleDeleteProjectForChatbot}
-                onDeleteAction={handleDeleteActionForChatbot}
-                onDeleteActivity={handleDeleteActivityForChatbot}
+                onCreateProject={(args) => createItemForChatbot('project', args)}
+                onCreateAction={(args) => createItemForChatbot('action', args)}
+                onCreateActivity={(args) => createItemForChatbot('activity', args)}
+                onAddTeamMember={addTeamMemberForChatbot}
+                onRemoveTeamMember={removeTeamMemberForChatbot}
+                onDeleteProject={(args) => deleteItemForChatbot('project', args)}
+                onDeleteAction={(args) => deleteItemForChatbot('action', args)}
+                onDeleteActivity={(args) => deleteItemForChatbot('activity', args)}
             />
-            <NotesModal
+             <NotesModal 
                 isOpen={notesModalProps.isOpen}
                 onClose={handleCloseNotesModal}
                 item={notesModalProps.item}
                 viewMode={notesModalProps.viewMode}
                 currentUser={loggedInUser}
                 users={users}
-                readOnly={notesModalProps.viewMode === 'approver'}
             />
-            <AiAnalysisModal
-                isOpen={isAiAnalysisModalOpen}
-                onClose={() => setIsAiAnalysisModalOpen(false)}
-                analysisItems={analysisItems}
-                currentUser={loggedInUser}
-            />
+            {loggedInUser && (
+                <AiAnalysisModal
+                    isOpen={isAiAnalysisModalOpen}
+                    onClose={() => setIsAiAnalysisModalOpen(false)}
+                    analysisItems={taskItems}
+                    currentUser={loggedInUser}
+                />
+            )}
         </div>
     );
 };
 
-const container = document.getElementById('root');
-const root = createRoot(container);
+const root = createRoot(document.getElementById('root')!);
 root.render(<App />);

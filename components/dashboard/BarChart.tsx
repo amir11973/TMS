@@ -45,12 +45,11 @@ export const BarChart = ({ data, title, color, orientation = 'vertical', onBarCl
                                 }}
                                 title={`${item.name}: ${toPersianDigits(item.value)}`}
                             >
-                                {orientation === 'vertical' && item.value > 0 && <span className="bar-value">{toPersianDigits(item.value)}</span>}
+                                {item.value > 0 && <span className="bar-value">{toPersianDigits(item.value)}</span>}
                             </div>
                         </div>
                         <span className="bar-label">
                             {item.name}
-                            {orientation === 'horizontal' && ` (${toPersianDigits(item.value)})`}
                         </span>
                     </div>
                 ))}

@@ -233,7 +233,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     ...activityToSave, 
                     project_id: project.id,
                     status: 'شروع نشده',
-                    history: []
+                    history: [],
+                    kanban_order: Date.now()
                 };
                 delete newActivityPayload.id;
                 const { data, error } = await supabase.from('activities').insert(newActivityPayload).select().single();

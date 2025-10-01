@@ -1,4 +1,5 @@
 
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -62,6 +63,11 @@ export const ListIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
   </svg>
+);
+export const KanbanIcon = () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
+        <path d="M5 5v14h4V5H5zm6 0v14h4V5h-4zm6 0v14h4V5h-4z"/>
+    </svg>
 );
 export const DetailsIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18">
