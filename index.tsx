@@ -1150,6 +1150,22 @@ const App = () => {
         return notStartedProjects + notStartedActions;
     }, [projects, actions, loggedInUser]);
     
+    useEffect(() => {
+        const totalBadgeCount = notStartedTasksCount + pendingApprovalsCount + notStartedProjectsAndActionsCount;
+
+        if ('setAppBadge' in navigator) {
+            if (totalBadgeCount > 0) {
+                (navigator as any).setAppBadge(totalBadgeCount).catch((error: any) => {
+                    console.error('Failed to set app badge:', error);
+                });
+            } else {
+                (navigator as any).clearAppBadge().catch((error: any) => {
+                    console.error('Failed to clear app badge:', error);
+                });
+            }
+        }
+    }, [notStartedTasksCount, pendingApprovalsCount, notStartedProjectsAndActionsCount]);
+    
     const handleRequestSendForApproval = (item: any, requestedStatus: string) => {
         setSendApprovalProps({ isOpen: true, item, requestedStatus });
     };
@@ -1512,6 +1528,7 @@ const supabaseAnonKey = '...';`}
                                         <span className="sidebar-button-text">{item.name}</span>
                                          {item.id === 'tasks' && notStartedTasksCount > 0 && <span className="sidebar-badge">{toPersianDigits(notStartedTasksCount)}</span>}
                                         {item.id === 'approvals' && pendingApprovalsCount > 0 && <span className="sidebar-badge">{toPersianDigits(pendingApprovalsCount)}</span>}
+                                        {item.id === 'projects_actions_list' && notStartedProjectsAndActionsCount > 0 && <span className="sidebar-badge">{toPersianDigits(notStartedProjectsAndActionsCount)}</span>}
                                     </button>
                                 )
                             })}
@@ -1544,6 +1561,7 @@ const supabaseAnonKey = '...';`}
                                     <span>{item.name}</span>
                                     {item.id === 'tasks' && notStartedTasksCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(notStartedTasksCount)}</span>}
                                     {item.id === 'approvals' && pendingApprovalsCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(pendingApprovalsCount)}</span>}
+                                    {item.id === 'projects_actions_list' && notStartedProjectsAndActionsCount > 0 && <span className="bottom-nav-badge">{toPersianDigits(notStartedProjectsAndActionsCount)}</span>}
                                 </button>
                             );
                         })}
