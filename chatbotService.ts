@@ -152,7 +152,7 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
         "من به عنوان دستیار هوشمند شما می‌توانم در انجام کارهای زیر به شما کمک کنم:
         - **پاسخ به سوالات:** می‌توانم به سوالات شما در مورد وضعیت پروژه‌ها، اقدامات، وظایف در دست اجرا یا موارد دارای تاخیر پاسخ دهم. کافیست سوال خود را به زبان فارسی بپرسید.
         - **ایجاد موارد جدید:** می‌توانید از من بخواهید تا یک پروژه، اقدام مستقل یا فعالیت جدید برایتان ایجاد کنم. فقط کافیست اطلاعات لازم مانند عنوان را به من بدهید. برای مثال: 'یک پروژه جدید با عنوان بهینه‌سازی فرایند فروش ایجاد کن'.
-        - **حذف موارد:** اگر نیاز به حذف یک پروژه، اقدام یا فعالیت دارید، می‌توانید از من بخواهایید تا آن را برایتان حذف کنم. برای مثال: 'پروژه تست را حذف کن'.
+        - **حذف موارد:** اگر نیاز به حذف یک پروژه، اقدام یا فعالیت دارید، می‌توانید از من بخواههایید تا آن را برایتان حذف کنم. برای مثال: 'پروژه تست را حذف کن'.
         - **مدیریت تیم:** می‌توانید اعضای جدیدی را به تیم خود اضافه کنید یا اعضای فعلی را حذف نمایید. برای مثال: 'کاربر رضا احمدی را به تیم من اضافه کن'.
         به طور خلاصه، من اینجا هستم تا مدیریت وظایف و پروژه‌های شما را سریع‌تر و آسان‌تر کنم!"
         
@@ -223,23 +223,31 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
             const errorData = await proxyResponse.json();
             throw new Error(errorData.error?.message || `Proxy request failed with status ${proxyResponse.status}`);
         }
-
-        // Handle streaming response
+        
         if (!proxyResponse.body) {
-            throw new Error("Streaming response not available.");
+            throw new Error("Response body is missing.");
         }
+
         const reader = proxyResponse.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
-        
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                break;
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                fullText += decoder.decode(value, { stream: true });
             }
-            fullText += decoder.decode(value, { stream: true });
+        } catch (e) {
+            console.error("Error reading from stream in chatbotService:", e);
+            throw new Error("خطا در دریافت پاسخ از سرویس هوش مصنوعی. ممکن است ارتباط قطع شده باشد یا پاسخ به دلایل ایمنی مسدود شده باشد.");
         }
-        fullText += decoder.decode(); // Final flush
+
+        if (!fullText) {
+            throw new Error("Received an empty response from the AI service.");
+        }
 
         const jsonResponse = JSON.parse(fullText);
 
@@ -262,10 +270,12 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
         console.error("Error calling Gemini proxy for chatbot:", error);
         let errorMessage = "متاسفانه در حال حاضر امکان پاسخگویی وجود ندارد. لطفا بعدا تلاش کنید.";
         if (error instanceof Error) {
-            if (error.message.includes("JSON")) {
+            if (error.message.includes("JSON") || error.message.includes("empty response")) {
                 errorMessage = "پاسخ از سرویس هوش مصنوعی قابل پردازش نبود. لطفا سوال خود را واضح‌تر بپرسید.";
             } else if (error.message.includes("API key")) {
                  errorMessage = "سرویس دستیار هوشمند به دلیل عدم وجود کلید API پیکربندی نشده است. لطفاً با مدیر سیستم تماس بگیرید.";
+            } else if (error.message.includes("قطع شده باشد")) {
+                errorMessage = error.message;
             }
         }
         return { type: 'text', text: errorMessage };

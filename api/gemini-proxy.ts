@@ -29,29 +29,60 @@ export default async function handler(request: Request) {
         }
 
         const ai = new GoogleGenAI({ apiKey });
-        const responseStream = await ai.models.generateContentStream({ model, contents, config });
-            
-        // Create a new ReadableStream to send back to the client
-        const readableStream = new ReadableStream({
+        
+        // Use generateContentStream for a streaming response to avoid timeouts
+        const streamResult = await ai.models.generateContentStream({ model, contents, config });
+        
+        // Create a new ReadableStream to pipe the response to the client
+        const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder();
-                for await (const chunk of responseStream) {
-                    const text = chunk.text;
-                    if (text) {
-                        controller.enqueue(encoder.encode(text));
+                try {
+                    // FIX: The `.response` property does not exist on the async generator returned by `generateContentStream`.
+                    // Safety checks must be performed by inspecting the streamed chunks.
+                    let lastChunkCandidates: any[] | undefined;
+
+                    for await (const chunk of streamResult) {
+                        // Check for prompt-level blocking on each chunk, as it can appear early.
+                        if (chunk.promptFeedback?.blockReason) {
+                            throw new Error(`Content generation blocked due to prompt: ${chunk.promptFeedback.blockReason}`);
+                        }
+
+                        // Stream out the text
+                        const text = chunk.text;
+                        if (text) {
+                            controller.enqueue(encoder.encode(text));
+                        }
+                        
+                        // Keep track of the candidates from the latest chunk for the final check.
+                        if (chunk.candidates) {
+                            lastChunkCandidates = chunk.candidates;
+                        }
                     }
+                    
+                    // After streaming all text chunks, check the final chunk for finishReason issues.
+                    if (lastChunkCandidates && lastChunkCandidates[0]?.finishReason && 
+                        ['SAFETY', 'RECITATION', 'OTHER'].includes(lastChunkCandidates[0].finishReason)) {
+                         throw new Error(`Content generation stopped due to: ${lastChunkCandidates[0].finishReason}`);
+                    }
+                    
+                    controller.close();
+                } catch (error) {
+                    console.error('Error in stream read loop:', error);
+                    // Propagate the error to the client, which will cause the fetch promise to reject
+                    controller.error(error);
                 }
-                controller.close();
             },
         });
 
-        return new Response(readableStream, {
+        return new Response(stream, {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });
 
     } catch (error) {
         console.error("Error in Gemini proxy:", error);
-        return new Response(JSON.stringify({ error: { message: 'An internal server error occurred while streaming.' } }), {
+        const errorMessage = error instanceof Error ? error.message : 'An internal server error occurred.';
+        return new Response(JSON.stringify({ error: { message: errorMessage } }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
         });

@@ -90,20 +90,25 @@ Your final response must be a single string with newlines separating each part. 
         }
 
         if (!proxyResponse.body) {
-            throw new Error("Streaming response not available.");
+            throw new Error("Response body is missing.");
         }
+
         const reader = proxyResponse.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
         
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                break;
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                fullText += decoder.decode(value, { stream: true });
             }
-            fullText += decoder.decode(value, { stream: true });
+        } catch (e) {
+            console.error("Error reading from stream in aiAnalysisService:", e);
+            throw new Error("خطا در دریافت پاسخ از سرویس هوش مصنوعی. ممکن است ارتباط قطع شده باشد یا پاسخ به دلایل ایمنی مسدود شده باشد.");
         }
-        fullText += decoder.decode(); // Final flush
 
         return fullText;
         

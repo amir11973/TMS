@@ -14,6 +14,14 @@
 
 
 
+
+
+
+
+
+
+
+
 /* General Resets and Base Styles */
 :root {
   /* Dark Theme Colors */
@@ -1879,12 +1887,46 @@ body {
     flex-direction: column;
 }
 
-.kanban-column-title {
-    font-size: 1rem;
-    font-weight: 700;
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 1rem;
     border-bottom: 1px solid var(--c-border);
+}
+
+.kanban-column-title {
+    font-size: 0.95rem;
+    font-weight: 700;
     color: var(--c-primary);
+    padding: 0;
+    border-bottom: none;
+    margin: 0;
+}
+
+.kanban-header-btn {
+    background: none;
+    border: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.kanban-header-btn:hover {
+    background-color: var(--c-header);
+    color: var(--c-text);
+}
+
+.kanban-header-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .kanban-column-content {
@@ -1928,16 +1970,17 @@ body {
 }
 .kanban-card-title {
     font-weight: 500;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     color: var(--c-text);
+    font-size: 0.85rem;
 }
 .kanban-card-parent {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--c-text-muted);
     margin-bottom: 0.5rem;
 }
 .kanban-card-tag {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     background-color: var(--c-info);
     color: white;
     padding: 2px 8px;

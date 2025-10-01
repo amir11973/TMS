@@ -2,9 +2,10 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toPersianDigits } from '../utils';
 import { renderPriorityBadge } from './PriorityBadge';
+import { VisibilityIcon, VisibilityOffIcon } from '../icons';
 
 const isDelayed = (item: any) => {
     const status = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
@@ -58,6 +59,8 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
     onStatusChange: (item: any, newStatus: string) => void,
     onUpdateItemsOrder: (updates: { id: number; type: string; kanban_order: number }[]) => void 
 }) => {
+    const [showAllCompleted, setShowAllCompleted] = useState(false);
+    
     const columns = useMemo(() => {
         const createColumn = (status: string) => items
             .filter(item => {
@@ -69,12 +72,20 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
             })
             .sort((a, b) => (a.kanban_order || 0) - (b.kanban_order || 0));
 
+        const allCompleted = createColumn('خاتمه یافته');
+        
+        // By default (showAllCompleted=false), only show items waiting for completion approval.
+        const completedToShow = showAllCompleted 
+            ? allCompleted 
+            : allCompleted.filter(item => item.status === 'ارسال برای تایید' && item.requestedStatus === 'خاتمه یافته');
+
         return {
             notStarted: createColumn('شروع نشده'),
             inProgress: createColumn('در حال اجرا'),
-            completed: createColumn('خاتمه یافته'),
+            completed: completedToShow,
+            allCompletedCount: allCompleted.length,
         };
-    }, [items]);
+    }, [items, showAllCompleted]);
     
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -150,7 +161,9 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
     return (
         <div className="kanban-board">
             <div className="kanban-column">
-                <h3 className="kanban-column-title">شروع نشده ({toPersianDigits(columns.notStarted.length)})</h3>
+                <div className="kanban-column-header">
+                    <h3 className="kanban-column-title">شروع نشده ({toPersianDigits(columns.notStarted.length)})</h3>
+                </div>
                 <div 
                     className="kanban-column-content"
                     onDragOver={handleDragOver}
@@ -166,7 +179,9 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                 </div>
             </div>
             <div className="kanban-column">
-                <h3 className="kanban-column-title">در حال اجرا ({toPersianDigits(columns.inProgress.length)})</h3>
+                <div className="kanban-column-header">
+                    <h3 className="kanban-column-title">در حال اجرا ({toPersianDigits(columns.inProgress.length)})</h3>
+                </div>
                  <div 
                     className="kanban-column-content"
                     onDragOver={handleDragOver}
@@ -182,7 +197,21 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                 </div>
             </div>
             <div className="kanban-column">
-                <h3 className="kanban-column-title">خاتمه یافته ({toPersianDigits(columns.completed.length)})</h3>
+                <div className="kanban-column-header">
+                    <h3 className="kanban-column-title">خاتمه یافته ({toPersianDigits(columns.completed.length)})</h3>
+                    <button 
+                        onClick={() => setShowAllCompleted(!showAllCompleted)} 
+                        className="kanban-header-btn" 
+                        title={showAllCompleted ? 'فقط منتظر تایید' : 'نمایش همه خاتمه یافته‌ها'}
+                    >
+                        {showAllCompleted ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        {!showAllCompleted && columns.allCompletedCount > columns.completed.length && (
+                             <span className="kanban-header-btn-text">
+                                ({toPersianDigits(columns.allCompletedCount)})
+                            </span>
+                        )}
+                    </button>
+                </div>
                  <div 
                     className="kanban-column-content"
                     onDragOver={handleDragOver}
