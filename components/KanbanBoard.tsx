@@ -157,7 +157,12 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, 'شروع نشده')}
                 >
-                    {columns.notStarted.map(item => <KanbanCard key={`${item.type}-${item.id}`} item={item} onCardClick={onCardClick} />)}
+                    {/* FIX: Wrapped KanbanCard in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component. */}
+                    {columns.notStarted.map(item => (
+                        <React.Fragment key={`${item.type}-${item.id}`}>
+                            <KanbanCard item={item} onCardClick={onCardClick} />
+                        </React.Fragment>
+                    ))}
                 </div>
             </div>
             <div className="kanban-column">
@@ -168,7 +173,12 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, 'در حال اجرا')}
                  >
-                    {columns.inProgress.map(item => <KanbanCard key={`${item.type}-${item.id}`} item={item} onCardClick={onCardClick} />)}
+                    {/* FIX: Wrapped KanbanCard in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component. */}
+                    {columns.inProgress.map(item => (
+                        <React.Fragment key={`${item.type}-${item.id}`}>
+                            <KanbanCard item={item} onCardClick={onCardClick} />
+                        </React.Fragment>
+                    ))}
                 </div>
             </div>
             <div className="kanban-column">
@@ -179,7 +189,12 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, 'خاتمه یافته')}
                  >
-                    {columns.completed.map(item => <KanbanCard key={`${item.type}-${item.id}`} item={item} onCardClick={onCardClick} />)}
+                    {/* FIX: Wrapped KanbanCard in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component. */}
+                    {columns.completed.map(item => (
+                        <React.Fragment key={`${item.type}-${item.id}`}>
+                            <KanbanCard item={item} onCardClick={onCardClick} />
+                        </React.Fragment>
+                    ))}
                 </div>
             </div>
         </div>

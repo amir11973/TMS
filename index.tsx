@@ -1457,9 +1457,6 @@ const supabaseAnonKey = '...';`}
                         {menuItems.map(item => {
                             if (item.id === 'users' && loggedInUser.username !== 'mahmoudi.pars@gmail.com') return null;
                             if (item.id === 'define_new') return null;
-                            if (item.id === 'settings') return null;
-                            if (item.id === 'projects_actions_list') return null;
-                            if (item.id === 'my_team') return null;
 
                             return (
                                 <button key={item.id} className={`bottom-nav-button ${view === item.id ? 'active' : ''}`} onClick={() => handleMenuClick(item.id, item.name)}>
