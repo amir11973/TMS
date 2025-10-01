@@ -38,6 +38,14 @@ export type Note = {
     created_at: string;
     updated_at: string;
 };
+
+export type CustomField = {
+    id: number;
+    title: string;
+    field_group: 'project' | 'action' | 'activity';
+    is_private: boolean;
+    owner_username: string;
+};
 // FIX: Add Web Speech API type definitions to resolve TypeScript errors in ChatbotModal.tsx.
 interface SpeechGrammar {
     src: string;

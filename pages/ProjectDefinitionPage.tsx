@@ -4,7 +4,7 @@
 */
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
 import moment from 'moment-jalaali';
-import { User, TeamMember } from '../types';
+import { User, TeamMember, CustomField } from '../types';
 import { getTodayString } from '../constants';
 import { supabase, handleSupabaseError } from '../supabaseClient';
 import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon, ApproveIcon } from '../icons';
@@ -21,7 +21,7 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams, onSetIsActionLoading }: {
+export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams, onSetIsActionLoading, customFields }: {
     users: User[];
     sections: string[];
     onSave: (project: any) => void;
@@ -37,6 +37,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     onViewDetails: (item: any) => void;
     onRequestAlert: (props: any) => void;
     onSetIsActionLoading: (isLoading: boolean) => void;
+    customFields: CustomField[];
 }) => {
     const initialProjectState = {
         title: '', projectManager: '', unit: sections[0] || '', priority: 'متوسط',
@@ -49,6 +50,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         use_workflow: true
     };
     const [project, setProject] = useState(initialProjectState);
+    const [customValues, setCustomValues] = useState<Record<string, any>>({});
     const [activeTab, setActiveTab] = useState('main'); // main or activities
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [editingActivity, setEditingActivity] = useState(null);
@@ -104,6 +106,35 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         return users.filter(u => approverUsernames.has(u.username));
     }, [project.owner, currentUser, teams, users]);
 
+    const relevantCustomFields = useMemo(() => {
+        if (!currentUser) return [];
+        const projectCustomFields = customFields.filter(f => f.field_group === 'project');
+
+        if (project.isNew) {
+            return projectCustomFields
+                .filter(f => f.owner_username === currentUser.username)
+                .map(f => ({ ...f, isReadOnly: false }));
+        } else {
+            const currentCustomValues = project?.custom_field_values || {};
+            
+            return projectCustomFields
+                .map(field => {
+                    const isOwner = field.owner_username === currentUser.username;
+                    const hasValue = currentCustomValues.hasOwnProperty(field.id);
+                    const isPublic = !field.is_private;
+
+                    if (isOwner) {
+                        return { ...field, isReadOnly: false };
+                    }
+                    if (isPublic && hasValue) {
+                        return { ...field, isReadOnly: true };
+                    }
+                    return null;
+                })
+                .filter((field): field is CustomField & { isReadOnly: boolean } => field !== null);
+        }
+    }, [customFields, currentUser, project]);
+
     useEffect(() => {
         if (isOpen) {
             if (projectToEdit) {
@@ -116,6 +147,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     projectManager: projectToEdit.isNew ? currentUser!.username : projectToEdit.projectManager
                 };
                 setProject(projectWithOwner);
+                setCustomValues(projectToEdit.custom_field_values || {});
     
                 if (isDifferentProject) { 
                     setActiveTab(projectToEdit.initialTab || 'main');
@@ -124,6 +156,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
             } else { // New project logic, just in case
                 setProject({...initialProjectState, owner: currentUser!.username, projectManager: currentUser!.username });
                 setActiveTab('main');
+                setCustomValues({});
             }
         }
     }, [projectToEdit, isOpen, currentUser]);
@@ -162,9 +195,13 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         setProject(updatedProject);
     };
     
+    const handleCustomValueChange = (fieldId: number, value: string) => {
+        setCustomValues(prev => ({ ...prev, [fieldId]: value }));
+    };
+
     const handleSave = (e: FormEvent) => {
         e.preventDefault();
-        onSave(project);
+        onSave({ ...project, custom_field_values: customValues });
     };
 
     const handleAddActivity = () => {
@@ -358,6 +395,19 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                     />
                                     <label htmlFor="project-use_workflow" style={{ marginBottom: 0, userSelect: 'none' }}>استفاده از گردش کار تاییدات</label>
                                 </div>
+                                
+                                {relevantCustomFields.length > 0 && <h4 className="list-section-header" style={{gridColumn: '1 / -1', marginTop: '1rem', marginBottom: '0'}}>فیلدهای سفارشی</h4>}
+                                {relevantCustomFields.map(field => (
+                                    <div className="input-group" key={field.id}>
+                                        <label htmlFor={`custom-field-proj-${field.id}`}>{field.title}</label>
+                                        <input
+                                            id={`custom-field-proj-${field.id}`}
+                                            value={customValues[field.id] || ''}
+                                            onChange={e => !field.isReadOnly && handleCustomValueChange(field.id, e.target.value)}
+                                            readOnly={field.isReadOnly || readOnly}
+                                        />
+                                    </div>
+                                ))}
                             </form>
                         </div>
                     )}
@@ -485,6 +535,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     approverUsers={activityApproverUsers}
                     currentUser={currentUser}
                     projectUseWorkflow={project.use_workflow}
+                    customFields={customFields}
                 />
             </div>
         </div>

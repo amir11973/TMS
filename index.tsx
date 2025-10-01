@@ -5,7 +5,7 @@
 import React, { useState, FormEvent, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import moment from 'moment-jalaali';
-import { User, TeamMember, TeamMemberRole } from './types';
+import { User, TeamMember, TeamMemberRole, CustomField } from './types';
 import { menuItems, getTodayString } from './constants';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabaseClient';
 import { PlusIcon, ChatbotIcon, AiAnalysisIcon } from './icons';
@@ -39,7 +39,8 @@ import {
     ChatbotModal,
     DashboardListModal,
     NotesModal,
-    AiAnalysisModal
+    AiAnalysisModal,
+    CustomFieldModal
 } from './modals/index';
 import { UserInfoModal } from './modals';
 
@@ -70,6 +71,8 @@ const App = () => {
     // Settings State
     const [theme, setTheme] = useState('dark');
     const [sections, setSections] = useState<string[]>([]);
+    const [customFields, setCustomFields] = useState<CustomField[]>([]);
+
 
     // Team Management State
     const [teams, setTeams] = useState<Record<string, TeamMember[]>>({});
@@ -106,18 +109,22 @@ const App = () => {
 
     const [notesModalProps, setNotesModalProps] = useState({ isOpen: false, item: null as any, viewMode: 'responsible' as 'responsible' | 'approver' });
 
+    const [isCustomFieldModalOpen, setIsCustomFieldModalOpen] = useState(false);
+    const [editingCustomField, setEditingCustomField] = useState<CustomField | null>(null);
+
     const isInitialRenderRef = useRef(true);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     const fetchData = useCallback(async () => {
         try {
-            const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes] = await Promise.all([
+            const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes, customFieldsRes] = await Promise.all([
                 supabase.from('users').select('*'),
                 supabase.from('projects').select('*, activities(*)').order('kanban_order', { foreignTable: 'activities', ascending: true, nullsFirst: false }).order('id', { foreignTable: 'activities' }),
                 supabase.from('actions').select('*').order('kanban_order', { ascending: true, nullsFirst: false }),
                 supabase.from('units').select('name'),
-                supabase.from('teams').select('*')
+                supabase.from('teams').select('*'),
+                supabase.from('custom_fields').select('*')
             ]);
 
             handleSupabaseError(usersRes.error, 'fetching users');
@@ -142,6 +149,9 @@ const App = () => {
                 return acc;
             }, {});
             setTeams(reconstructedTeams);
+
+            handleSupabaseError(customFieldsRes.error, 'fetching custom fields');
+            setCustomFields(customFieldsRes.data || []);
 
         } catch (e: any) {
             setError(`Failed to load application data: ${e.message}. Please check your network connection and Supabase configuration in supabaseClient.ts.`);
@@ -1038,6 +1048,64 @@ const App = () => {
         }
     };
 
+    // --- Custom Field Handlers ---
+    const handleOpenCustomFieldModal = (field: CustomField | null = null) => {
+        setEditingCustomField(field);
+        setIsCustomFieldModalOpen(true);
+    };
+
+    const handleCloseCustomFieldModal = () => {
+        setEditingCustomField(null);
+        setIsCustomFieldModalOpen(false);
+    };
+
+    const handleSaveCustomField = async (fieldToSave: any) => {
+        if (!loggedInUser) return;
+        setIsActionLoading(true);
+        try {
+            if (fieldToSave.id) { // Update
+                const { error } = await supabase.from('custom_fields').update(fieldToSave).eq('id', fieldToSave.id);
+                handleSupabaseError(error, 'updating custom field');
+                if (!error) {
+                    setCustomFields(prev => prev.map(f => f.id === fieldToSave.id ? fieldToSave : f));
+                }
+            } else { // Insert
+                const payload = { ...fieldToSave, owner_username: loggedInUser.username };
+                delete payload.id;
+                const { data, error } = await supabase.from('custom_fields').insert(payload).select().single();
+                handleSupabaseError(error, 'creating custom field');
+                if (data) {
+                    setCustomFields(prev => [...prev, data]);
+                }
+            }
+        } finally {
+            setIsActionLoading(false);
+            handleCloseCustomFieldModal();
+        }
+    };
+
+    const handleDeleteCustomField = (fieldId: number) => {
+        const fieldToDelete = customFields.find(f => f.id === fieldId);
+        handleRequestConfirmation({
+            title: 'حذف فیلد سفارشی',
+            message: `آیا از حذف فیلد "${fieldToDelete?.title}" اطمینان دارید؟ این عمل تمام مقادیر ذخیره شده برای این فیلد را نیز حذف خواهد کرد.`,
+            onConfirm: async () => {
+                setIsActionLoading(true);
+                try {
+                    const { error } = await supabase.from('custom_fields').delete().eq('id', fieldId);
+                    handleSupabaseError(error, 'deleting custom field');
+                    if (!error) {
+                        setCustomFields(prev => prev.filter(f => f.id !== fieldId));
+                        // Note: This does not clean up orphaned values in JSONB columns.
+                        // A database function would be better for production.
+                    }
+                } finally {
+                    setIsActionLoading(false);
+                }
+            }
+        });
+    };
+
     const taskItems = [
         ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title, use_workflow: p.use_workflow}))),
         ...actions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
@@ -1391,7 +1459,18 @@ const supabaseAnonKey = '...';`}
             case 'my_team':
                 return <MyTeamPage allUsers={users} currentUser={loggedInUser} teamMembers={currentUserTeam} onAddMember={handleAddTeamMember} onRemoveMember={handleRemoveTeamMember} onUpdateRole={handleUpdateTeamMemberRole} />;
             case 'settings':
-                return <SettingsPage theme={theme} onThemeChange={handleThemeChange} sections={sections} onAddSection={handleAddSection} onUpdateSection={handleUpdateSection} onDeleteSection={handleDeleteSection} currentUser={loggedInUser} />;
+                return <SettingsPage 
+                            theme={theme} 
+                            onThemeChange={handleThemeChange} 
+                            sections={sections} 
+                            onAddSection={handleAddSection} 
+                            onUpdateSection={handleUpdateSection} 
+                            onDeleteSection={handleDeleteSection} 
+                            currentUser={loggedInUser} 
+                            customFields={customFields}
+                            onOpenCustomFieldModal={handleOpenCustomFieldModal}
+                            onDeleteCustomField={handleDeleteCustomField}
+                        />;
             default:
                 return <div>صفحه مورد نظر یافت نشد.</div>;
         }
@@ -1472,9 +1551,9 @@ const supabaseAnonKey = '...';`}
             )}
             {!loggedInUser && mainContent()}
 
-            <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} onSave={handleSaveAction} users={users} sections={sections} actionToEdit={editingAction} currentUser={loggedInUser} teamMembers={currentUserTeam} onRequestAlert={handleRequestAlert} />
-            <ProjectDefinitionPage isOpen={isProjectModalOpen} onClose={() => {setIsProjectModalOpen(false); setEditingProject(null);}} onSave={handleSaveProject} projectToEdit={editingProject} users={users} sections={sections} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} onViewDetails={handleViewDetails} onRequestAlert={handleRequestAlert} teams={teams} onSetIsActionLoading={setIsActionLoading}/>
-            <DetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} item={detailsItem} users={users} onViewDetails={handleViewDetails} />
+            <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} onSave={handleSaveAction} users={users} sections={sections} actionToEdit={editingAction} currentUser={loggedInUser} teamMembers={currentUserTeam} onRequestAlert={handleRequestAlert} customFields={customFields} />
+            <ProjectDefinitionPage isOpen={isProjectModalOpen} onClose={() => {setIsProjectModalOpen(false); setEditingProject(null);}} onSave={handleSaveProject} projectToEdit={editingProject} users={users} sections={sections} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} onViewDetails={handleViewDetails} onRequestAlert={handleRequestAlert} teams={teams} onSetIsActionLoading={setIsActionLoading} customFields={customFields} />
+            <DetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} item={detailsItem} users={users} onViewDetails={handleViewDetails} customFields={customFields} currentUser={loggedInUser} />
             <ApprovalInfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} item={infoItem} />
             <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={history} users={users} />
             <ConfirmationModal isOpen={confirmationProps.isOpen} onClose={handleCloseConfirmation} onConfirm={confirmationProps.onConfirm} title={confirmationProps.title} message={confirmationProps.message} />
@@ -1519,6 +1598,12 @@ const supabaseAnonKey = '...';`}
                     currentUser={loggedInUser}
                 />
             )}
+            <CustomFieldModal
+                isOpen={isCustomFieldModalOpen}
+                onClose={handleCloseCustomFieldModal}
+                onSave={handleSaveCustomField}
+                fieldToEdit={editingCustomField}
+            />
         </div>
     );
 };

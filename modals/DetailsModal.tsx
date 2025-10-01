@@ -4,20 +4,24 @@
 */
 import React, { useMemo } from 'react';
 import moment from 'moment-jalaali';
-import { User } from '../types';
+import { User, CustomField } from '../types';
 import { renderPriorityBadge } from '../components';
 import { DetailsIcon } from '../icons';
 
-export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails }: { 
+export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, customFields, currentUser }: { 
     isOpen: boolean; 
     onClose: () => void; 
     item: any; 
     users: User[];
     onViewDetails: (item: any) => void;
+    customFields: CustomField[];
+    currentUser: User | null;
 }) => {
     if (!isOpen) return null;
 
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
+    const customFieldMap = useMemo(() => new Map(customFields.map(f => [f.id.toString(), f])), [customFields]);
+
 
     const isProject = item.type === 'project';
     const isActivity = item.type === 'activity';
@@ -76,6 +80,40 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails }: {
         });
     };
 
+    const renderCustomFields = () => {
+        if (!item.custom_field_values || Object.keys(item.custom_field_values).length === 0) {
+            return null;
+        }
+
+        const visibleFields = Object.entries(item.custom_field_values)
+            .map(([fieldId, value]) => {
+                const fieldDef = customFieldMap.get(fieldId);
+                if (!fieldDef) return null;
+
+                const canView = !fieldDef.is_private || (currentUser && fieldDef.owner_username === currentUser.username);
+                if (!canView) return null;
+
+                return { ...fieldDef, value };
+            })
+            .filter(Boolean);
+
+        if (visibleFields.length === 0) return null;
+
+        return (
+            <>
+                <h4 className="list-section-header">فیلدهای سفارشی</h4>
+                <div className="detail-grid">
+                    {visibleFields.map((field: any) => (
+                         <div className="detail-group" key={field.id}>
+                            <span className="detail-label">{field.title}</span>
+                            <p className="detail-value">{field.value || '—'}</p>
+                        </div>
+                    ))}
+                </div>
+            </>
+        );
+    };
+
     return (
         <div className="modal-backdrop" onClick={onClose}>
             <div className="modal-content details-modal-content" onClick={e => e.stopPropagation()}>
@@ -128,6 +166,9 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails }: {
                                     </div>
                                 )}
                             </div>
+                            
+                            {isProject && renderCustomFields()}
+
                             {isProject && item.activities && item.activities.length > 0 && (
                                 <>
                                     <h4 className="list-section-header">فعالیت‌های پروژه</h4>
@@ -170,6 +211,7 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails }: {
                             )}
                         </>
                     )}
+                    {!isProject && renderCustomFields()}
                 </div>
                 <div className="modal-footer">
                     <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>

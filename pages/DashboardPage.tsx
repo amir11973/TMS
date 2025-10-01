@@ -93,6 +93,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
     
     const typeData = useMemo(() => {
+        // FIX: Explicitly typed the reduce accumulator to ensure correct type inference for 'counts'.
         const counts = allItems.reduce<Record<string, number>>((acc, item) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
@@ -104,6 +105,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const statusData = useMemo(() => {
+        // FIX: Explicitly typed the reduce accumulator to ensure correct type inference for 'counts'.
         const counts = allItems.reduce<Record<string, number>>((acc, item) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
@@ -118,6 +120,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
 
     const responsibleData = useMemo(() => {
         // FIX: Explicitly typed the reduce accumulator to ensure correct type inference for 'counts', resolving an arithmetic error in the subsequent .sort() method.
+        // FIX: Explicitly typed the reduce accumulator to ensure TypeScript infers `counts` values as numbers, fixing the sort operation.
         const counts = allItems.reduce<Record<string, number>>((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;

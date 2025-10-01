@@ -4,11 +4,11 @@
 */
 import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment-jalaali';
-import { User } from '../types';
+import { User, CustomField } from '../types';
 import { getTodayString } from '../constants';
 import { JalaliDatePicker } from '../components';
 
-export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers, currentUser, projectUseWorkflow }: {
+export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers, currentUser, projectUseWorkflow, customFields }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (activity: any) => void;
@@ -20,24 +20,59 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
     approverUsers: User[];
     currentUser: User | null;
     projectUseWorkflow: boolean;
+    customFields: CustomField[];
 }) => {
     // FIX: Add 'underlyingStatus', 'requestedStatus', and 'approvalStatus' to prevent type errors.
     const initialActivityState = { title: '', startDate: getTodayString(), endDate: getTodayString(), responsible: '', approver: '', priority: 'متوسط', status: 'شروع نشده', underlyingStatus: null, requestedStatus: null, approvalStatus: null };
     
     const [activity, setActivity] = useState(initialActivityState);
+    const [customValues, setCustomValues] = useState<Record<string, any>>({});
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
+
+    const isNew = !activityToEdit;
+
+    const relevantCustomFields = useMemo(() => {
+        if (!currentUser) return [];
+        const activityCustomFields = customFields.filter(f => f.field_group === 'activity');
+
+        if (isNew) {
+            return activityCustomFields
+                .filter(f => f.owner_username === currentUser.username)
+                .map(f => ({ ...f, isReadOnly: false }));
+        } else {
+            const currentCustomValues = activityToEdit?.custom_field_values || {};
+            
+            return activityCustomFields
+                .map(field => {
+                    const isOwner = field.owner_username === currentUser.username;
+                    const hasValue = currentCustomValues.hasOwnProperty(field.id);
+                    const isPublic = !field.is_private;
+
+                    if (isOwner) {
+                        return { ...field, isReadOnly: false };
+                    }
+                    if (isPublic && hasValue) {
+                        return { ...field, isReadOnly: true };
+                    }
+                    return null;
+                })
+                .filter((field): field is CustomField & { isReadOnly: boolean } => field !== null);
+        }
+    }, [customFields, currentUser, activityToEdit, isNew]);
 
     useEffect(() => {
         if (isOpen) {
             if (activityToEdit) {
                 setActivity({ ...initialActivityState, ...activityToEdit });
+                setCustomValues(activityToEdit.custom_field_values || {});
             } else {
                 setActivity({
                     ...initialActivityState,
                     responsible: currentUser?.username || '',
                     approver: currentUser?.username || '',
                 });
+                setCustomValues({});
             }
         }
     }, [activityToEdit, isOpen, currentUser]);
@@ -72,9 +107,13 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
         setActivity(updatedActivity);
     };
 
+    const handleCustomValueChange = (fieldId: number, value: string) => {
+        setCustomValues(prev => ({ ...prev, [fieldId]: value }));
+    };
+
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(activity);
+        onSave({ ...activity, custom_field_values: customValues });
     };
 
     const modalTitle = activityToEdit ? "ویرایش فعالیت" : "تعریف فعالیت جدید";
@@ -140,6 +179,18 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
                                 <option value="خاتمه یافته">خاتمه یافته</option>
                             </select>
                         </div>
+                        {relevantCustomFields.length > 0 && <h4 className="list-section-header" style={{marginTop: '1.5rem', marginBottom: '1rem'}}>فیلدهای سفارشی</h4>}
+                        {relevantCustomFields.map(field => (
+                            <div className="input-group" key={field.id}>
+                                <label htmlFor={`custom-field-act-${field.id}`}>{field.title}</label>
+                                <input
+                                    id={`custom-field-act-${field.id}`}
+                                    value={customValues[field.id] || ''}
+                                    onChange={e => !field.isReadOnly && handleCustomValueChange(field.id, e.target.value)}
+                                    readOnly={field.isReadOnly}
+                                />
+                            </div>
+                        ))}
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="cancel-btn" onClick={onClose}>انصراف</button>
