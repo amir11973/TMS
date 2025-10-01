@@ -18,7 +18,7 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval, onOpenNotesModal, onUpdateItemsOrder }: {
+export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval, onOpenNotesModal, onUpdateItemsOrder, onRequestAlert }: {
     items: any[];
     currentUser: User | null;
     onShowHistory: (history: any[]) => void;
@@ -33,6 +33,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
     onSendForApproval: (item: any, requestedStatus: string) => void;
     onOpenNotesModal: (item: any, viewMode: 'responsible' | 'approver') => void;
     onUpdateItemsOrder: (updates: any[]) => void;
+    onRequestAlert: (props: any) => void;
 }) => {
     const [delegateModal, setDelegateModal] = useState({ isOpen: false, item: null as any });
     const [isMassDelegateModalOpen, setIsMassDelegateModalOpen] = useState(false);
@@ -75,7 +76,13 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
     };
 
     const handleKanbanStatusChange = (item: any, newStatus: string) => {
-        onSendForApproval(item, newStatus);
+        // Items without workflow are updated directly.
+        if (item.use_workflow === false) {
+            onDirectStatusUpdate(item.id, item.type, newStatus);
+        } else {
+            // Items with workflow go through the approval process.
+            onSendForApproval(item, newStatus);
+        }
     };
 
     const renderContent = () => {
@@ -96,6 +103,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                             onCardClick={onViewDetails}
                             onStatusChange={handleKanbanStatusChange}
                             onUpdateItemsOrder={onUpdateItemsOrder}
+                            onRequestAlert={onRequestAlert}
                         />
                     </section>
                 );

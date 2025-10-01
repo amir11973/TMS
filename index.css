@@ -22,6 +22,12 @@
 
 
 
+
+
+
+
+
+
 /* General Resets and Base Styles */
 :root {
   /* Dark Theme Colors */
@@ -958,9 +964,19 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    min-width: 0; /* Helps flexbox shrink the item if needed */
 }
 .chatbot-header-title svg {
     color: var(--c-primary);
+    width: 1.5rem; /* Larger icon */
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+.chatbot-header-title h3 {
+    font-size: 1.2rem; /* Larger font */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chat-messages {
@@ -1715,6 +1731,10 @@ body {
     .chatbot-fab {
         bottom: 1.25rem;
         right: 1.25rem;
+    }
+
+    .chat-input-form input {
+        font-size: 1rem;
     }
 
     .app-body {

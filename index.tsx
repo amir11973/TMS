@@ -141,13 +141,14 @@ const App = () => {
 
             handleSupabaseError(teamsRes.error, 'fetching teams');
             const teamsData = teamsRes.data || [];
+            // FIX: Explicitly typing the initial value for `reduce` ensures `reconstructedTeams` is correctly typed.
             const reconstructedTeams = teamsData.reduce((acc, team) => {
                 if (!acc[team.manager_username]) {
                     acc[team.manager_username] = [];
                 }
                 acc[team.manager_username].push({ username: team.member_username, role: team.role });
                 return acc;
-            }, {});
+            }, {} as Record<string, TeamMember[]>);
             setTeams(reconstructedTeams);
 
             handleSupabaseError(customFieldsRes.error, 'fetching custom fields');
@@ -1451,7 +1452,7 @@ const supabaseAnonKey = '...';`}
             case 'projects_actions_list':
                 return <ProjectsActionsListPage projects={projects} actions={actions} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} teams={teams} />;
             case 'tasks':
-                return <TasksPage items={taskItems} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} onDelegateTask={handleDelegateTask} projects={projects} actions={actions} teamMembers={currentUserTeam} onMassDelegate={handleMassDelegateTasks} onViewDetails={handleViewDetails} onDirectStatusUpdate={updateItemStatus} onSendForApproval={handleRequestSendForApproval} onOpenNotesModal={handleOpenNotesModal} onUpdateItemsOrder={handleUpdateItemsOrder} />;
+                return <TasksPage items={taskItems} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} onDelegateTask={handleDelegateTask} projects={projects} actions={actions} teamMembers={currentUserTeam} onMassDelegate={handleMassDelegateTasks} onViewDetails={handleViewDetails} onDirectStatusUpdate={updateItemStatus} onSendForApproval={handleRequestSendForApproval} onOpenNotesModal={handleOpenNotesModal} onUpdateItemsOrder={handleUpdateItemsOrder} onRequestAlert={handleRequestAlert} />;
             case 'approvals':
                 return <ApprovalsPage items={approvalItems} currentUser={loggedInUser} onApprovalDecision={handleRequestApprovalDecision} onShowHistory={handleShowHistory} onShowGlobalHistory={handleShowGlobalApprovalsHistory} onViewDetails={handleViewDetails} onShowInfo={handleShowInfo} users={users} onOpenNotesModal={handleOpenNotesModal}/>;
             case 'users':

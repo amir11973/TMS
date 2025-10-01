@@ -93,11 +93,11 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
     
     const typeData = useMemo(() => {
-        // FIX: Explicitly typed the reduce accumulator to ensure correct type inference for 'counts'.
-        const counts = allItems.reduce((acc, item) => {
+        // FIX: Explicitly typing the initial value for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
+        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
         return [
             { name: 'پروژه', value: counts['پروژه'] || 0, color: '#e94560' },
             { name: 'اقدام', value: counts['اقدام'] || 0, color: '#17a2b8' },
@@ -105,12 +105,12 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const statusData = useMemo(() => {
-        // FIX: Explicitly typed the reduce accumulator to ensure correct type inference for 'counts'.
-        const counts = allItems.reduce((acc, item) => {
+        // FIX: Explicitly typing the initial value for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
+        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
          return [
             { name: 'شروع نشده', value: counts['شروع نشده'] || 0, color: '#888' },
             { name: 'در حال اجرا', value: counts['در حال اجرا'] || 0, color: '#ffc107' },
@@ -119,13 +119,15 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        // FIX: Explicitly typed the reduce accumulator to ensure TypeScript infers `counts` values as numbers, fixing the sort operation.
-        const counts = allItems.reduce((acc, item) => {
+        // FIX: The `reduce` method's accumulator is explicitly typed as `Record<string, number>`.
+        // This ensures `counts` is correctly typed, preventing a TypeScript error in the `sort`
+        // method where `value` was previously of type `unknown`.
+        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,

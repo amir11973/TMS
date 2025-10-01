@@ -16,15 +16,13 @@ const isDelayed = (item: any) => {
     return endDate < today;
 };
 
-const KanbanCard = ({ item, onCardClick }: { item: any, onCardClick: (item: any) => void }) => {
+const KanbanCard = ({ item, onCardClick, onRequestAlert }: { item: any, onCardClick: (item: any) => void, onRequestAlert: (props: any) => void }) => {
     const delayed = isDelayed(item);
     const isPending = item.approvalStatus === 'pending';
 
     const handleDragStart = (e: React.DragEvent) => {
-        if (isPending) {
-            e.preventDefault();
-            return;
-        }
+        // The check for isPending is removed. Dragging is now always allowed to start.
+        // The drop target will determine if the move is valid.
         e.dataTransfer.setData('application/json', JSON.stringify(item));
         e.currentTarget.classList.add('dragging');
     };
@@ -39,12 +37,12 @@ const KanbanCard = ({ item, onCardClick }: { item: any, onCardClick: (item: any)
             onClick={() => onCardClick(item)} 
             role="button" 
             tabIndex={0}
-            draggable={!isPending}
+            draggable={true} // All cards are now draggable to allow for intra-column sorting.
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             data-id={`${item.type}-${item.id}`}
-            title={isPending ? `${item.title} (غیرقابل جابجایی در وضعیت انتظار تایید)` : item.title}
-            style={{ cursor: isPending ? 'not-allowed' : 'grab' }}
+            title={isPending ? `${item.title} (منتظر تایید)` : item.title}
+            style={{ cursor: 'grab' }} // All cards should be grabbable.
         >
             <div className="kanban-card-title">{item.title}</div>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: '26px'}}>
@@ -58,11 +56,12 @@ const KanbanCard = ({ item, onCardClick }: { item: any, onCardClick: (item: any)
     );
 };
 
-export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsOrder }: { 
+export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsOrder, onRequestAlert }: { 
     items: any[], 
     onCardClick: (item: any) => void,
     onStatusChange: (item: any, newStatus: string) => void,
-    onUpdateItemsOrder: (updates: { id: number; type: string; kanban_order: number }[]) => void 
+    onUpdateItemsOrder: (updates: { id: number; type: string; kanban_order: number }[]) => void,
+    onRequestAlert: (props: any) => void 
 }) => {
     const [showAllCompleted, setShowAllCompleted] = useState(false);
     
@@ -113,12 +112,27 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
 
             if (sourceEffectiveStatus !== targetStatus) {
                 // Inter-column drop (status change)
-                if (sourceItem.use_workflow === false) return;
 
+                // Prevent moving pending items between columns.
+                if (sourceItem.approvalStatus === 'pending') {
+                    onRequestAlert({
+                        title: 'عملیات غیرمجاز',
+                        message: 'امکان جابجایی آیتم در وضعیت "منتظر تایید" بین ستون‌ها وجود ندارد.'
+                    });
+                    return;
+                }
+                
                 const sourceStatus = sourceItem.status === 'ارسال برای تایید' ? sourceItem.underlyingStatus : sourceItem.status;
-                if (sourceStatus === targetStatus) return; 
-                if (sourceStatus === 'خاتمه یافته') return; 
-                if (sourceStatus === 'در حال اجرا' && targetStatus === 'شروع نشده') return; 
+                if (sourceStatus === targetStatus) return; // No actual status change
+
+                // Prevent moving backward from 'in progress' to 'not started'
+                if (sourceStatus === 'در حال اجرا' && targetStatus === 'شروع نشده') return;
+
+                // For workflow items, prevent moving out of 'completed'
+                if (sourceItem.use_workflow !== false && sourceStatus === 'خاتمه یافته') return;
+                
+                // For non-workflow items, prevent jumping from 'completed' back to 'not started'
+                if (sourceItem.use_workflow === false && sourceStatus === 'خاتمه یافته' && targetStatus === 'شروع نشده') return;
 
                 onStatusChange(sourceItem, targetStatus);
             } else {
@@ -140,7 +154,10 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     }
                 }
 
-                const reorderedItems = columnItems.filter(it => it.id !== sourceItem.id);
+                // FIX: Use composite key (type + id) to correctly filter out the dragged item,
+                // preventing bugs if an action and activity have the same ID.
+                const reorderedItems = columnItems.filter(it => `${it.type}-${it.id}` !== `${sourceItem.type}-${sourceItem.id}`);
+
                 const targetIndex = targetCard ? reorderedItems.findIndex(it => `${it.type}-${it.id}` === (targetCard as HTMLElement).dataset.id) : reorderedItems.length;
                 
                 reorderedItems.splice(targetIndex, 0, sourceItem);
@@ -178,7 +195,7 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     {/* FIX: Wrapped KanbanCard in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component. */}
                     {columns.notStarted.map(item => (
                         <React.Fragment key={`${item.type}-${item.id}`}>
-                            <KanbanCard item={item} onCardClick={onCardClick} />
+                            <KanbanCard item={item} onCardClick={onCardClick} onRequestAlert={onRequestAlert} />
                         </React.Fragment>
                     ))}
                 </div>
@@ -196,7 +213,7 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     {/* FIX: Wrapped KanbanCard in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component. */}
                     {columns.inProgress.map(item => (
                         <React.Fragment key={`${item.type}-${item.id}`}>
-                            <KanbanCard item={item} onCardClick={onCardClick} />
+                            <KanbanCard item={item} onCardClick={onCardClick} onRequestAlert={onRequestAlert} />
                         </React.Fragment>
                     ))}
                 </div>
@@ -226,7 +243,7 @@ export const KanbanBoard = ({ items, onCardClick, onStatusChange, onUpdateItemsO
                     {/* FIX: Wrapped KanbanCard in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component. */}
                     {columns.completed.map(item => (
                         <React.Fragment key={`${item.type}-${item.id}`}>
-                            <KanbanCard item={item} onCardClick={onCardClick} />
+                            <KanbanCard item={item} onCardClick={onCardClick} onRequestAlert={onRequestAlert} />
                         </React.Fragment>
                     ))}
                 </div>
