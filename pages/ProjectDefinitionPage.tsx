@@ -7,7 +7,7 @@ import moment from 'moment-jalaali';
 import { User, TeamMember, CustomField } from '../types';
 import { getTodayString } from '../constants';
 import { supabase, handleSupabaseError } from '../supabaseClient';
-import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon, ApproveIcon } from '../icons';
+import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon, ApproveIcon, PlusIcon } from '../icons';
 import { renderPriorityBadge, JalaliDatePicker } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
@@ -39,6 +39,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     onSetIsActionLoading: (isLoading: boolean) => void;
     customFields: CustomField[];
 }) => {
+    // FIX: Add 'custom_field_values' to prevent type errors when accessing it on the project state.
     const initialProjectState = {
         title: '', projectManager: '', unit: sections[0] || '', priority: 'متوسط',
         projectStartDate: getTodayString(), projectEndDate: getTodayString(), projectGoal: '',
@@ -47,7 +48,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         isNew: false,
         status: 'شروع نشده',
         id: null,
-        use_workflow: true
+        use_workflow: true,
+        custom_field_values: {}
     };
     const [project, setProject] = useState(initialProjectState);
     const [customValues, setCustomValues] = useState<Record<string, any>>({});
@@ -434,8 +436,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                         </select>
                                     </div>
                                     {canManageActivities && (
-                                         <button className="add-activity-btn" onClick={handleAddActivity}>
-                                            افزودن فعالیت
+                                         <button className="add-activity-btn icon-add-btn" onClick={handleAddActivity} title="افزودن فعالیت">
+                                            <PlusIcon />
                                         </button>
                                     )}
                                 </div>

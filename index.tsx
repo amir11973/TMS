@@ -1600,6 +1600,7 @@ const supabaseAnonKey = '...';`}
                 onDeleteProject={(args) => deleteItemForChatbot('project', args)}
                 onDeleteAction={(args) => deleteItemForChatbot('action', args)}
                 onDeleteActivity={(args) => deleteItemForChatbot('activity', args)}
+                onRequestAlert={handleRequestAlert}
             />
              <NotesModal 
                 isOpen={notesModalProps.isOpen}

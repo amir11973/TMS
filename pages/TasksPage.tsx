@@ -90,7 +90,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
             case 'calendar':
                 return (
                     <section style={{display: 'flex', flexDirection: 'column', flexGrow: 1}}>
-                        <h3 className="list-section-header">نمای تقویم وظایf</h3>
+                        <h3 className="list-section-header">نمای تقویم وظایف</h3>
                         <JalaliCalendarView items={openTasks} onViewDetails={onViewDetails} />
                     </section>
                 );

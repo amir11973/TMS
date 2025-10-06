@@ -41,8 +41,8 @@ export const DashboardListModal = ({ isOpen, onClose, title, items, onViewDetail
                     <h3>{title}</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
-                <div className="modal-body">
-                    <div className="table-container" style={{ maxHeight: '60vh' }}>
+                <div className="modal-body modal-body-with-table">
+                    <div className="table-container">
                         <table className="user-list-table dashboard-data-table">
                             <thead>
                                 <tr>

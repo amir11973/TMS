@@ -28,6 +28,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 /* General Resets and Base Styles */
 :root {
   /* Dark Theme Colors */
@@ -251,7 +262,7 @@ body {
 }
 
 .logout-button {
-    background-color: var(--c-primary);
+    background-color: #b71c1c;
     color: white;
     border: none;
     border-radius: 0.375rem;
@@ -263,7 +274,7 @@ body {
 }
 
 .logout-button:hover {
-    background-color: #d43751;
+    background-color: #9a1616;
 }
 
 .app-body {
@@ -503,9 +514,9 @@ body {
 }
 
 .header-action-btn {
-    background-color: var(--c-header);
-    color: var(--c-text);
-    border: 0.0625rem solid var(--c-border);
+    background-color: var(--c-primary);
+    color: white;
+    border: none;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     cursor: pointer;
@@ -517,7 +528,7 @@ body {
     transition: background-color 0.2s;
 }
 .header-action-btn:hover {
-    background-color: #2a4a7a;
+    background-color: #d43751;
 }
 .header-action-btn svg {
     width: 1.125rem;
@@ -696,6 +707,23 @@ body {
 
 .add-activity-btn:hover { background-color: #d43751; }
 
+.add-user-button.icon-add-btn,
+.add-activity-btn.icon-add-btn {
+    padding: 0;
+    width: 2.5625rem;
+    height: 2.5625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.add-user-button.icon-add-btn svg,
+.add-activity-btn.icon-add-btn svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
 
 /* Projects, Actions, Tasks, Approvals Pages */
 .projects-actions-list-page,
@@ -841,7 +869,7 @@ body {
 .theme-option svg { width: 3.125rem; height: 3.125rem; color: var(--c-text-muted); }
 .theme-option.active svg { color: var(--c-primary); }
 .unit-management-form { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end; }
-.unit-management-form .input-group { flex-grow: 1; margin-bottom: 0; }
+.unit-management-form .input-group { flex-grow: 0; width: 15rem; margin-bottom: 0; }
 .unit-management-form button { height: 2.5625rem; }
 
 /* Details Modal */
@@ -1520,6 +1548,17 @@ body {
     overflow-y: auto;
 }
 
+.modal-body-with-table {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden; /* Prevent this element from showing a scrollbar */
+    min-height: 0; /* Fix for flex item overflow in some browsers */
+}
+
+.modal-body-with-table .table-container {
+    flex-grow: 1; /* Allow the table container to fill the available space */
+}
+
 .modal-body .input-group { margin-bottom: 1rem; }
 .modal-body .input-group label { font-weight: 700; }
 .modal-body .input-group input,
@@ -1648,10 +1687,10 @@ body {
 .projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
 
 /* --- Dashboard Page --- */
-.dashboard-data-table th:nth-child(1) { width: 10%; }
-.dashboard-data-table th:nth-child(2) { width: 40%; }
-.dashboard-data-table th:nth-child(3) { width: 15%; }
-.dashboard-data-table th:nth-child(4) { width: 15%; }
+.dashboard-data-table th:nth-child(1) { width: 15%; }
+.dashboard-data-table th:nth-child(2) { width: 27%; }
+.dashboard-data-table th:nth-child(3) { width: 18%; }
+.dashboard-data-table th:nth-child(4) { width: 20%; }
 .dashboard-data-table th:nth-child(5) { width: 20%; }
 
 /* --- Tasks Page --- */
@@ -1670,17 +1709,28 @@ body {
 
 
 /* --- Modal Tables --- */
-.modal-content .mass-delegate-table th:nth-child(1) { width: 5%; }   /* # */
+.modal-content .mass-delegate-table th:nth-child(1) { width: 10%; }   /* # */
 .modal-content .mass-delegate-table th:nth-child(2) { width: 20%; } /* فعالیت / عنوان */
-.modal-content .mass-delegate-table th:nth-child(3) { width: 35%; } /* پروژه / اقدام */
+.modal-content .mass-delegate-table th:nth-child(3) { width: 30%; } /* پروژه / اقدام */
 .modal-content .mass-delegate-table th:nth-child(4) { width: 20%; } /* مسئول فعلی */
 .modal-content .mass-delegate-table th:nth-child(5) { width: 20%; } /* مسئول جدید */
 
-.modal-content .completed-tasks-table th:nth-child(1) { width: 5%; }   /* # */
-.modal-content .completed-tasks-table th:nth-child(2) { width: 45%; } /* عنوان */
+.modal-content .completed-tasks-table th:nth-child(1) { width: 10%; }   /* # */
+.modal-content .completed-tasks-table th:nth-child(2) { width: 40%; } /* عنوان */
 .modal-content .completed-tasks-table th:nth-child(3) { width: 15%; } /* تاریخچه */
 .modal-content .completed-tasks-table th:nth-child(4) { width: 15%; } /* تاریخ تایید نهایی */
 .modal-content .completed-tasks-table th:nth-child(5) { width: 20%; } /* پروژه / اقدام */
+
+.project-modal-content .activities-table {
+    table-layout: fixed;
+    width: 100%;
+}
+.project-modal-content .activities-table th:nth-child(1) { width: 10%; }
+.project-modal-content .activities-table th:nth-child(2) { width: 40%; }
+.project-modal-content .activities-table th:nth-child(3) { width: 15%; }
+.project-modal-content .activities-table th:nth-child(4) { width: 15%; }
+.project-modal-content .activities-table th:nth-child(5) { width: 20%; }
+
 
 .modal-content .completed-tasks-table td:nth-child(4) {
     white-space: nowrap;
@@ -1863,8 +1913,8 @@ body {
     .projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
 
     /* --- Dashboard Page Grid Widths --- */
-    .dashboard-data-table th:nth-child(1) { width: 5%; }
-    .dashboard-data-table th:nth-child(2) { width: 65%; }
+    .dashboard-data-table th:nth-child(1) { width: 10%; }
+    .dashboard-data-table th:nth-child(2) { width: 60%; }
     .dashboard-data-table th:nth-child(3) { width: 10%; }
     .dashboard-data-table th:nth-child(4) { width: 10%; }
     .dashboard-data-table th:nth-child(5) { width: 10%; }
@@ -2109,7 +2159,7 @@ body {
     background-color: #c82333;
 }
 .calendar-task-title {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: white;
     white-space: nowrap;
     overflow: hidden;

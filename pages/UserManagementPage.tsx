@@ -4,7 +4,7 @@
 */
 import React, { useState, FormEvent } from 'react';
 import { User } from '../types';
-import { EditIcon, DeleteIcon, PowerIcon, DetailsIcon } from '../icons';
+import { EditIcon, DeleteIcon, PowerIcon, DetailsIcon, PlusIcon } from '../icons';
 
 export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUserActive, onEditUser, onShowUserInfo }: {
     users: User[];
@@ -57,7 +57,9 @@ export const UserManagementPage = ({ users, onAddUser, onDeleteUser, onToggleUse
                     <label htmlFor="confirm-password">تکرار رمز عبور</label>
                     <input type="password" id="confirm-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
                 </div>
-                <button type="submit" className="add-user-button">افزودن</button>
+                <button type="submit" className="add-user-button icon-add-btn" title="افزودن کاربر">
+                    <PlusIcon />
+                </button>
             </form>
             <div className="table-wrapper">
                 <table className="user-list-table">

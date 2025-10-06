@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { toPersianDigits } from '../utils';
 
@@ -86,8 +86,8 @@ export const MassDelegateModal = ({ isOpen, onClose, onSave, projects, actions, 
                     <h3>تغییر واگذاری گروهی</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
-                <div className="modal-body">
-                    <div className="table-container" style={{ maxHeight: '60vh' }}>
+                <div className="modal-body modal-body-with-table">
+                    <div className="table-container">
                         <table className="user-list-table mass-delegate-table">
                             <thead>
                                 <tr>

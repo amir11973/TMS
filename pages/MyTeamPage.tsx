@@ -4,7 +4,7 @@
 */
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember, TeamMemberRole } from '../types';
-import { DeleteIcon, DetailsIcon } from '../icons';
+import { DeleteIcon, DetailsIcon, PlusIcon } from '../icons';
 
 const TeamMemberDetailsModal = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () => void; user: User | null }) => {
     if (!isOpen || !user) return null;
@@ -88,7 +88,7 @@ export const MyTeamPage = ({ allUsers, currentUser, teamMembers, onAddMember, on
                         {usersAvailableToAdd.map(u => <option key={u.id} value={u.username} />)}
                     </datalist>
                 </div>
-                <button className="add-user-button" onClick={handleAddClick} disabled={!userToAdd}>افزودن</button>
+                <button className="add-user-button icon-add-btn" onClick={handleAddClick} disabled={!userToAdd} title="افزودن"><PlusIcon /></button>
             </div>
             <div className="table-wrapper">
                 <table className="user-list-table">

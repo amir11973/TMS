@@ -44,7 +44,8 @@ export const ChatbotModal = ({
     onRemoveTeamMember,
     onDeleteProject,
     onDeleteAction,
-    onDeleteActivity
+    onDeleteActivity,
+    onRequestAlert
 }: {
     isOpen: boolean;
     onClose: () => void;
@@ -63,6 +64,7 @@ export const ChatbotModal = ({
     onDeleteProject: (data: any) => Promise<ChatbotResult>;
     onDeleteAction: (data: any) => Promise<ChatbotResult>;
     onDeleteActivity: (data: any) => Promise<ChatbotResult>;
+    onRequestAlert: (props: { title: string; message: string; }) => void;
 }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -107,13 +109,34 @@ export const ChatbotModal = ({
         };
 
         recognition.onerror = (event) => {
-            // FIX: Gracefully handle the common 'no-speech' error.
-            if (event.error === 'no-speech') {
-                // This is a common case when the user doesn't speak.
-                // We can simply stop listening without logging a disruptive error.
-                console.log("No speech detected, stopping recognition.");
+            let errorMessage = 'خطای نامشخص در تشخیص گفتار رخ داد.';
+            
+            // FIX: Gracefully handle various speech recognition errors with user-friendly messages.
+            switch (event.error) {
+                case 'no-speech':
+                    console.log("No speech detected, stopping recognition.");
+                    setIsListening(false);
+                    return; // Don't show an alert for this common case.
+                case 'not-allowed':
+                    errorMessage = 'دسترسی به میکروفون رد شد. لطفاً در تنظیمات مرورگر خود این دسترسی را فعال کنید.';
+                    break;
+                case 'network':
+                    errorMessage = 'خطای شبکه در سرویس تشخیص گفتار. لطفاً اتصال اینترنت خود را بررسی کنید.';
+                    break;
+                case 'service-not-allowed':
+                    errorMessage = 'سرویس تشخیص گفتار توسط مرورگر یا سیستم عامل مجاز نیست.';
+                    break;
+                case 'audio-capture':
+                    errorMessage = 'مشکلی در دریافت صدا از میکروفون به وجود آمد.';
+                    break;
+            }
+
+            console.error('Speech recognition error', event.error, event.message);
+            if (onRequestAlert) {
+                onRequestAlert({ title: 'خطای تشخیص گفتار', message: errorMessage });
             } else {
-                console.error('Speech recognition error', event.error);
+                // Fallback if prop is not passed for some reason
+                alert(errorMessage);
             }
             setIsListening(false);
         };

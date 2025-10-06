@@ -33,8 +33,8 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                     <h3>خاتمه یافته ها</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
-                <div className="modal-body">
-                    <div className="table-container" style={{ maxHeight: '60vh' }}>
+                <div className="modal-body modal-body-with-table">
+                    <div className="table-container">
                         <table className="user-list-table completed-tasks-table">
                             <thead>
                                 <tr>

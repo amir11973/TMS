@@ -4,7 +4,7 @@
 */
 import React, { useState, useEffect } from 'react';
 import { User, CustomField } from '../types';
-import { ThemeIcon, TableIcon, LightModeIcon, DarkModeIcon, EditIcon, DeleteIcon, CustomFieldsIcon } from '../icons';
+import { ThemeIcon, TableIcon, LightModeIcon, DarkModeIcon, EditIcon, DeleteIcon, CustomFieldsIcon, PlusIcon } from '../icons';
 
 export const SettingsPage = ({ 
     theme, 
@@ -104,9 +104,15 @@ export const SettingsPage = ({
                                    onChange={e => editingSection ? setEditingSection({...editingSection, new: e.target.value}) : setNewSection(e.target.value)}
                                />
                             </div>
-                            <button className="add-user-button" onClick={handleAddOrUpdateSection}>
-                                {editingSection ? 'ذخیره تغییرات' : 'افزودن بخش'}
-                            </button>
+                            {editingSection ? (
+                                <button className="add-user-button" onClick={handleAddOrUpdateSection}>
+                                    ذخیره تغییرات
+                                </button>
+                            ) : (
+                                <button className="add-user-button icon-add-btn" onClick={handleAddOrUpdateSection} title="افزودن بخش">
+                                    <PlusIcon />
+                                </button>
+                            )}
                             {editingSection && <button type="button" className="cancel-btn" onClick={() => setEditingSection(null)}>انصراف</button>}
                         </div>
                         <div className="table-wrapper">
@@ -142,7 +148,9 @@ export const SettingsPage = ({
                     <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h3 className="list-section-header" style={{ marginBottom: 0, borderBottom: 'none' }}>مدیریت فیلدهای سفارشی</h3>
-                            <button className="add-user-button" onClick={() => onOpenCustomFieldModal(null)}>ایجاد فیلد جدید</button>
+                            <button className="add-user-button icon-add-btn" onClick={() => onOpenCustomFieldModal(null)} title="ایجاد فیلد جدید">
+                                <PlusIcon />
+                            </button>
                         </div>
                         <div className="table-wrapper">
                             <table className="user-list-table">
