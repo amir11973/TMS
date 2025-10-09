@@ -1,44 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* General Resets and Base Styles */
 :root {
   /* Dark Theme Colors */
@@ -869,7 +828,7 @@ body {
 .theme-option svg { width: 3.125rem; height: 3.125rem; color: var(--c-text-muted); }
 .theme-option.active svg { color: var(--c-primary); }
 .unit-management-form { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end; }
-.unit-management-form .input-group { flex-grow: 0; width: 15rem; margin-bottom: 0; }
+.unit-management-form .input-group { flex-grow: 0; width: 15rem; }
 .unit-management-form button { height: 2.5625rem; }
 
 /* Details Modal */
@@ -1709,11 +1668,13 @@ body {
 
 
 /* --- Modal Tables --- */
-.modal-content .mass-delegate-table th:nth-child(1) { width: 10%; }   /* # */
-.modal-content .mass-delegate-table th:nth-child(2) { width: 20%; } /* فعالیت / عنوان */
-.modal-content .mass-delegate-table th:nth-child(3) { width: 30%; } /* پروژه / اقدام */
-.modal-content .mass-delegate-table th:nth-child(4) { width: 20%; } /* مسئول فعلی */
-.modal-content .mass-delegate-table th:nth-child(5) { width: 20%; } /* مسئول جدید */
+.modal-content .mass-delegate-table th:nth-child(1) { width: 5%; }
+.modal-content .mass-delegate-table th:nth-child(2) { width: 30%; }
+.modal-content .mass-delegate-table th:nth-child(3) { width: 30%; }
+.modal-content .mass-delegate-table th:nth-child(4) { width: 15%; }
+.modal-content .mass-delegate-table th:nth-child(5) { width: 10%; }
+.modal-content .mass-delegate-table th:nth-child(6) { width: 10%; }
+
 
 .modal-content .completed-tasks-table th:nth-child(1) { width: 10%; }   /* # */
 .modal-content .completed-tasks-table th:nth-child(2) { width: 40%; } /* عنوان */
@@ -2043,6 +2004,9 @@ body {
     margin-bottom: 0.25rem;
     color: var(--c-text);
     font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 .kanban-card-parent {
     font-size: 0.7rem;
@@ -2165,4 +2129,168 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     display: block;
+}
+.user-list-table tbody tr.delegated-task {
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.1) 10px,
+        rgba(0, 0, 0, 0.1) 20px
+    );
+    background-color: var(--c-table-row-bg); /* Keep original background color */
+}
+
+.kanban-card.delegated-task {
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.1) 10px,
+        rgba(0, 0, 0, 0.1) 20px
+    );
+    background-color: var(--c-surface); /* Keep original background color */
+}
+
+body.theme-light .user-list-table tbody tr.delegated-task,
+body.theme-light .kanban-card.delegated-task {
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.04) 10px,
+        rgba(0, 0, 0, 0.04) 20px
+    );
+}
+
+.item-tag {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: filter 0.2s, transform 0.2s;
+}
+
+.item-tag:hover {
+    filter: brightness(1.2);
+    transform: scale(1.05);
+}
+
+.parent-tag {
+    background-color: var(--c-info);
+    color: white;
+}
+
+.subtask-tag {
+    background-color: var(--c-success);
+    color: white;
+}
+
+/* Hierarchy Modal Styles */
+.hierarchy-container {
+    background-color: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.hierarchy-tree, .hierarchy-children {
+    list-style: none;
+    padding-right: 20px; /* Indentation for children */
+    position: relative;
+}
+
+.hierarchy-tree {
+    padding-right: 0;
+}
+
+.hierarchy-node {
+    position: relative;
+    padding-right: 25px; /* Space for connecting lines */
+    margin-bottom: 0.5rem;
+}
+
+/* Vertical connecting line */
+.hierarchy-node::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background-color: var(--c-border);
+}
+
+/* Last node in a list should not have a line going down */
+.hierarchy-node:last-child::before {
+    height: 24px; /* Adjust to connect to middle of node content */
+}
+
+/* Horizontal connecting line */
+.hierarchy-node::after {
+    content: '';
+    position: absolute;
+    top: 24px; /* Adjust to align with middle of the node content */
+    right: 0;
+    width: 20px; /* Length of the horizontal line */
+    height: 1px;
+    background-color: var(--c-border);
+}
+
+.node-content {
+    background-color: var(--c-surface);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    border-right: 3px solid var(--c-info);
+    transition: background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.hierarchy-node.current-item > .node-content {
+    background-color: var(--c-hover-bg);
+    border-right-color: var(--c-primary);
+    box-shadow: 0 0 8px rgba(233, 69, 96, 0.5);
+}
+
+.node-main-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.node-title {
+    display: block;
+    font-weight: 500;
+}
+
+.node-status {
+    background-color: var(--c-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.node-meta {
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.node-dates {
+    direction: ltr;
+    text-align: left;
 }

@@ -93,11 +93,11 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
     
     const typeData = useMemo(() => {
-        // FIX: Explicitly typing the initial value for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
-        const counts = allItems.reduce((acc, item: any) => {
+        // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
+        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
         return [
             { name: 'پروژه', value: counts['پروژه'] || 0, color: '#e94560' },
             { name: 'اقدام', value: counts['اقدام'] || 0, color: '#17a2b8' },
@@ -105,12 +105,12 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const statusData = useMemo(() => {
-        // FIX: Explicitly typing the initial value for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
-        const counts = allItems.reduce((acc, item: any) => {
+        // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
+        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
          return [
             { name: 'شروع نشده', value: counts['شروع نشده'] || 0, color: '#888' },
             { name: 'در حال اجرا', value: counts['در حال اجرا'] || 0, color: '#ffc107' },
@@ -119,14 +119,14 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        // FIX: Explicitly typing the initial value of the reduce accumulator ensures 'counts' is correctly typed as Record<string, number>,
+        // FIX: Explicitly typing the accumulator of the reduce function ensures 'counts' is correctly typed as Record<string, number>,
         // resolving the arithmetic operation error on the sort function where `value` was previously inferred as `unknown`.
-        const counts = allItems.reduce((acc, item: any) => {
+        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {} as Record<string, number>);
+        }, {});
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,

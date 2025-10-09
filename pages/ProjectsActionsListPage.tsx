@@ -16,7 +16,7 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEditProject, onDeleteProject, onEditAction, onDeleteAction, currentUser, onShowHistory, users, teams }: {
+export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEditProject, onDeleteProject, onEditAction, onDeleteAction, currentUser, onShowHistory, users, teams, allActivities, allActions, onShowHierarchy }: {
     projects: any[];
     actions: any[];
     onViewDetails: (item: any) => void;
@@ -25,9 +25,12 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
     onEditAction: (action: any) => void;
     onDeleteAction: (id: number) => void;
     currentUser: User | null;
-    onShowHistory: (history: any[]) => void;
+    onShowHistory: (item: any) => void;
     users: User[];
     teams: Record<string, TeamMember[]>;
+    allActivities: any[];
+    allActions: any[];
+    onShowHierarchy: (item: any) => void;
 }) => {
     const [titleFilter, setTitleFilter] = useState('');
     const [responsibleFilter, setResponsibleFilter] = useState('all');
@@ -36,6 +39,9 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     const allResponsibles = useMemo(() => [...new Set([...projects.map(p => p.projectManager), ...actions.map(a => a.responsible)])].filter(Boolean), [projects, actions]);
     const allStatuses = useMemo(() => ['شروع نشده', 'در حال اجرا', 'خاتمه یافته'], []);
+    
+    const parentIds = useMemo(() => new Set([...allActivities, ...allActions].map(i => i.parent_id).filter(Boolean)), [allActivities, allActions]);
+
 
     const filteredItems = useMemo(() => {
         if (!currentUser) return [];
@@ -223,6 +229,8 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                 const canEdit = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
                                                 const canDelete = isAdmin || currentUser.username === item.owner || isCurrentUserAdminInOwnersTeam;
                                                 const displayStatus = item.status === 'ارسال برای تایید' ? item.underlyingStatus : item.status;
+                                                const isParent = parentIds.has(item.id);
+                                                const isSubtask = !!item.parent_id;
 
                                                 return (
                                                     <tr key={`action-${item.id}`}>
@@ -241,7 +249,13 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td>{item.title}</td>
+                                                        <td>
+                                                            <div className="title-cell-content" style={{ justifyContent: 'flex-start' }}>
+                                                                <span>{item.title}</span>
+                                                                {isParent && <span className="item-tag parent-tag" onClick={(e) => { e.stopPropagation(); onShowHierarchy(item); }}>والد</span>}
+                                                                {isSubtask && <span className="item-tag subtask-tag" onClick={(e) => { e.stopPropagation(); onShowHierarchy(item); }}>زیرفعالیت</span>}
+                                                            </div>
+                                                        </td>
                                                         <td>
                                                             {displayStatus}
                                                         </td>
@@ -265,7 +279,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                                         </button>
                                                                     )}
                                                                     {item.history && (
-                                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                        <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item)}>
                                                                             <HistoryIcon />
                                                                         </button>
                                                                     )}

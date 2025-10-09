@@ -8,7 +8,7 @@ import { User, CustomField } from '../types';
 import { renderPriorityBadge } from '../components';
 import { DetailsIcon } from '../icons';
 
-export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, customFields, currentUser }: { 
+export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, customFields, currentUser, allActivities, allActions }: { 
     isOpen: boolean; 
     onClose: () => void; 
     item: any; 
@@ -16,11 +16,19 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
     onViewDetails: (item: any) => void;
     customFields: CustomField[];
     currentUser: User | null;
+    allActivities: any[];
+    allActions: any[];
 }) => {
     if (!isOpen) return null;
 
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     const customFieldMap = useMemo(() => new Map(customFields.map(f => [f.id.toString(), f])), [customFields]);
+
+    const subtasks = useMemo(() => {
+        if (!item || item.type === 'project') return [];
+        const subtaskSource = item.type === 'activity' ? allActivities : allActions;
+        return subtaskSource.filter((sub: any) => sub.parent_id === item.id);
+    }, [item, allActivities, allActions]);
 
 
     const isProject = item.type === 'project';
@@ -130,8 +138,8 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
                                     <span className="detail-value">{item.title}</span>
                                 </div>
                                  <div className="detail-group">
-                                    <span className="detail-label">مالک</span>
-                                    <span className="detail-value">{userMap.get(item.owner) || item.owner}</span>
+                                    <span className="detail-label">{isProject ? 'مالک' : 'تایید کننده'}</span>
+                                    <span className="detail-value">{isProject ? (userMap.get(item.owner) || item.owner) : (userMap.get(item.approver) || item.approver)}</span>
                                 </div>
                                 <div className="detail-group">
                                     <span className="detail-label">{isProject ? 'مدیر پروژه' : 'مسئول'}</span>
@@ -212,6 +220,34 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
                         </>
                     )}
                     {!isProject && renderCustomFields()}
+
+                    {subtasks.length > 0 && (
+                        <>
+                            <h4 className="list-section-header">زیرفعالیت‌ها</h4>
+                            <div className="table-wrapper">
+                                <table className="user-list-table">
+                                    <thead>
+                                        <tr>
+                                            <th>عنوان</th>
+                                            <th>مسئول</th>
+                                            <th>وضعیت</th>
+                                            <th>اهمیت</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {subtasks.map((sub: any) => (
+                                            <tr key={sub.id}>
+                                                <td>{sub.title}</td>
+                                                <td>{userMap.get(sub.responsible) || sub.responsible}</td>
+                                                <td>{sub.status}</td>
+                                                <td>{renderPriorityBadge(sub.priority)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )}
                 </div>
                 <div className="modal-footer">
                     <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>

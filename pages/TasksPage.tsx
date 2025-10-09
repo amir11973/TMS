@@ -5,10 +5,9 @@
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { CollapsibleTableSection, JalaliCalendarView, KanbanBoard } from '../components';
-import { DetailsIcon, HistoryIcon, DelegateIcon, SendIcon, SendForFinishIcon, NotesIcon, CalendarIcon, ListIcon, KanbanIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, SendIcon, SendForFinishIcon, NotesIcon, CalendarIcon, ListIcon, KanbanIcon, DelegateIcon } from '../icons';
 import { toPersianDigits } from '../utils';
-// FIX: Corrected import path to avoid conflict with empty modals.tsx file.
-import { DelegateTaskModal, MassDelegateModal, CompletedTasksModal } from '../modals/index';
+import { CompletedTasksModal } from '../modals/index';
 
 const isDelayed = (status: string, endDateStr: string) => {
     if (status === 'خاتمه یافته' || !endDateStr) return false;
@@ -18,25 +17,25 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegateTask, projects, actions, teamMembers, onMassDelegate, onViewDetails, onDirectStatusUpdate, onSendForApproval, onOpenNotesModal, onUpdateItemsOrder, onRequestAlert }: {
+export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMembers, onViewDetails, onDirectStatusUpdate, onSendForApproval, onOpenNotesModal, onUpdateItemsOrder, onRequestAlert, onOpenSubtaskModal, onOpenDelegatedItemsModal, allActivities, allActions, projects, onShowHierarchy }: {
     items: any[];
     currentUser: User | null;
-    onShowHistory: (history: any[]) => void;
+    onShowHistory: (item: any) => void;
     users: User[];
-    onDelegateTask: (item: any, newResponsible: string) => void;
-    projects: any[];
-    actions: any[];
     teamMembers: TeamMember[];
-    onMassDelegate: (updates: any[]) => void;
     onViewDetails: (item: any) => void;
     onDirectStatusUpdate: (itemId: number, itemType: string, newStatus: string) => void;
     onSendForApproval: (item: any, requestedStatus: string) => void;
     onOpenNotesModal: (item: any, viewMode: 'responsible' | 'approver') => void;
     onUpdateItemsOrder: (updates: any[]) => void;
     onRequestAlert: (props: any) => void;
+    onOpenSubtaskModal: (item: any) => void;
+    onOpenDelegatedItemsModal: () => void;
+    allActivities: any[];
+    allActions: any[];
+    projects: any[];
+    onShowHierarchy: (item: any) => void;
 }) => {
-    const [delegateModal, setDelegateModal] = useState({ isOpen: false, item: null as any });
-    const [isMassDelegateModalOpen, setIsMassDelegateModalOpen] = useState(false);
     const [isCompletedTasksModalOpen, setIsCompletedTasksModalOpen] = useState(false);
     const [viewMode, setViewMode] = useState('list'); // 'list', 'calendar', or 'kanban'
     
@@ -52,7 +51,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
 
     const groupedOpenTasks = useMemo(() => {
         return openTasks.reduce((acc, task) => {
-            const groupName = task.parentName || 'بدون پروژه/اقدام';
+            const groupName = task.parentName || 'بدون والد';
             if (!acc[groupName]) {
                 acc[groupName] = [];
             }
@@ -61,26 +60,10 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
         }, {} as Record<string, any[]>);
     }, [openTasks]);
 
-    const handleOpenDelegateModal = (item: any) => {
-        setDelegateModal({ isOpen: true, item });
-    };
-
-    const handleConfirmDelegate = (newResponsibleUsername: string) => {
-        onDelegateTask(delegateModal.item, newResponsibleUsername);
-        setDelegateModal({ isOpen: false, item: null });
-    };
-    
-    const handleSaveMassDelegation = (updates: any[]) => {
-        onMassDelegate(updates);
-        setIsMassDelegateModalOpen(false);
-    };
-
     const handleKanbanStatusChange = (item: any, newStatus: string) => {
-        // Items without workflow are updated directly.
         if (item.use_workflow === false) {
             onDirectStatusUpdate(item.id, item.type, newStatus);
         } else {
-            // Items with workflow go through the approval process.
             onSendForApproval(item, newStatus);
         }
     };
@@ -125,9 +108,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                 </thead>
                                 <tbody>
                                     {Object.keys(groupedOpenTasks).length > 0 ? (
-                                        // FIX: Explicitly type 'tasks' to resolve 'unknown' type error.
                                         Object.entries(groupedOpenTasks).map(([groupName, tasks]: [string, any[]]) => (
-                                            // FIX: Wrapped CollapsibleTableSection in a React.Fragment and moved the key to it to satisfy TypeScript's prop checking, as 'key' is not a defined prop on the component.
                                             <React.Fragment key={groupName}>
                                                 <CollapsibleTableSection title={groupName} count={tasks.length} defaultOpen={true}>
                                                     {tasks.map((item, index) => {
@@ -144,9 +125,10 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                                         const isPendingApproval = item.status === 'ارسال برای تایید';
                                                         const canStart = displayStatus === 'شروع نشده' && !isPendingApproval;
                                                         const canFinish = displayStatus === 'در حال اجرا' && !isPendingApproval;
+                                                        const isDelegated = item.isDelegated;
 
                                                         return (
-                                                            <tr key={item.id}>
+                                                            <tr key={item.id} className={isDelegated ? 'delegated-task' : ''}>
                                                                 <td>
                                                                     <div className="title-cell-content" style={{ justifyContent: 'center' }}>
                                                                         <span>{toPersianDigits(index + 1)}</span>
@@ -156,7 +138,13 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                                                         ></span>
                                                                     </div>
                                                                 </td>
-                                                                <td>{item.title}</td>
+                                                                <td>
+                                                                    <div className="title-cell-content" style={{ justifyContent: 'flex-start' }}>
+                                                                        <span>{item.title}</span>
+                                                                        {item.isDelegated && <span className="item-tag parent-tag" onClick={(e) => { e.stopPropagation(); onShowHierarchy(item); }}>والد</span>}
+                                                                        {item.isSubtask && <span className="item-tag subtask-tag" onClick={(e) => { e.stopPropagation(); onShowHierarchy(item); }}>زیرفعالیت</span>}
+                                                                    </div>
+                                                                </td>
                                                                 <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
                                                                 <td>{displayStatus}</td>
                                                                 <td>
@@ -165,10 +153,10 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                                                             <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
                                                                                 <DetailsIcon />
                                                                             </button>
-                                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                            <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item)}>
                                                                                 <HistoryIcon />
                                                                             </button>
-                                                                            <button className="icon-btn delegate-btn" title="واگذاری" onClick={() => handleOpenDelegateModal(item)}>
+                                                                            <button className="icon-btn delegate-btn" title="ایجاد زیرفعالیت" onClick={() => onOpenSubtaskModal(item)}>
                                                                                 <DelegateIcon />
                                                                             </button>
                                                                             <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'responsible')}>
@@ -181,7 +169,8 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                                                                     className="status-select"
                                                                                     value={displayStatus}
                                                                                     onChange={(e) => onDirectStatusUpdate(item.id, item.type, e.target.value)}
-                                                                                    disabled={isPendingApproval}
+                                                                                    disabled={isPendingApproval || isDelegated}
+                                                                                    title={isDelegated ? "وضعیت این آیتم توسط زیرفعالیت‌های آن کنترل می‌شود" : ""}
                                                                                 >
                                                                                     <option value="شروع نشده">شروع نشده</option>
                                                                                     <option value="در حال اجرا">در حال اجرا</option>
@@ -192,16 +181,16 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                                                                             <div className="action-buttons-row">
                                                                                 {canStart && (
                                                                                     <>
-                                                                                        <button className="icon-btn" style={{ color: 'var(--c-info)' }} title="ارسال برای تایید شروع" onClick={() => onSendForApproval(item, 'در حال اجرا')}>
+                                                                                        <button className="icon-btn" style={{ color: 'var(--c-info)' }} title={isDelegated ? "ابتدا باید زیرفعالیت‌ها انجام شوند" : "ارسال برای تایید شروع"} onClick={() => onSendForApproval(item, 'در حال اجرا')} disabled={isDelegated}>
                                                                                             <SendIcon />
                                                                                         </button>
-                                                                                        <button className="icon-btn" title="ارسال برای تایید خاتمه" onClick={() => onSendForApproval(item, 'خاتمه یافته')}>
+                                                                                        <button className="icon-btn" title={isDelegated ? "ابتدا باید زیرفعالیت‌ها انجام شوند" : "ارسال برای تایید خاتمه"} onClick={() => onSendForApproval(item, 'خاتمه یافته')} disabled={isDelegated}>
                                                                                             <SendForFinishIcon />
                                                                                         </button>
                                                                                     </>
                                                                                 )}
                                                                                 {canFinish && (
-                                                                                    <button className="icon-btn" title="ارسال برای تایید خاتمه" onClick={() => onSendForApproval(item, 'خاتمه یافته')}>
+                                                                                    <button className="icon-btn" title={isDelegated ? "ابتدا باید زیرفعالیت‌ها انجام شوند" : "ارسال برای تایید خاتمه"} onClick={() => onSendForApproval(item, 'خاتمه یافته')} disabled={isDelegated}>
                                                                                         <SendForFinishIcon />
                                                                                     </button>
                                                                                 )}
@@ -242,9 +231,9 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                     {viewMode !== 'calendar' ? <CalendarIcon /> : <ListIcon />}
                     <span>{viewMode !== 'calendar' ? 'نمای تقویم' : 'نمای لیست'}</span>
                 </button>
-                <button className="header-action-btn" onClick={() => setIsMassDelegateModalOpen(true)}>
+                <button className="header-action-btn" onClick={onOpenDelegatedItemsModal}>
                     <DelegateIcon />
-                    <span>تغییر واگذاری</span>
+                    <span>موارد واگذار شده</span>
                 </button>
                 <button className="header-action-btn" onClick={() => setIsCompletedTasksModalOpen(true)}>
                     <HistoryIcon />
@@ -252,23 +241,6 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, onDelegate
                 </button>
             </div>
             {renderContent()}
-            <DelegateTaskModal
-                isOpen={delegateModal.isOpen}
-                onClose={() => setDelegateModal({ isOpen: false, item: null })}
-                onDelegate={handleConfirmDelegate}
-                item={delegateModal.item}
-                users={users}
-            />
-            <MassDelegateModal
-                isOpen={isMassDelegateModalOpen}
-                onClose={() => setIsMassDelegateModalOpen(false)}
-                onSave={handleSaveMassDelegation}
-                projects={projects}
-                actions={actions}
-                teamMembers={teamMembers}
-                currentUser={currentUser}
-                users={users}
-            />
             <CompletedTasksModal
                 isOpen={isCompletedTasksModalOpen}
                 onClose={() => setIsCompletedTasksModalOpen(false)}

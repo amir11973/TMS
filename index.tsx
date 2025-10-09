@@ -40,9 +40,13 @@ import {
     DashboardListModal,
     NotesModal,
     AiAnalysisModal,
-    CustomFieldModal
+    CustomFieldModal,
+    SubtaskModal,
+    DelegatedItemsModal,
+    HierarchyModal
 } from './modals/index';
-import { UserInfoModal } from './modals';
+// FIX: Corrected import path for UserInfoModal to resolve module loading error.
+import { UserInfoModal } from './modals/index';
 
 moment.loadPersian({ usePersianDigits: true });
 
@@ -67,6 +71,8 @@ const App = () => {
 
     const [projects, setProjects] = useState<any[]>([]);
     const [actions, setActions] = useState<any[]>([]);
+    const [allActivities, setAllActivities] = useState<any[]>([]);
+    const [allActions, setAllActions] = useState<any[]>([]);
     
     // Settings State
     const [theme, setTheme] = useState('dark');
@@ -111,6 +117,17 @@ const App = () => {
 
     const [isCustomFieldModalOpen, setIsCustomFieldModalOpen] = useState(false);
     const [editingCustomField, setEditingCustomField] = useState<CustomField | null>(null);
+    
+    const [subtaskModalProps, setSubtaskModalProps] = useState({ 
+        isOpen: false, 
+        parentItem: null as any,
+        responsibleUsers: [] as User[],
+        approverUsers: [] as User[]
+    });
+    const [isDelegatedItemsModalOpen, setIsDelegatedItemsModalOpen] = useState(false);
+    const [isHierarchyModalOpen, setIsHierarchyModalOpen] = useState(false);
+    const [hierarchyItem, setHierarchyItem] = useState<any | null>(null);
+
 
     const isInitialRenderRef = useRef(true);
     
@@ -118,9 +135,10 @@ const App = () => {
 
     const fetchData = useCallback(async () => {
         try {
-            const [usersRes, projectsRes, actionsRes, sectionsRes, teamsRes, customFieldsRes] = await Promise.all([
+            const [usersRes, projectsRes, activitiesRes, actionsRes, sectionsRes, teamsRes, customFieldsRes] = await Promise.all([
                 supabase.from('users').select('*'),
-                supabase.from('projects').select('*, activities(*)').order('kanban_order', { foreignTable: 'activities', ascending: true, nullsFirst: false }).order('id', { foreignTable: 'activities' }),
+                supabase.from('projects').select('*'),
+                supabase.from('activities').select('*').order('kanban_order', { ascending: true, nullsFirst: false }),
                 supabase.from('actions').select('*').order('kanban_order', { ascending: true, nullsFirst: false }),
                 supabase.from('units').select('name'),
                 supabase.from('teams').select('*'),
@@ -131,10 +149,24 @@ const App = () => {
             setUsers(usersRes.data || []);
 
             handleSupabaseError(projectsRes.error, 'fetching projects');
-            setProjects(projectsRes.data || []);
+            const projectsData = projectsRes.data || [];
+
+            handleSupabaseError(activitiesRes.error, 'fetching activities');
+            const activitiesData = activitiesRes.data || [];
+            setAllActivities(activitiesData);
 
             handleSupabaseError(actionsRes.error, 'fetching actions');
-            setActions(actionsRes.data || []);
+            const actionsData = actionsRes.data || [];
+            setAllActions(actionsData);
+            
+            const projectsWithActivities = projectsData.map(p => ({
+                ...p,
+                activities: activitiesData.filter(a => a.project_id === p.id && !a.parent_id)
+            }));
+            setProjects(projectsWithActivities);
+
+            const topLevelActions = actionsData.filter(a => !a.parent_id);
+            setActions(topLevelActions);
 
             handleSupabaseError(sectionsRes.error, 'fetching sections');
             setSections((sectionsRes.data || []).map(u => u.name));
@@ -195,21 +227,19 @@ const App = () => {
     }, [theme]);
 
     const calculateProjectStatus = (project: any) => {
-        const activities = project.activities;
-        if (!activities || activities.length === 0) {
+        const projectActivities = allActivities.filter(a => a.project_id === project.id);
+        if (!projectActivities || projectActivities.length === 0) {
             return 'شروع نشده';
         }
 
         const isActivityComplete = (act: any) => {
-            // If workflow is disabled for the project, completion only depends on status.
             if (project.use_workflow === false) {
                 return act.status === 'خاتمه یافته';
             }
-            // If workflow is enabled, it needs approval.
             return act.status === 'خاتمه یافته' && act.approvalStatus === 'approved';
         };
 
-        const allCompleted = activities.every(isActivityComplete);
+        const allCompleted = projectActivities.every(isActivityComplete);
         if (allCompleted) {
             return 'خاتمه یافته';
         }
@@ -218,11 +248,10 @@ const App = () => {
             if (project.use_workflow === false) {
                 return act.status === 'در حال اجرا' || act.status === 'خاتمه یافته';
             }
-            // For workflow-enabled projects, 'active' means it was approved to start, or it's already complete.
             return (act.status === 'در حال اجرا' && act.approvalStatus === 'approved') || isActivityComplete(act);
         };
         
-        const anyActive = activities.some(isActivityActive);
+        const anyActive = projectActivities.some(isActivityActive);
         if (anyActive) {
             return 'در حال اجرا';
         }
@@ -232,11 +261,8 @@ const App = () => {
 
     useEffect(() => {
         const projectsWithUpdatedStatus = projects.map(project => {
-            if (!project.activities) return project;
-            
             const newStatus = calculateProjectStatus(project);
             if (project.status !== newStatus) {
-                // Also update in DB
                 supabase.from('projects').update({ status: newStatus }).eq('id', project.id).then(({ error }) => {
                      handleSupabaseError(error, 'updating project status');
                 });
@@ -245,13 +271,94 @@ const App = () => {
             return project;
         });
 
-        if (JSON.stringify(projects) !== JSON.stringify(projectsWithUpdatedStatus)) {
+        if (JSON.stringify(projects.map(p=>p.status)) !== JSON.stringify(projectsWithUpdatedStatus.map(p=>p.status))) {
             setProjects(projectsWithUpdatedStatus);
         }
-    }, [projects]);
+    }, [projects, allActivities]);
+    
+    const calculateParentStatus = (parent: any, allItems: any[]) => {
+        // Helper to get all descendants recursively. It returns a flat list.
+        const getAllDescendants = (p: any, items: any[]): any[] => {
+            const children = items.filter(i => i.parent_id === p.id);
+            if (children.length === 0) {
+                return [];
+            }
+            // Recursively build the list of all descendants
+            return children.reduce((acc, child) => [...acc, child, ...getAllDescendants(child, items)], [] as any[]);
+        };
+        
+        const descendants = getAllDescendants(parent, allItems);
+
+        if (descendants.length === 0) {
+            // If it has no descendants, its status should not be changed by this logic.
+            return parent.status;
+        }
+
+        // When all items in the sub-chain are completed, its status becomes completed.
+        const allCompleted = descendants.every(d => d.status === 'خاتمه یافته');
+        if (allCompleted) {
+            return 'خاتمه یافته';
+        }
+
+        // If even one of the sub-chain activities is in progress or completed, its status becomes in progress.
+        const anyActive = descendants.some(d => d.status === 'در حال اجرا' || d.status === 'خاتمه یافته');
+        if (anyActive) {
+            return 'در حال اجرا';
+        }
+
+        // Default case: if nothing is active or completed, it must be 'Not Started'.
+        return 'شروع نشده';
+    };
+    
+    useEffect(() => {
+        const updateParentStatuses = async () => {
+            const allItems = [...allActivities, ...allActions];
+            const parentIds = new Set(allItems.map(i => i.parent_id).filter(Boolean));
+            const parentItems = allItems.filter(item => parentIds.has(item.id));
+            
+            const updates: { id: number; tableName: string; payload: { status: string }; }[] = [];
+    
+            parentItems.forEach(parent => {
+                const isActivity = !!parent.project_id;
+                const allSubtasksForParentType = isActivity ? allActivities : allActions;
+                const newStatus = calculateParentStatus(parent, allSubtasksForParentType);
+    
+                if (parent.status !== newStatus) {
+                    updates.push({
+                        id: parent.id,
+                        tableName: isActivity ? 'activities' : 'actions',
+                        payload: { status: newStatus }
+                    });
+                }
+            });
+    
+            if (updates.length > 0) {
+                setIsActionLoading(true);
+                try {
+                    const updatePromises = updates.map(u => 
+                        supabase.from(u.tableName).update(u.payload).eq('id', u.id)
+                    );
+                    
+                    const results = await Promise.all(updatePromises);
+                    const hadError = results.some(res => res.error);
+                    if (hadError) {
+                        results.forEach(res => handleSupabaseError(res.error, 'auto-updating parent status'));
+                    } else {
+                        await fetchData();
+                    }
+                } finally {
+                    setIsActionLoading(false);
+                }
+            }
+        };
+    
+        if (!isInitialRenderRef.current) {
+            updateParentStatuses();
+        }
+    }, [allActivities, allActions, fetchData]);
 
 
-    const handleRequestConfirmation = ({ title, message, onConfirm }) => {
+    const handleRequestConfirmation = ({ title, message, onConfirm }: { title: string; message: string; onConfirm: () => void; }) => {
         setConfirmationProps({
             isOpen: true,
             title,
@@ -267,7 +374,7 @@ const App = () => {
         setConfirmationProps({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     };
 
-    const handleRequestAlert = ({ title, message }) => {
+    const handleRequestAlert = ({ title, message }: { title: string; message: string; }) => {
         setAlertProps({ isOpen: true, title, message });
     };
 
@@ -275,7 +382,7 @@ const App = () => {
         setAlertProps({ isOpen: false, title: '', message: '' });
     };
 
-    const handleRequestApprovalDecision = (item, decision) => {
+    const handleRequestApprovalDecision = (item: any, decision: any) => {
         setApprovalDecisionProps({ isOpen: true, item, decision });
     };
     
@@ -283,15 +390,15 @@ const App = () => {
         setApprovalDecisionProps({ isOpen: false, item: null, decision: '' });
     };
 
-    const handleConfirmApprovalDecision = (comment) => {
+    const handleConfirmApprovalDecision = (comment: string) => {
         const { item, decision } = approvalDecisionProps;
         if (item && decision) {
-            updateItemStatus(item.id, item.type, decision, { comment });
+            updateItemStatus(item.id, (item as any).type, decision, { comment });
         }
         handleCloseApprovalDecision();
     };
 
-    const handleLogin = (user) => {
+    const handleLogin = (user: User) => {
         setLoggedInUser(user);
         setTheme(user.theme || 'dark');
         setView('dashboard');
@@ -304,7 +411,7 @@ const App = () => {
         setContentTitle('ورود به سامانه');
     };
 
-    const handleSignUp = async ({ username, password, fullName }) => {
+    const handleSignUp = async ({ username, password, fullName }: { username: string; password: string; fullName: string; }) => {
         setIsActionLoading(true);
         try {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -355,7 +462,7 @@ const App = () => {
         }
     };
     
-    const handleAddUser = async ({ username, password, fullName }) => {
+    const handleAddUser = async ({ username, password, fullName }: { username: string; password: string; fullName: string; }) => {
         setIsActionLoading(true);
         try {
             const { data, error } = await supabase.from('users').insert([{ username, password_hash: password, full_name: fullName, role: 'تیم پروژه', is_active: true }]).select().single();
@@ -383,9 +490,9 @@ const App = () => {
         const username = userToDelete.username;
         const isAssigned = projects.some(p => 
             p.owner === username ||
-            p.projectManager === username || 
-            (p.activities && p.activities.some(a => a.responsible === username || a.approver === username))
-        ) || actions.some(a => 
+            p.projectManager === username
+        ) || allActivities.some(a => a.responsible === username || a.approver === username)
+          || allActions.some(a => 
             a.owner === username ||
             a.responsible === username || 
             a.approver === username
@@ -520,19 +627,18 @@ const App = () => {
         setIsChoiceModalOpen(false);
     };
 
-    const handleSaveProject = async (projectToSave) => {
+    const handleSaveProject = async (projectToSave: any) => {
         setIsActionLoading(true);
         try {
             if (projectToSave.isNew) {
                 const { activities, isNew, ...newProjectPayload } = projectToSave;
-                newProjectPayload.owner = loggedInUser.username;
+                newProjectPayload.owner = loggedInUser!.username;
                 delete newProjectPayload.id; // Ensure ID is not sent for new records
                 const { data, error } = await supabase.from('projects').insert(newProjectPayload).select().single();
                 handleSupabaseError(error, 'creating new project');
                 if (data) {
-                    const newProject = { ...data, activities: [] };
-                    setProjects(prev => [...prev, newProject]);
-                    setEditingProject({ ...newProject, initialTab: 'activities' });
+                    await fetchData();
+                    setEditingProject({ ...data, activities: [], initialTab: 'activities' });
                 } else {
                     handleRequestAlert({
                         title: 'خطا در ذخیره‌سازی',
@@ -544,8 +650,7 @@ const App = () => {
                 const { data, error } = await supabase.from('projects').update(updatePayload).eq('id', projectToSave.id).select().single();
                 handleSupabaseError(error, 'updating project');
                 if (data) {
-                    const updatedProject = { ...data, activities: projectToSave.activities };
-                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                    await fetchData();
                     setIsProjectModalOpen(false);
                     setEditingProject(null);
                 } else {
@@ -565,7 +670,7 @@ const App = () => {
         }
     };
 
-    const handleSaveAction = async (actionToSave) => {
+    const handleSaveAction = async (actionToSave: any) => {
         setIsActionLoading(true);
         try {
             if (actionToSave.id) { // Update
@@ -573,7 +678,7 @@ const App = () => {
                 const { data, error } = await supabase.from('actions').update(updatePayload).eq('id', actionToSave.id).select().single();
                 handleSupabaseError(error, 'updating action');
                 if (data) {
-                    setActions(prev => prev.map(a => a.id === data.id ? data : a));
+                    await fetchData();
                     setIsActionModalOpen(false);
                     setEditingAction(null);
                 } else {
@@ -583,12 +688,12 @@ const App = () => {
                     });
                 }
             } else { // Insert
-                const newActionPayload = { ...actionToSave, owner: loggedInUser.username, history: [{ status: actionToSave.status, user: loggedInUser.username, date: new Date().toISOString() }], kanban_order: Date.now() };
+                const newActionPayload = { ...actionToSave, owner: loggedInUser!.username, history: [{ status: 'ایجاد شده - شروع نشده', user: loggedInUser!.username, date: new Date().toISOString() }], kanban_order: Date.now() };
                 delete newActionPayload.id;
                 const { data, error } = await supabase.from('actions').insert(newActionPayload).select().single();
                 handleSupabaseError(error, 'creating new action');
                 if (data) {
-                    setActions(prev => [...prev, data]);
+                    await fetchData();
                     setIsActionModalOpen(false);
                     setEditingAction(null);
                 } else {
@@ -608,12 +713,13 @@ const App = () => {
         }
     };
     
-    const handleEditProject = (project, isReadOnly = false) => {
-        setEditingProject({ ...project, readOnly: isReadOnly });
+    const handleEditProject = (project: any, isReadOnly = false) => {
+        const fullProjectData = { ...project, activities: allActivities.filter(a => a.project_id === project.id) };
+        setEditingProject({ ...fullProjectData, readOnly: isReadOnly });
         setIsProjectModalOpen(true);
     }
 
-    const handleDeleteProject = (projectId) => {
+    const handleDeleteProject = (projectId: number) => {
         const projectToDelete = projects.find(p => p.id === projectId);
         handleRequestConfirmation({
             title: 'حذف پروژه',
@@ -624,7 +730,7 @@ const App = () => {
                     const { error } = await supabase.from('projects').delete().eq('id', projectId);
                     handleSupabaseError(error, 'deleting project');
                     if (!error) {
-                        setProjects(prev => prev.filter(p => p.id !== projectId));
+                        await fetchData();
                     }
                 } finally {
                     setIsActionLoading(false);
@@ -633,13 +739,13 @@ const App = () => {
         });
     };
 
-    const handleEditAction = (action) => {
+    const handleEditAction = (action: any) => {
         setEditingAction(action);
         setIsActionModalOpen(true);
     };
 
-    const handleDeleteAction = (actionId) => {
-        const actionToDelete = actions.find(a => a.id === actionId);
+    const handleDeleteAction = (actionId: number) => {
+        const actionToDelete = allActions.find(a => a.id === actionId);
         handleRequestConfirmation({
             title: 'حذف اقدام',
             message: `آیا از حذف اقدام "${actionToDelete?.title}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`,
@@ -649,7 +755,7 @@ const App = () => {
                     const { error } = await supabase.from('actions').delete().eq('id', actionId);
                     handleSupabaseError(error, 'deleting action');
                     if (!error) {
-                        setActions(prev => prev.filter(a => a.id !== actionId));
+                        await fetchData();
                     }
                 } finally {
                     setIsActionLoading(false);
@@ -658,40 +764,33 @@ const App = () => {
         });
     };
 
-    const handleViewDetails = (item) => {
-        setDetailsItem(item);
+    const handleViewDetails = (item: any) => {
+        let fullItem = item;
+        if (item.type === 'project') {
+            fullItem = { ...item, activities: allActivities.filter(a => a.project_id === item.id) };
+        }
+        setDetailsItem(fullItem);
         setIsDetailsModalOpen(true);
     };
     
-    const handleShowInfo = (item) => {
+    const handleShowInfo = (item: any) => {
         setInfoItem(item);
         setIsInfoModalOpen(true);
     };
 
-    const updateItemStatus = async (itemId, itemType, newStatus, extraData = {}) => {
+    const updateItemStatus = async (itemId: number, itemType: string, newStatus: string, extraData = {}) => {
         setIsActionLoading(true);
         try {
             const isActivity = itemType === 'activity';
             const tableName = isActivity ? 'activities' : 'actions';
+            const allItems = isActivity ? allActivities : allActions;
 
-            let itemToUpdate, parentProject;
-            if (isActivity) {
-                for (const p of projects) {
-                    const found = p.activities.find(a => a.id === itemId);
-                    if (found) { 
-                        itemToUpdate = found;
-                        parentProject = p;
-                        break;
-                    }
-                }
-            } else {
-                itemToUpdate = actions.find(a => a.id === itemId);
-            }
+            const itemToUpdate = allItems.find(a => a.id === itemId);
             if (!itemToUpdate) return;
             
             let finalStatus = newStatus;
-            const historyEntry: any = { user: loggedInUser.username, date: new Date().toISOString(), ...extraData };
-            let newApprovalStatus = undefined;
+            const historyEntry: any = { user: loggedInUser!.username, date: new Date().toISOString(), ...extraData };
+            let newApprovalStatus: string | undefined = undefined;
             const isApprovalDecision = newStatus === 'approved' || newStatus === 'rejected';
 
             const updatePayload: any = {};
@@ -721,87 +820,49 @@ const App = () => {
             handleSupabaseError(error, 'updating item status');
             
             if (!error && data) {
-                if (isActivity) {
-                    const updatedActivities = parentProject.activities.map(act => act.id === itemId ? data : act);
-                    const updatedProject = { ...parentProject, activities: updatedActivities };
-                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-                } else {
-                    setActions(prev => prev.map(act => act.id === itemId ? data : act));
-                }
+                await fetchData();
             }
         } finally {
             setIsActionLoading(false);
         }
     };
-
-    const handleDelegateTask = async (itemToDelegate, newResponsibleUsername) => {
+    
+    const handleSaveSubtask = async (subtask: any) => {
         setIsActionLoading(true);
         try {
-            const isActivity = itemToDelegate.type === 'activity';
-            const tableName = isActivity ? 'activities' : 'actions';
-
-            const historyEntry = {
-                status: 'واگذار شد',
-                user: loggedInUser.username,
-                date: new Date().toISOString(),
-                details: `مسئولیت از ${itemToDelegate.responsible} به ${newResponsibleUsername} واگذار شد.`
+            const { parentItem, ...newSubtaskPayload } = subtask;
+            const tableName = parentItem.type === 'activity' ? 'activities' : 'actions';
+            
+            const payload: any = { 
+                ...newSubtaskPayload, 
+                owner: loggedInUser!.username,
+                history: [{ status: 'ایجاد شده - شروع نشده', user: loggedInUser!.username, date: new Date().toISOString() }],
+                kanban_order: Date.now(),
+                parent_id: parentItem.id,
+                use_workflow: parentItem.use_workflow
             };
 
-            const updatePayload = {
-                responsible: newResponsibleUsername,
-                history: [...(itemToDelegate.history || []), historyEntry]
-            };
-
-            const { data, error } = await supabase.from(tableName).update(updatePayload).eq('id', itemToDelegate.id).select().single();
-            handleSupabaseError(error, 'delegating task');
-
-            if (!error && data) {
-                if (isActivity) {
-                    setProjects(prev => prev.map(p => ({
-                        ...p,
-                        activities: p.activities.map(act => act.id === itemToDelegate.id ? data : act)
-                    })));
-                } else {
-                    setActions(prev => prev.map(act => act.id === itemToDelegate.id ? data : act));
-                }
+            if (parentItem.type === 'activity' && parentItem.project_id) {
+                payload.project_id = parentItem.project_id;
             }
-        } finally {
-            setIsActionLoading(false);
-        }
-    };
+            
+            const { error } = await supabase.from(tableName).insert(payload);
+            handleSupabaseError(error, 'creating subtask');
 
-    const handleMassDelegateTasks = async (updates: Array<{ itemId: number; itemType: string; newResponsible: string }>) => {
-        setIsActionLoading(true);
-        try {
-            const updatePromises = updates.map(async (update) => {
-                const isActivity = update.itemType === 'activity';
-                const tableName = isActivity ? 'activities' : 'actions';
-                
-                const { data: item } = await supabase.from(tableName).select('responsible, history').eq('id', update.itemId).single();
-                if (!item) return null;
+            if (!error) {
+                await fetchData();
+            } else {
+                 handleRequestAlert({
+                    title: 'خطا در ذخیره‌سازی',
+                    message: 'زیرفعالیت ذخیره نشد. لطفا دوباره تلاش کنید.'
+                });
+            }
 
-                const historyEntry = {
-                    status: 'واگذار شد',
-                    user: loggedInUser.username,
-                    date: new Date().toISOString(),
-                    details: `مسئولیت از ${item.responsible} به ${update.newResponsible} واگذار شد.`
-                };
-
-                return supabase.from(tableName)
-                    .update({ responsible: update.newResponsible, history: [...(item.history || []), historyEntry] })
-                    .eq('id', update.itemId);
+        } catch(e: any) {
+            handleRequestAlert({
+                title: 'خطا در ذخیره‌سازی',
+                message: `زیرفعالیت ذخیره نشد: ${e.message}`
             });
-
-            const results = await Promise.all(updatePromises);
-            results.forEach(res => handleSupabaseError(res?.error, 'mass delegating tasks'));
-
-            // Refetch projects and actions to ensure UI is consistent
-            const [projectsRes, actionsRes] = await Promise.all([
-                supabase.from('projects').select('*, activities(*)'),
-                supabase.from('actions').select('*')
-            ]);
-            if (projectsRes.data) setProjects(projectsRes.data);
-            if (actionsRes.data) setActions(actionsRes.data);
         } finally {
             setIsActionLoading(false);
         }
@@ -810,13 +871,16 @@ const App = () => {
     const globalApprovalHistory = React.useMemo(() => {
         if (!loggedInUser) return [];
 
-        const allItems = [
-            ...projects.flatMap(p => p.activities.map(a => ({...a, parentTitle: `${p.title} / ${a.title}`}))),
-            ...actions.map(a => ({...a, parentTitle: a.title}))
+        const allItemsForHistory = [
+            ...allActivities.map(a => {
+                const project = projects.find(p => p.id === a.project_id);
+                return {...a, parentTitle: `${project?.title || 'پروژه نامشخص'} / ${a.title}`};
+            }),
+            ...allActions.map(a => ({...a, parentTitle: a.title}))
         ];
 
         const history: any[] = [];
-        allItems.forEach(item => {
+        allItemsForHistory.forEach(item => {
             if (item.history) {
                 const decisions = item.history.filter((entry: any) => 
                     (entry.approvalDecision === 'approved' || entry.approvalDecision === 'rejected') && entry.user === loggedInUser.username
@@ -827,7 +891,6 @@ const App = () => {
                     let requestEntry = null;
 
                     if (decisionIndex > -1) {
-                         // Find the most recent 'send for approval' before this decision
                          for (let i = decisionIndex - 1; i >= 0; i--) {
                             if (item.history[i].status === 'ارسال برای تایید') {
                                 requestEntry = item.history[i];
@@ -848,15 +911,75 @@ const App = () => {
             }
         });
         return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [projects, actions, loggedInUser]);
+    }, [allActivities, allActions, projects, loggedInUser]);
 
     const handleShowGlobalApprovalsHistory = () => {
         handleShowHistory(globalApprovalHistory);
     };
 
-    const handleShowHistory = (historyData) => {
+    const getSubtaskHistoryRecursive = useCallback((
+        parentId: number,
+        parentType: 'activity' | 'action',
+        visited: Set<string>
+    ): any[] => {
+        const visitedKey = `${parentType}-${parentId}`;
+        if (visited.has(visitedKey)) return [];
+        visited.add(visitedKey);
+    
+        const childrenSource = parentType === 'activity' ? allActivities : allActions;
+        const children = childrenSource.filter(item => item.parent_id === parentId);
+        
+        let comprehensiveHistory: any[] = [];
+    
+        children.forEach(child => {
+            const creationEntry = (child.history || [])[0];
+            const creationDate = creationEntry?.date || child.created_at;
+
+            comprehensiveHistory.push({
+                date: creationDate,
+                user: child.owner,
+                status: 'واگذاری زیرفعالیت',
+                details: `زیرفعالیت «${child.title}» ایجاد شد. مسئول: ${userMap.get(child.responsible) || child.responsible}, وضعیت فعلی: ${child.status}.`,
+                _sourceItem: child.parent_id === parentId ? 'والد اصلی' : child.title,
+            });
+    
+            const childHistory = (child.history || []).map((entry: any) => ({
+                ...entry,
+                _sourceItem: child.title 
+            }));
+            comprehensiveHistory.push(...childHistory);
+            
+            const grandChildHistory = getSubtaskHistoryRecursive(child.id, (child as any).type, visited);
+            comprehensiveHistory.push(...grandChildHistory);
+        });
+    
+        return comprehensiveHistory;
+    }, [allActivities, allActions, userMap]);
+
+    const handleShowComprehensiveHistory = useCallback((item: any) => {
+        const parentIds = new Set([...allActivities, ...allActions].map(i => i.parent_id).filter(Boolean));
+        const isParent = parentIds.has(item.id);
+
+        let historyToShow = [...(item.history || [])];
+
+        if (isParent) {
+            const subtaskHistory = getSubtaskHistoryRecursive(item.id, item.type, new Set());
+            historyToShow = [...historyToShow, ...subtaskHistory];
+        }
+        
+        historyToShow.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        handleShowHistory(historyToShow);
+    }, [allActivities, allActions, getSubtaskHistoryRecursive]);
+
+    const handleShowHistory = (historyData: any[]) => {
         setHistory(historyData);
         setIsHistoryModalOpen(true);
+    };
+    
+    const handleShowHierarchy = (item: any) => {
+        setHierarchyItem(item);
+        setIsHierarchyModalOpen(true);
     };
 
     const handleAddSection = async (sectionName: string) => {
@@ -878,36 +1001,19 @@ const App = () => {
         setIsActionLoading(true);
         try {
             if (newName && !sections.includes(newName) && oldName !== newName) {
-                // Step 1: Insert the new section name into the 'units' table.
                 const { error: insertError } = await supabase.from('units').insert({ name: newName });
                 handleSupabaseError(insertError, 'inserting new section name');
     
-                // Step 2: Update projects referencing the old section name to the new name.
                 const { error: projectError } = await supabase.from('projects').update({ unit: newName }).eq('unit', oldName);
                 handleSupabaseError(projectError, 'updating projects for section rename');
     
-                // Step 3: Update actions referencing the old section name to the new name.
                 const { error: actionError } = await supabase.from('actions').update({ unit: newName }).eq('unit', oldName);
                 handleSupabaseError(actionError, 'updating actions for section rename');
                 
-                // Step 4: Delete the old section name from the 'units' table.
                 const { error: deleteError } = await supabase.from('units').delete().eq('name', oldName);
                 handleSupabaseError(deleteError, 'deleting old section name');
     
-                // If all database operations are successful, update the local state.
-                setSections(prev => prev.map(u => u === oldName ? newName : u));
-                
-                // And refetch data to ensure UI consistency.
-                const [projectsRes, actionsRes] = await Promise.all([
-                    supabase.from('projects').select('*, activities(*)').order('id', { foreignTable: 'activities' }),
-                    supabase.from('actions').select('*')
-                ]);
-    
-                handleSupabaseError(projectsRes.error, 'refetching projects after section update');
-                if (projectsRes.data) setProjects(projectsRes.data);
-                
-                handleSupabaseError(actionsRes.error, 'refetching actions after section update');
-                if (actionsRes.data) setActions(actionsRes.data);
+                await fetchData();
             }
         } catch (e: any) {
             console.error(`Failed to update section: ${e.message}`);
@@ -924,7 +1030,6 @@ const App = () => {
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
-                    // Check for dependencies before deleting
                     const { count: projectCount, error: pError } = await supabase.from('projects').select('*', { count: 'exact', head: true }).eq('unit', sectionName);
                     handleSupabaseError(pError, 'checking projects for section');
                     
@@ -952,13 +1057,17 @@ const App = () => {
         });
     };
 
-    const handleUpdateProjectState = (projectToUpdate) => {
+    const handleUpdateProjectState = (projectToUpdate: any) => {
         setProjects(prevProjects => prevProjects.map(p => 
             p.id === projectToUpdate.id ? projectToUpdate : p
         ));
         if (editingProject && editingProject.id === projectToUpdate.id) {
             setEditingProject(projectToUpdate);
         }
+        setAllActivities(prev => prev.map(a => {
+            const updatedAct = projectToUpdate.activities.find((ua: any) => ua.id === a.id);
+            return updatedAct || a;
+        }));
     };
 
     // --- Team Management Handlers ---
@@ -989,12 +1098,9 @@ const App = () => {
     const handleRemoveTeamMember = (username: string) => {
         if (!loggedInUser) return;
 
-        const isAssigned = projects.some(p => 
-            p.projectManager === username || 
-            (p.activities && p.activities.some(a => a.responsible === username || a.approver === username))
-        ) || actions.some(a => 
-            a.responsible === username || a.approver === username
-        );
+        const isAssigned = projects.some(p => p.projectManager === username) 
+            || allActivities.some(a => a.responsible === username || a.approver === username)
+            || allActions.some(a => a.responsible === username || a.approver === username);
     
         if (isAssigned) {
             handleRequestAlert({
@@ -1107,17 +1213,57 @@ const App = () => {
         });
     };
 
-    const taskItems = [
-        ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title, use_workflow: p.use_workflow}))),
-        ...actions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
-    ].filter(item => item.responsible === loggedInUser?.username);
+    const taskItems = useMemo(() => {
+        if (!loggedInUser) return [];
+
+        const activityMap = new Map(allActivities.map(a => [a.id, a]));
+        const actionMap = new Map(allActions.map(a => [a.id, a]));
+        const projectMap = new Map(projects.map(p => [p.id, p]));
+        
+        const allSubtasks = [...allActivities, ...allActions];
+        const parentIds = new Set(allSubtasks.map(s => s.parent_id).filter(Boolean));
+
+        const getParentName = (item: any): string => {
+            if (item.type === 'activity') {
+                if (item.parent_id) {
+                    return activityMap.get(item.parent_id)?.title || '...';
+                }
+                return projectMap.get(item.project_id)?.title || '...';
+            }
+            if (item.type === 'action') {
+                if (item.parent_id) {
+                    return actionMap.get(item.parent_id)?.title || '...';
+                }
+                return 'اقدام مستقل';
+            }
+            return '';
+        };
+
+        const userTasks = [
+            ...allActivities.map(a => ({ ...a, type: 'activity' })),
+            ...allActions.map(a => ({ ...a, type: 'action' })),
+        ].filter(item => item.responsible === loggedInUser.username);
+        
+        return userTasks.map((item: any) => ({
+            ...item,
+            parentName: getParentName(item),
+            isDelegated: parentIds.has(item.id),
+            isSubtask: !!item.parent_id,
+            use_workflow: item.type === 'activity' 
+                ? projectMap.get(item.project_id)?.use_workflow 
+                : item.use_workflow
+        }));
+    }, [loggedInUser, allActivities, allActions, projects]);
 
     const approvalItems = [
-         ...projects.flatMap(p => p.activities.map(a => ({...a, type: 'activity', parentName: p.title}))),
-        ...actions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
+         ...allActivities.map(a => {
+             const project = projects.find(p => p.id === a.project_id);
+             return {...a, type: 'activity', parentName: project?.title || 'پروژه نامشخص'};
+         }),
+        ...allActions.map(a => ({...a, type: 'action', parentName: 'اقدام مستقل'}))
     ].filter(item => item.approver === loggedInUser?.username && item.status === 'ارسال برای تایید');
 
-    const currentUserTeam = teams[loggedInUser?.username] || [];
+    const currentUserTeam = teams[loggedInUser?.username || ''] || [];
 
     const notStartedTasksCount = React.useMemo(() => {
         if (!loggedInUser) return 0;
@@ -1136,19 +1282,19 @@ const App = () => {
         const visibleProjects = isAdmin ? projects : projects.filter(p => 
             p.owner === loggedInUser.username ||
             p.projectManager === loggedInUser.username ||
-            (p.activities && p.activities.some(act => act.responsible === loggedInUser.username || act.approver === loggedInUser.username))
+            allActivities.some(act => act.project_id === p.id && (act.responsible === loggedInUser!.username || act.approver === loggedInUser!.username))
         );
-        const visibleActions = isAdmin ? actions : actions.filter(a => 
+        const visibleActions = isAdmin ? allActions : allActions.filter(a => 
             a.owner === loggedInUser.username ||
             a.responsible === loggedInUser.username ||
             a.approver === loggedInUser.username
         );
         
         const notStartedProjects = visibleProjects.filter(p => p.status === 'شروع نشده').length;
-        const notStartedActions = visibleActions.filter(a => a.status === 'شروع نشده').length;
+        const notStartedActions = visibleActions.filter(a => a.status === 'شروع نشده' && !a.parent_id).length;
         
         return notStartedProjects + notStartedActions;
-    }, [projects, actions, loggedInUser]);
+    }, [projects, allActions, allActivities, loggedInUser]);
     
     useEffect(() => {
         const totalBadgeCount = notStartedTasksCount + pendingApprovalsCount + notStartedProjectsAndActionsCount;
@@ -1202,21 +1348,9 @@ const App = () => {
 
             const isActivity = item.type === 'activity';
             const tableName = isActivity ? 'activities' : 'actions';
+            const allItems = isActivity ? allActivities : allActions;
 
-            let itemToUpdate: any, parentProject: any;
-            if (isActivity) {
-                for (const p of projects) {
-                    const found = p.activities.find((a: any) => a.id === item.id);
-                    if (found) {
-                        itemToUpdate = found;
-                        parentProject = p;
-                        break;
-                    }
-                }
-            } else {
-                itemToUpdate = actions.find((a: any) => a.id === item.id);
-            }
-
+            const itemToUpdate = allItems.find((a: any) => a.id === item.id);
             if (!itemToUpdate) return;
             
             const historyEntry = {
@@ -1241,13 +1375,7 @@ const App = () => {
             handleSupabaseError(error, 'sending for approval');
 
             if (!error && data) {
-                if (isActivity && parentProject) {
-                    const updatedActivities = parentProject.activities.map((act: any) => act.id === item.id ? data : act);
-                    const updatedProject = { ...parentProject, activities: updatedActivities };
-                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-                } else {
-                    setActions(prev => prev.map((act: any) => act.id === item.id ? data : act));
-                }
+                await fetchData();
             }
         } finally {
             setIsActionLoading(false);
@@ -1266,19 +1394,7 @@ const App = () => {
             const results = await Promise.all(updatePromises);
             results.forEach(res => handleSupabaseError(res.error, 'updating item order'));
 
-            // Optimistically update local state to reflect new order instantly
-            const activityUpdates = new Map(updates.filter(u => u.type === 'activity').map(u => [u.id, u.kanban_order]));
-            const actionUpdates = new Map(updates.filter(u => u.type === 'action').map(u => [u.id, u.kanban_order]));
-
-            if (activityUpdates.size > 0) {
-                setProjects(prev => prev.map(p => ({
-                    ...p,
-                    activities: p.activities.map(act => activityUpdates.has(act.id) ? { ...act, kanban_order: activityUpdates.get(act.id) } : act)
-                })));
-            }
-            if (actionUpdates.size > 0) {
-                setActions(prev => prev.map(a => actionUpdates.has(a.id) ? { ...a, kanban_order: actionUpdates.get(a.id) } : a));
-            }
+            await fetchData();
 
         } catch (e: any) {
              handleRequestAlert({
@@ -1302,8 +1418,37 @@ const App = () => {
         setIsAiAnalysisModalOpen(true);
     };
     
+    const handleOpenSubtaskModal = (parentItem: any) => {
+        if (!loggedInUser) return;
+        const owner = parentItem.owner;
+        if (!owner) {
+            console.error("Parent item for subtask has no owner.");
+            return;
+        }
+        const ownerTeam = teams[owner] || [];
+        const teamUsernames = new Set(ownerTeam.map(m => m.username));
+        teamUsernames.add(owner);
+        const responsibleUsers = users.filter(u => teamUsernames.has(u.username));
+
+        const approverUsernames = new Set(
+            ownerTeam
+                .filter(m => m.role === 'ادمین' || m.role === 'مدیر')
+                .map(m => m.username)
+        );
+        approverUsernames.add(owner);
+        const approverUsers = users.filter(u => approverUsernames.has(u.username));
+        
+        setSubtaskModalProps({
+            isOpen: true,
+            parentItem,
+            responsibleUsers,
+            approverUsers
+        });
+    };
+    
     // ... chatbot handlers, etc.
-    const createItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: any) => {
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    const createItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: Record<string, any>) => {
         // FIX: Add a check for `loggedInUser` to prevent errors and ensure a user is logged in.
         if (!loggedInUser) return { success: false, error: 'کاربر وارد نشده است.' };
         if (!args.title) return { success: false, error: 'عنوان الزامی است.' };
@@ -1340,7 +1485,7 @@ const App = () => {
             const parentProject = projects.find(p => p.title.toLowerCase().includes(args.project_name.toLowerCase()));
             if (!parentProject) return { success: false, error: `پروژه ای با نام '${args.project_name}' یافت نشد.` };
 
-            const newActivity = { ...defaultData, responsible: responsibleUser, approver: approverUser, project_id: parentProject.id, status: 'شروع نشده', history: [] };
+            const newActivity = { ...defaultData, responsible: responsibleUser, approver: approverUser, project_id: parentProject.id, status: 'شروع نشده', history: [{ status: 'ایجاد شده - شروع نشده', user: loggedInUser.username, date: new Date().toISOString() }] };
             
             // This logic is in ProjectDefinitionPage, so we simulate it here.
             // FIX: Replaced incorrect function name 'onSetIsActionLoading' with 'setIsActionLoading'.
@@ -1349,8 +1494,7 @@ const App = () => {
                 const { data, error } = await supabase.from('activities').insert(newActivity).select().single();
                 handleSupabaseError(error, 'creating activity via chatbot');
                 if (data) {
-                    const updatedProject = { ...parentProject, activities: [...parentProject.activities, data] };
-                    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                    await fetchData();
                     return { success: true, title: args.title, parent: parentProject.title };
                 } else {
                     return { success: false, error: 'خطا در ذخیره فعالیت در پایگاه داده.' };
@@ -1363,7 +1507,8 @@ const App = () => {
         return { success: false, error: 'نوع آیتم نامعتبر است.' };
     };
     
-    const deleteItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: any) => {
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    const deleteItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: Record<string, any>) => {
         if (!args.title) return { success: false, error: 'عنوان برای حذف الزامی است.' };
     
         let itemToDelete;
@@ -1372,12 +1517,12 @@ const App = () => {
         if (itemType === 'project') {
             itemToDelete = projects.find(p => p.title.toLowerCase() === args.title.toLowerCase());
         } else if (itemType === 'action') {
-            itemToDelete = actions.find(a => a.title.toLowerCase() === args.title.toLowerCase());
+            itemToDelete = allActions.find(a => a.title.toLowerCase() === args.title.toLowerCase());
         } else if (itemType === 'activity') {
             if (!args.project_name) return { success: false, error: 'نام پروژه برای حذف فعالیت الزامی است.' };
             const parentProject = projects.find(p => p.title.toLowerCase().includes(args.project_name.toLowerCase()));
             if (!parentProject) return { success: false, error: `پروژه ای با نام '${args.project_name}' یافت نشد.` };
-            itemToDelete = parentProject.activities.find((a:any) => a.title.toLowerCase() === args.title.toLowerCase());
+            itemToDelete = allActivities.find((a:any) => a.project_id === parentProject.id && a.title.toLowerCase() === args.title.toLowerCase());
             parentProjectTitle = parentProject.title;
         }
     
@@ -1387,7 +1532,7 @@ const App = () => {
         setIsActionLoading(true);
         try {
             const tableName = itemType === 'activity' ? 'activities' : `${itemType}s`;
-            const { error } = await supabase.from(tableName).delete().eq('id', itemToDelete.id);
+            const { error } = await supabase.from(tableName).delete().eq('id', (itemToDelete as any).id);
             handleSupabaseError(error, `deleting ${itemType} via chatbot`);
             if (error) {
                 return { success: false, error: `خطا در حذف از پایگاه داده: ${error.message}` };
@@ -1402,7 +1547,8 @@ const App = () => {
         }
     };
     
-    const addTeamMemberForChatbot = async (args: any) => {
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    const addTeamMemberForChatbot = async (args: Record<string, any>) => {
         if (!args.username) return { success: false, error: 'نام کاربری برای افزودن عضو الزامی است.' };
         const userToAdd = findUserByMention(args.username, users);
         if (!userToAdd) return { success: false, error: `کاربری با نام '${args.username}' یافت نشد.` };
@@ -1412,16 +1558,15 @@ const App = () => {
         return { success: true, name: userDetails?.full_name || userToAdd, role: args.role || 'عضو تیم' };
     };
 
-    const removeTeamMemberForChatbot = async (args: any) => {
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    const removeTeamMemberForChatbot = async (args: Record<string, any>) => {
         if (!args.username) return { success: false, error: 'نام کاربری برای حذف عضو الزامی است.' };
         const userToRemove = findUserByMention(args.username, users);
          if (!userToRemove) return { success: false, error: `کاربری با نام '${args.username}' یافت نشد.` };
 
-        const teamMember = (teams[loggedInUser.username] || []).find(m => m.username === userToRemove);
+        const teamMember = (teams[loggedInUser!.username] || []).find(m => m.username === userToRemove);
         if (!teamMember) return { success: false, error: `کاربر '${args.username}' عضو تیم شما نیست.`};
         
-        // This will trigger a confirmation modal, so we can't await it directly.
-        // We'll proceed optimistically.
         handleRemoveTeamMember(userToRemove);
         const userDetails = users.find(u => u.username === userToRemove);
         return { success: true, name: userDetails?.full_name || userToRemove };
@@ -1464,13 +1609,13 @@ const supabaseAnonKey = '...';`}
 
         switch (view) {
             case 'dashboard':
-                return <DashboardPage projects={projects} actions={actions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
+                return <DashboardPage projects={projects} actions={allActions} currentUser={loggedInUser} users={users} teams={teams} onViewDetails={handleViewDetails} />;
             case 'projects_actions_list':
-                return <ProjectsActionsListPage projects={projects} actions={actions} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} teams={teams} />;
+                return <ProjectsActionsListPage projects={projects} actions={actions} onViewDetails={handleViewDetails} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} onEditAction={handleEditAction} onDeleteAction={handleDeleteAction} currentUser={loggedInUser} onShowHistory={handleShowComprehensiveHistory} users={users} teams={teams} allActivities={allActivities} allActions={allActions} onShowHierarchy={handleShowHierarchy} />;
             case 'tasks':
-                return <TasksPage items={taskItems} currentUser={loggedInUser} onShowHistory={handleShowHistory} users={users} onDelegateTask={handleDelegateTask} projects={projects} actions={actions} teamMembers={currentUserTeam} onMassDelegate={handleMassDelegateTasks} onViewDetails={handleViewDetails} onDirectStatusUpdate={updateItemStatus} onSendForApproval={handleRequestSendForApproval} onOpenNotesModal={handleOpenNotesModal} onUpdateItemsOrder={handleUpdateItemsOrder} onRequestAlert={handleRequestAlert} />;
+                return <TasksPage items={taskItems} currentUser={loggedInUser} onShowHistory={handleShowComprehensiveHistory} users={users} onOpenSubtaskModal={handleOpenSubtaskModal} onOpenDelegatedItemsModal={() => setIsDelegatedItemsModalOpen(true)} teamMembers={currentUserTeam} onViewDetails={handleViewDetails} onDirectStatusUpdate={updateItemStatus} onSendForApproval={handleRequestSendForApproval} onOpenNotesModal={handleOpenNotesModal} onUpdateItemsOrder={handleUpdateItemsOrder} onRequestAlert={handleRequestAlert} allActivities={allActivities} allActions={allActions} projects={projects} onShowHierarchy={handleShowHierarchy} />;
             case 'approvals':
-                return <ApprovalsPage items={approvalItems} currentUser={loggedInUser} onApprovalDecision={handleRequestApprovalDecision} onShowHistory={handleShowHistory} onShowGlobalHistory={handleShowGlobalApprovalsHistory} onViewDetails={handleViewDetails} onShowInfo={handleShowInfo} users={users} onOpenNotesModal={handleOpenNotesModal}/>;
+                return <ApprovalsPage items={approvalItems} currentUser={loggedInUser} onApprovalDecision={handleRequestApprovalDecision} onShowHistory={handleShowComprehensiveHistory} onShowGlobalHistory={handleShowGlobalApprovalsHistory} onViewDetails={handleViewDetails} onShowInfo={handleShowInfo} users={users} onOpenNotesModal={handleOpenNotesModal}/>;
             case 'users':
                 return <UserManagementPage users={users} onAddUser={handleAddUser} onDeleteUser={handleDeleteUser} onToggleUserActive={handleToggleUserActive} onEditUser={handleEditUser} onShowUserInfo={handleShowUserInfo} />;
             case 'my_team':
@@ -1571,8 +1716,9 @@ const supabaseAnonKey = '...';`}
             {!loggedInUser && mainContent()}
 
             <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} onSave={handleSaveAction} users={users} sections={sections} actionToEdit={editingAction} currentUser={loggedInUser} teamMembers={currentUserTeam} onRequestAlert={handleRequestAlert} customFields={customFields} />
-            <ProjectDefinitionPage isOpen={isProjectModalOpen} onClose={() => {setIsProjectModalOpen(false); setEditingProject(null);}} onSave={handleSaveProject} projectToEdit={editingProject} users={users} sections={sections} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} onViewDetails={handleViewDetails} onRequestAlert={handleRequestAlert} teams={teams} onSetIsActionLoading={setIsActionLoading} customFields={customFields} />
-            <DetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} item={detailsItem} users={users} onViewDetails={handleViewDetails} customFields={customFields} currentUser={loggedInUser} />
+            {/* FIX: Corrected the prop name from 'onRequestConfirmation' to 'handleRequestConfirmation' to resolve a 'Cannot find name' error. */}
+            <ProjectDefinitionPage isOpen={isProjectModalOpen} onClose={() => {setIsProjectModalOpen(false); setEditingProject(null);}} onSave={handleSaveProject} projectToEdit={editingProject} users={users} sections={sections} onRequestConfirmation={handleRequestConfirmation} onShowHistory={handleShowComprehensiveHistory} currentUser={loggedInUser} teamMembers={currentUserTeam} onUpdateProject={handleUpdateProjectState} onViewDetails={handleViewDetails} onRequestAlert={handleRequestAlert} teams={teams} onSetIsActionLoading={setIsActionLoading} customFields={customFields} allActivities={allActivities} allActions={allActions} />
+            <DetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} item={detailsItem} users={users} onViewDetails={handleViewDetails} customFields={customFields} currentUser={loggedInUser} allActivities={allActivities} allActions={allActions} />
             <ApprovalInfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} item={infoItem} />
             <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={history} users={users} />
             <ConfirmationModal isOpen={confirmationProps.isOpen} onClose={handleCloseConfirmation} onConfirm={confirmationProps.onConfirm} title={confirmationProps.title} message={confirmationProps.message} />
@@ -1582,11 +1728,35 @@ const supabaseAnonKey = '...';`}
             <UserEditModal isOpen={isUserEditModalOpen} onClose={() => setIsUserEditModalOpen(false)} onSave={handleUpdateUser} userToEdit={editingUser} />
             <SendApprovalModal isOpen={sendApprovalProps.isOpen} onClose={handleCloseSendForApproval} onSend={handleConfirmSendForApproval} requestedStatus={sendApprovalProps.requestedStatus} />
             <UserInfoModal isOpen={isUserInfoModalOpen} onClose={handleCloseUserInfo} user={userInfoUser} />
+            <SubtaskModal 
+                isOpen={subtaskModalProps.isOpen} 
+                onClose={() => setSubtaskModalProps({isOpen: false, parentItem: null, responsibleUsers: [], approverUsers: []})} 
+                parentItem={subtaskModalProps.parentItem} 
+                responsibleUsers={subtaskModalProps.responsibleUsers}
+                approverUsers={subtaskModalProps.approverUsers}
+                currentUser={loggedInUser}
+                users={users} 
+                onSave={handleSaveSubtask} 
+                allActivities={allActivities} 
+                allActions={allActions} 
+                onRequestAlert={handleRequestAlert} 
+            />
+            <DelegatedItemsModal isOpen={isDelegatedItemsModalOpen} onClose={() => setIsDelegatedItemsModalOpen(false)} currentUser={loggedInUser} allActivities={allActivities} allActions={allActions} users={users} onShowHistory={handleShowHistory} />
+
+            <HierarchyModal
+                isOpen={isHierarchyModalOpen}
+                onClose={() => setIsHierarchyModalOpen(false)}
+                currentItem={hierarchyItem}
+                allActivities={allActivities}
+                allActions={allActions}
+                users={users}
+            />
+
             <ChatbotModal 
                 isOpen={isChatbotOpen} 
                 onClose={() => setIsChatbotOpen(false)} 
                 projects={projects}
-                actions={actions}
+                actions={allActions}
                 users={users}
                 currentUser={loggedInUser}
                 taskItems={taskItems}

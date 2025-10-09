@@ -62,7 +62,7 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                                             <td>{toPersianDigits(index + 1)}</td>
                                             <td>{item.title}</td>
                                             <td>
-                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory([...(item.history || [])].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()))}>
                                                     <HistoryIcon />
                                                 </button>
                                             </td>

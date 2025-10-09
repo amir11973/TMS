@@ -12,14 +12,14 @@ export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: bool
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
     return (
-        <div className="modal-backdrop" onClick={onClose}>
+        <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 1050 }}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>تاریخچه تغییرات</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
                 <div className="modal-body">
-                    {history && [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry, index) => {
+                    {history && history.map((entry, index) => {
                          let approvalStatusText = '';
                          if (entry?.status === 'ارسال برای تایید') {
                              approvalStatusText = 'ارسال شده برای تایید';
@@ -31,11 +31,12 @@ export const HistoryModal = ({ isOpen, onClose, history, users }: { isOpen: bool
                         
                         const userName = userMap.get(entry?.user) || entry?.user || 'نامشخص';
                         const isDecisionEntry = entry.hasOwnProperty('requestComment');
-                        
+                        const sourcePrefix = entry._sourceItem && entry._sourceItem !== 'والد اصلی' ? `[${entry._sourceItem}] ` : '';
+
                         return (
                             <div className="history-detail-item" key={index}>
                                {entry.parentTitle && <p><strong>مورد:</strong> {entry.parentTitle}</p>}
-                               <p><strong>وضعیت:</strong> {entry?.status ?? 'نامشخص'} {entry?.requestedStatus ? `(درخواست برای ${entry.requestedStatus})` : ''}</p>
+                               <p><strong>وضعیت:</strong> {sourcePrefix}{entry?.status ?? 'نامشخص'} {entry?.requestedStatus ? `(درخواست برای ${entry.requestedStatus})` : ''}</p>
                                {approvalStatusText && <p><strong>وضعیت تایید:</strong> {approvalStatusText}</p>}
                                <p><strong>نام کاربر:</strong> {userName}</p>
                                <p><strong>تاریخ:</strong> {entry?.date ? moment(entry.date).format('jYYYY/jMM/jDD HH:mm') : 'نامشخص'}</p>

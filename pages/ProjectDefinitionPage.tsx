@@ -21,13 +21,13 @@ const isDelayed = (status: string, endDateStr: string) => {
     return endDate < today;
 };
 
-export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams, onSetIsActionLoading, customFields }: {
+export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, onRequestConfirmation, onShowHistory, currentUser, teamMembers, onUpdateProject, isOpen, onClose, onViewDetails, onRequestAlert, teams, onSetIsActionLoading, customFields, allActivities, allActions }: {
     users: User[];
     sections: string[];
     onSave: (project: any) => void;
     projectToEdit: any;
     onRequestConfirmation: (props: any) => void;
-    onShowHistory: (history: any[]) => void;
+    onShowHistory: (item: any) => void;
     currentUser: User | null;
     teamMembers: TeamMember[];
     teams: Record<string, TeamMember[]>;
@@ -38,6 +38,8 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     onRequestAlert: (props: any) => void;
     onSetIsActionLoading: (isLoading: boolean) => void;
     customFields: CustomField[];
+    allActivities: any[];
+    allActions: any[];
 }) => {
     // FIX: Add 'custom_field_values' to prevent type errors when accessing it on the project state.
     const initialProjectState = {
@@ -61,6 +63,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
     const { readOnly = false } = projectToEdit || {};
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
+    const parentIds = useMemo(() => new Set([...allActivities, ...allActions].map(i => i.parent_id).filter(Boolean)), [allActivities, allActions]);
     
     const projectManagers = useMemo(() => {
         const owner = project.owner || currentUser?.username;
@@ -272,7 +275,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     ...activityToSave, 
                     project_id: project.id,
                     status: 'شروع نشده',
-                    history: [],
+                    history: [{ status: 'ایجاد شده - شروع نشده', user: currentUser!.username, date: new Date().toISOString() }],
                     kanban_order: Date.now()
                 };
                 delete newActivityPayload.id;
@@ -428,15 +431,15 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                             style={{width: '100%', height: 'auto', padding: '0.5rem'}}
                                             aria-label="فیلتر وضعیت فعالیت‌ها"
                                         >
+                                            <option value="all">همه وضعیت‌ها</option>
                                             <option value="active">جاری و شروع نشده</option>
-                                            <option value="all">همه</option>
                                             <option value="شروع نشده">شروع نشده</option>
                                             <option value="در حال اجرا">در حال اجرا</option>
                                             <option value="خاتمه یافته">خاتمه یافته</option>
                                         </select>
                                     </div>
                                     {canManageActivities && (
-                                         <button className="add-activity-btn icon-add-btn" onClick={handleAddActivity} title="افزودن فعالیت">
+                                        <button className="add-activity-btn icon-add-btn" onClick={handleAddActivity} title="افزودن فعالیت جدید">
                                             <PlusIcon />
                                         </button>
                                     )}
@@ -444,22 +447,24 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                             </div>
                             <div className="table-wrapper">
                                 <table className="user-list-table activities-table">
-                                    <thead>
+                                     <thead>
                                         <tr>
                                             <th>#</th>
                                             <th>عنوان</th>
-                                            <th>اهمیت</th>
                                             <th>وضعیت</th>
+                                            <th>اهمیت</th>
                                             <th>عملیات</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                       {filteredActivities.length > 0 ? filteredActivities.map((activity: any, index: number) => {
+                                        {filteredActivities.map((activity: any, index: number) => {
                                             const displayStatus = activity.status === 'ارسال برای تایید' ? activity.underlyingStatus : activity.status;
-                                            return (
-                                               <tr key={activity.id}>
-                                                   <td>
-                                                        <div className="title-cell-content" style={{ justifyContent: 'center' }}>
+                                            const isParent = parentIds.has(activity.id);
+                                            const isSubtask = !!activity.parent_id;
+                                            return(
+                                                <tr key={activity.id}>
+                                                    <td>
+                                                         <div className="title-cell-content" style={{ justifyContent: 'center' }}>
                                                             <span>{toPersianDigits(index + 1)}</span>
                                                             {activity.status === 'خاتمه یافته' ? (
                                                                 <span className="completed-indicator" title="تکمیل شده">
@@ -472,43 +477,41 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                                 ></span>
                                                             )}
                                                         </div>
-                                                   </td>
-                                                   <td>{activity.title}</td>
-                                                   <td>{renderPriorityBadge(activity.priority)}</td>
-                                                   <td>
-                                                        {displayStatus}
                                                     </td>
-                                                   <td>
+                                                    <td>
+                                                        <div className="title-cell-content" style={{ justifyContent: 'flex-start' }}>
+                                                            <span>{activity.title}</span>
+                                                            {isParent && <span className="item-tag parent-tag">والد</span>}
+                                                            {isSubtask && <span className="item-tag subtask-tag">زیرفعالیت</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td>{displayStatus}</td>
+                                                    <td>{renderPriorityBadge(activity.priority)}</td>
+                                                    <td>
                                                         <div className="action-buttons-grid">
                                                             <div className="action-buttons-row">
-                                                                <button className="icon-btn details-btn" title="جزئیات" onClick={() => handleViewActivityDetails(activity)}>
+                                                                <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleViewActivityDetails(activity)}>
                                                                     <DetailsIcon />
                                                                 </button>
-                                                                {canManageActivities && (
-                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
-                                                                        <EditIcon />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                            <div className="action-buttons-row">
-                                                                {canManageActivities && (
-                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
-                                                                        <DeleteIcon />
-                                                                    </button>
-                                                                )}
-                                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity.history)}>
+                                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(activity)}>
                                                                     <HistoryIcon />
                                                                 </button>
                                                             </div>
+                                                            {canManageActivities && (
+                                                                <div className="action-buttons-row">
+                                                                    <button className="icon-btn edit-btn" title="ویرایش" onClick={() => handleEditActivity(activity)}>
+                                                                        <EditIcon />
+                                                                    </button>
+                                                                    <button className="icon-btn delete-btn" title="حذف" onClick={() => handleDeleteActivity(activity.id)}>
+                                                                        <DeleteIcon />
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                   </td>
-                                               </tr>
-                                           )
-                                       }) : (
-                                        <tr>
-                                            <td colSpan={5} style={{ textAlign: 'center' }}>فعالیتی با این فیلتر یافت نشد.</td>
-                                        </tr>
-                                       )}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -516,29 +519,30 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                     )}
                 </div>
                  <div className="modal-footer">
-                    {activeTab === 'main' && !readOnly ? (
-                        <>
-                            <button type="button" className="cancel-btn" onClick={onClose}>انصراف</button>
-                            <button type="submit" form="project-form" className="save-btn">{project.isNew ? 'ایجاد و ادامه' : 'ذخیره پروژه'}</button>
-                        </>
-                    ) : (
-                        <button type="button" className="cancel-btn" onClick={onClose}>بستن</button>
+                    <button type="button" className="cancel-btn" onClick={onClose}>
+                        {project.isNew ? 'انصراف' : 'بستن'}
+                    </button>
+                    {activeTab === 'main' && !readOnly && (
+                        <button type="submit" form="project-form" className="save-btn">ذخیره اطلاعات</button>
                     )}
                 </div>
-                <ActivityModal 
-                    isOpen={isActivityModalOpen}
-                    onClose={() => setIsActivityModalOpen(false)}
-                    onSave={handleSaveActivity}
-                    activityToEdit={editingActivity}
-                    users={users}
-                    onRequestAlert={onRequestAlert}
-                    isProjectOwner={canManageActivities}
-                    responsibleUsers={activityResponsibleUsers}
-                    approverUsers={activityApproverUsers}
-                    currentUser={currentUser}
-                    projectUseWorkflow={project.use_workflow}
-                    customFields={customFields}
-                />
+                
+                 {isActivityModalOpen && (
+                    <ActivityModal
+                        isOpen={isActivityModalOpen}
+                        onClose={() => setIsActivityModalOpen(false)}
+                        onSave={handleSaveActivity}
+                        activityToEdit={editingActivity}
+                        users={users}
+                        onRequestAlert={onRequestAlert}
+                        isProjectOwner={canManageActivities}
+                        responsibleUsers={activityResponsibleUsers}
+                        approverUsers={activityApproverUsers}
+                        currentUser={currentUser}
+                        projectUseWorkflow={project.use_workflow}
+                        customFields={customFields}
+                    />
+                )}
             </div>
         </div>
     );

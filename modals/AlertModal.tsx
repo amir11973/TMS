@@ -13,7 +13,7 @@ export const AlertModal = ({ isOpen, onClose, title, message }: {
     if (!isOpen) return null;
 
     return (
-        <div className="modal-backdrop" onClick={onClose}>
+        <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 1200 }}>
             <div className="modal-content confirmation-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>{title}</h3>
