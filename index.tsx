@@ -133,6 +133,18 @@ const App = () => {
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
+    const getActionDescendantIds = useCallback((parentId: number, allActionsList: any[]): number[] => {
+        const children = allActionsList.filter(a => a.parent_id === parentId);
+        if (children.length === 0) {
+            return [];
+        }
+        let descendantIds: number[] = children.map(c => c.id);
+        children.forEach(child => {
+            descendantIds.push(...getActionDescendantIds(child.id, allActionsList));
+        });
+        return descendantIds;
+    }, []);
+
     const fetchData = useCallback(async () => {
         try {
             const [usersRes, projectsRes, activitiesRes, actionsRes, sectionsRes, teamsRes, customFieldsRes] = await Promise.all([
@@ -727,9 +739,14 @@ const App = () => {
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
-                    const { error } = await supabase.from('projects').delete().eq('id', projectId);
-                    handleSupabaseError(error, 'deleting project');
-                    if (!error) {
+                    // Explicitly delete activities first to ensure cascade, in case DB constraint is not set.
+                    const { error: activityError } = await supabase.from('activities').delete().eq('project_id', projectId);
+                    handleSupabaseError(activityError, 'deleting project activities');
+    
+                    const { error: projectError } = await supabase.from('projects').delete().eq('id', projectId);
+                    handleSupabaseError(projectError, 'deleting project');
+    
+                    if (!activityError && !projectError) {
                         await fetchData();
                     }
                 } finally {
@@ -748,12 +765,16 @@ const App = () => {
         const actionToDelete = allActions.find(a => a.id === actionId);
         handleRequestConfirmation({
             title: 'حذف اقدام',
-            message: `آیا از حذف اقدام "${actionToDelete?.title}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`,
+            message: `آیا از حذف اقدام "${actionToDelete?.title}" اطمینان دارید؟ این عمل تمام زیرمجموعه‌های آن را نیز حذف خواهد کرد.`,
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
-                    const { error } = await supabase.from('actions').delete().eq('id', actionId);
-                    handleSupabaseError(error, 'deleting action');
+                    const descendantIds = getActionDescendantIds(actionId, allActions);
+                    const idsToDelete = [actionId, ...descendantIds];
+    
+                    const { error } = await supabase.from('actions').delete().in('id', idsToDelete);
+                    handleSupabaseError(error, 'deleting action and its sub-actions');
+    
                     if (!error) {
                         await fetchData();
                     }
@@ -1058,16 +1079,18 @@ const App = () => {
     };
 
     const handleUpdateProjectState = (projectToUpdate: any) => {
+        // This part is for updating the project object itself
         setProjects(prevProjects => prevProjects.map(p => 
             p.id === projectToUpdate.id ? projectToUpdate : p
         ));
         if (editingProject && editingProject.id === projectToUpdate.id) {
             setEditingProject(projectToUpdate);
         }
-        setAllActivities(prev => prev.map(a => {
-            const updatedAct = projectToUpdate.activities.find((ua: any) => ua.id === a.id);
-            return updatedAct || a;
-        }));
+    
+        // This part syncs allActivities with the activities from the updated project
+        const otherActivities = allActivities.filter(a => a.project_id !== projectToUpdate.id);
+        const newAllActivities = [...otherActivities, ...projectToUpdate.activities];
+        setAllActivities(newAllActivities);
     };
 
     // --- Team Management Handlers ---

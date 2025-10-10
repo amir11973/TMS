@@ -227,21 +227,36 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
         });
     };
 
+    const getActivityDescendantIds = (parentId: number, allActivitiesList: any[]): number[] => {
+        const children = allActivitiesList.filter(a => a.parent_id === parentId);
+        if (children.length === 0) return [];
+
+        let descendantIds: number[] = children.map(c => c.id);
+        children.forEach(child => {
+            descendantIds.push(...getActivityDescendantIds(child.id, allActivitiesList));
+        });
+        return descendantIds;
+    };
+
     const handleDeleteActivity = (activityId: number) => {
-         const activityToDelete = project.activities.find((a:any) => a.id === activityId);
-         onRequestConfirmation({
+        const activityToDelete = project.activities.find((a: any) => a.id === activityId);
+        onRequestConfirmation({
             title: 'حذف فعالیت',
-            message: `آیا از حذف فعالیت "${activityToDelete?.title}" اطمینان دارید؟`,
+            message: `آیا از حذف فعالیت "${activityToDelete?.title}" اطمینان دارید؟ این عمل تمام زیرفعالیت‌های آن را نیز حذف خواهد کرد.`,
             onConfirm: async () => {
                 onSetIsActionLoading(true);
                 try {
-                    const { error } = await supabase.from('activities').delete().eq('id', activityId);
-                    handleSupabaseError(error, 'deleting activity');
+                    const descendantIds = getActivityDescendantIds(activityId, allActivities);
+                    const idsToDelete = [activityId, ...descendantIds];
+    
+                    const { error } = await supabase.from('activities').delete().in('id', idsToDelete);
+                    handleSupabaseError(error, 'deleting activity and sub-activities');
+    
                     if (!error) {
-                        const updatedActivities = project.activities.filter((a:any) => a.id !== activityId);
+                        const updatedActivities = project.activities.filter((a: any) => !idsToDelete.includes(a.id));
                         const updatedProject = { ...project, activities: updatedActivities };
-                        setProject(updatedProject);
-                        onUpdateProject(updatedProject);
+                        setProject(updatedProject); // Update local state for immediate UI feedback in modal
+                        onUpdateProject(updatedProject); // Update parent (App) state
                     }
                 } finally {
                     onSetIsActionLoading(false);
