@@ -7,7 +7,7 @@ import moment from 'moment-jalaali';
 import { HistoryIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 
-export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: { isOpen: boolean; onClose: () => void; items: any[], onShowHistory: (history: any[]) => void; }) => {
+export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: { isOpen: boolean; onClose: () => void; items: any[], onShowHistory: (item: any) => void; }) => {
     if (!isOpen) return null;
 
     const sortedItems = useMemo(() => {
@@ -48,11 +48,11 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                             <tbody>
                                 {sortedItems.length > 0 ? sortedItems.map((item, index) => {
                                     // First, look for the explicit approval history entry for workflow items
-                                    let finalApprovalEntry = item.history?.slice().reverse().find(h => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
+                                    let finalApprovalEntry = item.history?.slice().reverse().find((h:any) => h.approvalDecision === 'approved' && h.status === 'خاتمه یافته');
                                     
                                     // If not found (e.g., for non-workflow items), find the last entry where status became 'خاتمه یافته'
                                     if (!finalApprovalEntry) {
-                                        finalApprovalEntry = item.history?.slice().reverse().find(h => h.status === 'خاتمه یافته');
+                                        finalApprovalEntry = item.history?.slice().reverse().find((h:any) => h.status === 'خاتمه یافته');
                                     }
 
                                     const finalApprovalDate = finalApprovalEntry ? moment(finalApprovalEntry.date).format('jYYYY/jMM/jDD') : '—';
@@ -62,7 +62,7 @@ export const CompletedTasksModal = ({ isOpen, onClose, items, onShowHistory }: {
                                             <td>{toPersianDigits(index + 1)}</td>
                                             <td>{item.title}</td>
                                             <td>
-                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory([...(item.history || [])].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()))}>
+                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item)}>
                                                     <HistoryIcon />
                                                 </button>
                                             </td>

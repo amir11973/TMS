@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { User } from '../types';
-import { JalaliDatePicker, renderPriorityBadge } from '../components';
+import { JalaliDatePicker, renderPriorityBadge, renderStatusBadge } from '../components';
 import { getTodayString } from '../constants';
 import { toPersianDigits } from '../utils';
 
@@ -173,7 +173,7 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
                                     <tr key={st.id}>
                                         <td>{st.title}</td>
                                         <td>{userMap.get(st.responsible) || st.responsible}</td>
-                                        <td>{st.status}</td>
+                                        <td>{renderStatusBadge(st.status)}</td>
                                         <td>{renderPriorityBadge(st.priority)}</td>
                                     </tr>
                                 )) : (

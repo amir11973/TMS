@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { User } from '../types';
 import { toPersianDigits } from '../utils';
+import { renderStatusBadge } from '../components';
 
 // Recursive component to render each node in the hierarchy
 const HierarchyNode = ({ node, currentItemId, userMap }: { node: any, currentItemId: number, userMap: Map<string, string> }) => {
@@ -21,7 +22,7 @@ const HierarchyNode = ({ node, currentItemId, userMap }: { node: any, currentIte
             <div className="node-content">
                 <div className="node-main-info">
                     <span className="node-title">{title}</span>
-                    <span className="node-status">{status}</span>
+                    {renderStatusBadge(status)}
                 </div>
                 <div className="node-meta">
                     <span>({itemType}) - مسئول: {userMap.get(responsible) || responsible}</span>

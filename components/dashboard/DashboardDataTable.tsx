@@ -4,7 +4,7 @@
 */
 import React, { useMemo } from 'react';
 import { CollapsibleTableSection } from '../CollapsibleTable';
-import { renderPriorityBadge } from '../PriorityBadge';
+import { renderPriorityBadge, renderStatusBadge } from '../PriorityBadge';
 import { DetailsIcon, ApproveIcon } from '../../icons';
 import { toPersianDigits } from '../../utils';
 
@@ -93,7 +93,7 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                                 </div>
                                             </td>
                                             <td>{item.name}</td>
-                                            <td>{item.status}</td>
+                                            <td>{renderStatusBadge(item.status)}</td>
                                             <td>{renderPriorityBadge(item.priority)}</td>
                                             <td>
                                                 <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>
@@ -127,7 +127,7 @@ export const DashboardDataTable = ({ items, onViewDetails, projects, actions }: 
                                                 </div>
                                             </td>
                                             <td>{item.name}</td>
-                                            <td>{item.status}</td>
+                                            <td>{renderStatusBadge(item.status)}</td>
                                             <td>{renderPriorityBadge(item.priority)}</td>
                                             <td>
                                                 <button className="icon-btn details-btn" title="مشاهده جزئیات" onClick={() => handleDetailsClick(item)}>

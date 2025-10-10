@@ -6,7 +6,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { User, TeamMember, CustomField } from '../types';
 import { getTodayString } from '../constants';
-import { JalaliDatePicker } from '../components';
+import { JalaliDatePicker, renderStatusBadge } from '../components';
 
 export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionToEdit, currentUser, teamMembers, onRequestAlert, customFields }: {
     isOpen: boolean;
@@ -210,11 +210,15 @@ export const ActionModal = ({ isOpen, onClose, onSave, users, sections, actionTo
                             </div>
                              <div className="input-group">
                                 <label htmlFor="action-status">وضعیت</label>
-                                <select name="status" id="action-status" value={displayStatus} onChange={handleChange} disabled={!isAdmin}>
-                                    <option value="شروع نشده">شروع نشده</option>
-                                    <option value="در حال اجرا">در حال اجرا</option>
-                                    <option value="خاتمه یافته">خاتمه یافته</option>
-                                </select>
+                                {isAdmin ? (
+                                    <select name="status" id="action-status" value={displayStatus} onChange={handleChange}>
+                                        <option value="شروع نشده">شروع نشده</option>
+                                        <option value="در حال اجرا">در حال اجرا</option>
+                                        <option value="خاتمه یافته">خاتمه یافته</option>
+                                    </select>
+                                ) : (
+                                    renderStatusBadge(displayStatus)
+                                )}
                             </div>
                              <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <input 

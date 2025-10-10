@@ -1393,6 +1393,61 @@ body {
 .priority-medium { background-color: var(--c-warning); color: #1a1a2e; }
 .priority-high { background-color: var(--c-danger); }
 
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+.status-badge::before {
+    display: none;
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* --- Status Colors --- */
+/* Not Started (Gray) */
+.status-badge.status-not-started { background-color: rgba(108, 117, 125, 0.2); color: var(--c-text-muted); }
+.status-badge.status-not-started::before { background-color: #888; }
+
+/* In Progress (Yellow) */
+.status-badge.status-in-progress { background-color: rgba(255, 193, 7, 0.2); color: #b8860b; }
+.status-badge.status-in-progress::before { background-color: var(--c-warning); }
+body.theme-light .status-badge.status-in-progress { color: #856404; }
+
+
+/* Completed (Purple) */
+.status-badge.status-completed { background-color: rgba(142, 68, 173, 0.2); color: #ab85bb; }
+.status-badge.status-completed::before { background-color: #8e44ad; }
+body.theme-light .status-badge.status-completed { color: #8e44ad; }
+
+/* Pending Approval (Blue, per user request) */
+.status-badge.status-pending-approval { background-color: rgba(23, 162, 184, 0.2); color: var(--c-info); }
+.status-badge.status-pending-approval::before { background-color: var(--c-info); }
+
+/* Approved (Pink/Primary, per user request) */
+.status-badge.status-approved { background-color: rgba(233, 69, 96, 0.2); color: var(--c-primary); }
+.status-badge.status-approved::before { background-color: var(--c-primary); }
+
+/* Rejected (Red, per user request) */
+.status-badge.status-rejected { background-color: rgba(220, 53, 69, 0.2); color: var(--c-danger); }
+.status-badge.status-rejected::before { background-color: var(--c-danger); }
+
+/* Workflow Disabled (Black, per user request) */
+.status-badge.status-workflow-disabled { background-color: #343a40; color: #f8f9fa; }
+.status-badge.status-workflow-disabled::before { background-color: #000; }
+body.theme-light .status-badge.status-workflow-disabled { background-color: #343a40; color: #f8f9fa; }
+
+.status-badge.status-default { background-color: var(--c-header); color: var(--c-text-muted); }
+.status-badge.status-default::before { display: none; }
+
 /* Tabs */
 .tabs-container {
     display: flex;
@@ -1654,8 +1709,8 @@ body {
 
 /* --- Tasks Page --- */
 .tasks-page .user-list-table th:nth-child(1) { width: 10%; }
-.tasks-page .user-list-table th:nth-child(2) { width: 30%; }
-.tasks-page .user-list-table th:nth-child(3) { width: 15%; }
+.tasks-page .user-list-table th:nth-child(2) { width: 25%; }
+.tasks-page .user-list-table th:nth-child(3) { width: 20%; }
 .tasks-page .user-list-table th:nth-child(4) { width: 15%; }
 .tasks-page .user-list-table th:nth-child(5) { width: 30%; }
 
@@ -1882,9 +1937,9 @@ body {
     
     /* --- Tasks Page Grid Widths --- */
     .tasks-page .user-list-table th:nth-child(1) { width: 5%; }
-    .tasks-page .user-list-table th:nth-child(2) { width: 50%; }
-    .tasks-page .user-list-table th:nth-child(3) { width: 10%; }
-    .tasks-page .user-list-table th:nth-child(4) { width: 10%; }
+    .tasks-page .user-list-table th:nth-child(2) { width: 40%; }
+    .tasks-page .user-list-table th:nth-child(3) { width: 15%; }
+    .tasks-page .user-list-table th:nth-child(4) { width: 15%; }
     .tasks-page .user-list-table th:nth-child(5) { width: 25%; }
 
     /* --- Approvals Page Grid Widths --- */

@@ -5,7 +5,7 @@
 import React, { useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { User, CustomField } from '../types';
-import { renderPriorityBadge } from '../components';
+import { renderPriorityBadge, renderStatusBadge } from '../components';
 import { DetailsIcon } from '../icons';
 
 export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, customFields, currentUser, allActivities, allActions }: { 
@@ -59,7 +59,7 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
             </div>
             <div className="detail-group">
                 <span className="detail-label">وضعیت</span>
-                <span className="detail-value">{displayStatus}</span>
+                <div className="detail-value">{renderStatusBadge(displayStatus)}</div>
             </div>
             <div className="detail-group">
                 <span className="detail-label">مسئول</span>
@@ -147,7 +147,7 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
                                 </div>
                                 <div className="detail-group">
                                     <span className="detail-label">وضعیت</span>
-                                    <span className="detail-value">{displayStatus}</span>
+                                    <div className="detail-value">{renderStatusBadge(displayStatus)}</div>
                                 </div>
                                  <div className="detail-group">
                                     <span className="detail-label">درجه اهمیت</span>
@@ -198,7 +198,7 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
                                                     return (
                                                         <tr key={act.id}>
                                                             <td>{act.title}</td>
-                                                            <td>{effectiveStatus}</td>
+                                                            <td>{renderStatusBadge(effectiveStatus)}</td>
                                                             <td>{renderPriorityBadge(act.priority)}</td>
                                                             <td>
                                                                 <button 
@@ -239,7 +239,7 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
                                             <tr key={sub.id}>
                                                 <td>{sub.title}</td>
                                                 <td>{userMap.get(sub.responsible) || sub.responsible}</td>
-                                                <td>{sub.status}</td>
+                                                <td>{renderStatusBadge(sub.status)}</td>
                                                 <td>{renderPriorityBadge(sub.priority)}</td>
                                             </tr>
                                         ))}

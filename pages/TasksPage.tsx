@@ -4,7 +4,7 @@
 */
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
-import { CollapsibleTableSection, JalaliCalendarView, KanbanBoard } from '../components';
+import { CollapsibleTableSection, JalaliCalendarView, KanbanBoard, renderStatusBadge } from '../components';
 import { DetailsIcon, HistoryIcon, SendIcon, SendForFinishIcon, NotesIcon, CalendarIcon, ListIcon, KanbanIcon, DelegateIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 import { CompletedTasksModal } from '../modals/index';
@@ -113,7 +113,9 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                                                 <CollapsibleTableSection title={groupName} count={tasks.length} defaultOpen={true}>
                                                     {tasks.map((item, index) => {
                                                         let approvalStatusText = '—';
-                                                        if (item.status === 'ارسال برای تایید') {
+                                                        if (item.use_workflow === false) {
+                                                            approvalStatusText = 'گردش کار غیرفعال';
+                                                        } else if (item.status === 'ارسال برای تایید') {
                                                             approvalStatusText = `منتظر تایید (${item.requestedStatus})`;
                                                         } else if (item.approvalStatus === 'approved') {
                                                             approvalStatusText = 'تایید شده';
@@ -145,8 +147,8 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                                                                         {item.isSubtask && <span className="item-tag subtask-tag" onClick={(e) => { e.stopPropagation(); onShowHierarchy(item); }}>زیرفعالیت</span>}
                                                                     </div>
                                                                 </td>
-                                                                <td>{item.use_workflow === false ? 'گردش کار غیرفعال' : approvalStatusText}</td>
-                                                                <td>{displayStatus}</td>
+                                                                <td>{renderStatusBadge(displayStatus, approvalStatusText)}</td>
+                                                                <td>{renderStatusBadge(displayStatus)}</td>
                                                                 <td>
                                                                     <div className="action-buttons-grid">
                                                                         <div className="action-buttons-row">

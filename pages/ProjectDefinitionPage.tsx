@@ -8,7 +8,7 @@ import { User, TeamMember, CustomField } from '../types';
 import { getTodayString } from '../constants';
 import { supabase, handleSupabaseError } from '../supabaseClient';
 import { EditIcon, DeleteIcon, HistoryIcon, DetailsIcon, ApproveIcon, PlusIcon } from '../icons';
-import { renderPriorityBadge, JalaliDatePicker } from '../components';
+import { renderPriorityBadge, JalaliDatePicker, renderStatusBadge } from '../components';
 // FIX: Corrected import path to avoid conflict with empty modals.tsx file.
 import { ActivityModal } from '../modals/index';
 import { toPersianDigits } from '../utils';
@@ -374,7 +374,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                 </div>
                                  <div className="input-group">
                                     <label htmlFor="status">وضعیت پروژه</label>
-                                    <input name="status" id="status" value={project.status || 'شروع نشده'} disabled />
+                                    {renderStatusBadge(project.status || 'شروع نشده')}
                                 </div>
                                 <div className="input-group">
                                     <label htmlFor="projectStartDate">تاریخ شروع</label>
@@ -485,7 +485,7 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                             {isSubtask && <span className="item-tag subtask-tag">زیرفعالیت</span>}
                                                         </div>
                                                     </td>
-                                                    <td>{displayStatus}</td>
+                                                    <td>{renderStatusBadge(displayStatus)}</td>
                                                     <td>{renderPriorityBadge(activity.priority)}</td>
                                                     <td>
                                                         <div className="action-buttons-grid">

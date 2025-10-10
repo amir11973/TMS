@@ -4,7 +4,7 @@
 */
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
-import { renderPriorityBadge, CollapsibleTableSection } from '../components';
+import { renderPriorityBadge, CollapsibleTableSection, renderStatusBadge } from '../components';
 import { DetailsIcon, EditIcon, DeleteIcon, HistoryIcon, ApproveIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 
@@ -185,7 +185,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                             </div>
                                                         </td>
                                                         <td>{item.title}</td>
-                                                        <td>{item.status}</td>
+                                                        <td>{renderStatusBadge(item.status)}</td>
                                                         <td>{renderPriorityBadge(item.priority)}</td>
                                                         <td>
                                                             <div className="action-buttons-grid">
@@ -257,7 +257,7 @@ export const ProjectsActionsListPage = ({ projects, actions, onViewDetails, onEd
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            {displayStatus}
+                                                            {renderStatusBadge(displayStatus)}
                                                         </td>
                                                         <td>{renderPriorityBadge(item.priority)}</td>
                                                         <td>

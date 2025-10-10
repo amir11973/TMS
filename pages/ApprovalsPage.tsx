@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useMemo } from 'react';
-import { CollapsibleTableSection } from '../components';
+import { CollapsibleTableSection, renderStatusBadge } from '../components';
 import { DetailsIcon, HistoryIcon, DocumentIcon, ApproveIcon, RejectIcon, NotesIcon } from '../icons';
 import { User } from '../types';
 import { toPersianDigits } from '../utils';
@@ -107,7 +107,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                         </td>
                                                         <td>{item.title}</td>
                                                         <td>{userMap.get(item.responsible) || item.responsible}</td>
-                                                        <td>{item.requestedStatus}</td>
+                                                        <td>{renderStatusBadge(item.requestedStatus)}</td>
                                                         <td>
                                                             <div className="action-buttons-grid">
                                                                 <div className="action-buttons-row">

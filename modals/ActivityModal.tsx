@@ -6,7 +6,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment-jalaali';
 import { User, CustomField } from '../types';
 import { getTodayString } from '../constants';
-import { JalaliDatePicker } from '../components';
+import { JalaliDatePicker, renderStatusBadge } from '../components';
 
 export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, onRequestAlert, isProjectOwner, responsibleUsers, approverUsers, currentUser, projectUseWorkflow, customFields }: {
     isOpen: boolean;
@@ -173,11 +173,15 @@ export const ActivityModal = ({ isOpen, onClose, onSave, activityToEdit, users, 
                         </div>
                          <div className="input-group">
                             <label htmlFor="activity-status">وضعیت</label>
-                            <select name="status" id="activity-status" value={displayStatus} onChange={handleChange} disabled={!isAdmin}>
-                                <option value="شروع نشده">شروع نشده</option>
-                                <option value="در حال اجرا">در حال اجرا</option>
-                                <option value="خاتمه یافته">خاتمه یافته</option>
-                            </select>
+                            {isAdmin ? (
+                                <select name="status" id="activity-status" value={displayStatus} onChange={handleChange}>
+                                    <option value="شروع نشده">شروع نشده</option>
+                                    <option value="در حال اجرا">در حال اجرا</option>
+                                    <option value="خاتمه یافته">خاتمه یافته</option>
+                                </select>
+                            ) : (
+                                renderStatusBadge(displayStatus)
+                            )}
                         </div>
                         {relevantCustomFields.length > 0 && <h4 className="list-section-header" style={{marginTop: '1.5rem', marginBottom: '1rem'}}>فیلدهای سفارشی</h4>}
                         {relevantCustomFields.map(field => (

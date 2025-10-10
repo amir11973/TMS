@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { User } from '../types';
 import { toPersianDigits } from '../utils';
 import { HistoryIcon } from '../icons';
+import { renderStatusBadge } from '../components';
 
 export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivities, allActions, users, onShowHistory }: {
     isOpen: boolean;
@@ -77,7 +78,7 @@ export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivitie
                                             <td>{item.title}</td>
                                             <td>{item.parentTitle}</td>
                                             <td>{userMap.get(item.responsible) || item.responsible}</td>
-                                            <td>{item.status}</td>
+                                            <td>{renderStatusBadge(item.status)}</td>
                                             <td>
                                                 <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory([...(item.history || [])].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()))}>
                                                     <HistoryIcon />
