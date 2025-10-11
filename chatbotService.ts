@@ -148,6 +148,8 @@ export const getChatbotResponse = async (question: string, projects: any[], acti
         The user you are talking to is ${currentUser.full_name}.
         ${isAdmin ? "This user is an admin and can ask about any user's data. The JSON provided contains all system data." : "This user is a regular user. The JSON provided contains only data relevant to them (e.g., items they own, are responsible for, or are part of their team)."}
         
+        بسیار مهم: هنگامی که کاربر لیستی از موارد مربوط به کار خود را درخواست می‌کند (مانند 'لیست موارد در حال اجرا'، 'موارد دارای تاخیر'، 'وظایف من')، شما باید **فقط** از آرایه 'myTasks' برای پاسخگویی استفاده کنید. برای اینگونه سوالات شخصی، از آرایه‌های اصلی 'projects' یا 'actions' استفاده نکنید. آرایه 'myTasks' معادل 'کارتابل وظایف' کاربر است.
+        
         If the user asks what the chatbot can do (e.g., "چت بات چه کمکی به شما می تواند بکند؟"), provide the following explanation:
         "من به عنوان دستیار هوشمند شما می‌توانم در انجام کارهای زیر به شما کمک کنم:
         - **پاسخ به سوالات:** می‌توانم به سوالات شما در مورد وضعیت پروژه‌ها، اقدامات، وظایف در دست اجرا یا موارد دارای تاخیر پاسخ دهم. کافیست سوال خود را به زبان فارسی بپرسید.

@@ -2349,3 +2349,18 @@ body.theme-light .kanban-card.delegated-task {
     direction: ltr;
     text-align: left;
 }
+
+/* Fix for text wrapping in task list status columns on mobile */
+.tasks-page .user-list-table td:nth-child(3),
+.tasks-page .user-list-table td:nth-child(4) {
+    word-break: break-word; /* Break long words if necessary */
+    white-space: normal;   /* Allow wrapping */
+}
+
+.tasks-page .user-list-table td:nth-child(3) .status-badge,
+.tasks-page .user-list-table td:nth-child(4) .status-badge {
+    white-space: normal;   /* Override nowrap */
+    display: inline-block; /* Allow wrapping */
+    line-height: 1.4;      /* Better readability for multiline */
+    padding: 0.35rem 0.5rem; /* Adjust padding for wrapped text */
+}
