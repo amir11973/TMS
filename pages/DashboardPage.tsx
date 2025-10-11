@@ -94,6 +94,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     
     const typeData = useMemo(() => {
         // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
+        // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
         const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
@@ -106,6 +107,7 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
 
     const statusData = useMemo(() => {
         // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
+        // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
         const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
@@ -119,8 +121,8 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     }, [allItems]);
 
     const responsibleData = useMemo(() => {
-        // FIX: Explicitly typing the accumulator of the reduce function ensures 'counts' is correctly typed as Record<string, number>,
-        // resolving the arithmetic operation error on the sort function where `value` was previously inferred as `unknown`.
+        // FIX: Explicitly typing the accumulator of the reduce function ensures 'counts' is correctly typed as Record<string, number>, resolving arithmetic operation errors.
+        // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
         const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;

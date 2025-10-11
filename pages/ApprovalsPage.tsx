@@ -77,7 +77,6 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                             <tr>
                                 <th>#</th>
                                 <th>عنوان</th>
-                                <th>مسئول</th>
                                 <th>درخواست برای</th>
                                 <th>عملیات</th>
                             </tr>
@@ -106,7 +105,6 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                             </div>
                                                         </td>
                                                         <td>{item.title}</td>
-                                                        <td>{userMap.get(item.responsible) || item.responsible}</td>
                                                         <td>{renderStatusBadge(item.requestedStatus)}</td>
                                                         <td>
                                                             <div className="action-buttons-grid">
@@ -144,7 +142,7 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                  ))
                             ) : (
                                 <tr>
-                                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                                    <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
                                         هیچ موردی در انتظار تایید شما نیست.
                                     </td>
                                 </tr>

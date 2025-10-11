@@ -1272,9 +1272,11 @@ const App = () => {
             parentName: getParentName(item),
             isDelegated: parentIds.has(item.id),
             isSubtask: !!item.parent_id,
+// FIX: Cast `item` to `any` when accessing `use_workflow` to resolve a type error where `item` was being treated as 'unknown'.
+            // FIX: Cast `item` to `any` to resolve 'unknown' type error when accessing `use_workflow`.
             use_workflow: item.type === 'activity' 
                 ? projectMap.get(item.project_id)?.use_workflow 
-                : item.use_workflow
+                : (item as any).use_workflow
         }));
     }, [loggedInUser, allActivities, allActions, projects]);
 
@@ -1471,6 +1473,8 @@ const App = () => {
     
     // ... chatbot handlers, etc.
     // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+// FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type error.
     const createItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: Record<string, any>) => {
         // FIX: Add a check for `loggedInUser` to prevent errors and ensure a user is logged in.
         if (!loggedInUser) return { success: false, error: 'کاربر وارد نشده است.' };
@@ -1531,6 +1535,8 @@ const App = () => {
     };
     
     // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+// FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type error.
     const deleteItemForChatbot = async (itemType: 'project' | 'action' | 'activity', args: Record<string, any>) => {
         if (!args.title) return { success: false, error: 'عنوان برای حذف الزامی است.' };
     
@@ -1571,6 +1577,8 @@ const App = () => {
     };
     
     // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+// FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type error.
     const addTeamMemberForChatbot = async (args: Record<string, any>) => {
         if (!args.username) return { success: false, error: 'نام کاربری برای افزودن عضو الزامی است.' };
         const userToAdd = findUserByMention(args.username, users);
@@ -1582,6 +1590,8 @@ const App = () => {
     };
 
     // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+// FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type errors when accessing its properties.
+    // FIX: Typed 'args' as Record<string, any> to resolve 'unknown' type error.
     const removeTeamMemberForChatbot = async (args: Record<string, any>) => {
         if (!args.username) return { success: false, error: 'نام کاربری برای حذف عضو الزامی است.' };
         const userToRemove = findUserByMention(args.username, users);
@@ -1764,7 +1774,7 @@ const supabaseAnonKey = '...';`}
                 allActions={allActions} 
                 onRequestAlert={handleRequestAlert} 
             />
-            <DelegatedItemsModal isOpen={isDelegatedItemsModalOpen} onClose={() => setIsDelegatedItemsModalOpen(false)} currentUser={loggedInUser} allActivities={allActivities} allActions={allActions} users={users} onShowHistory={handleShowHistory} />
+            <DelegatedItemsModal isOpen={isDelegatedItemsModalOpen} onClose={() => setIsDelegatedItemsModalOpen(false)} currentUser={loggedInUser} allActivities={allActivities} allActions={allActions} users={users} onShowHistory={handleShowHistory} onViewDetails={handleViewDetails} />
 
             <HierarchyModal
                 isOpen={isHierarchyModalOpen}

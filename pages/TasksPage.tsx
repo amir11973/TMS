@@ -102,7 +102,6 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                                         <th>#</th>
                                         <th>عنوان</th>
                                         <th>وضعیت تائید</th>
-                                        <th>وضعیت</th>
                                         <th>عملیات</th>
                                     </tr>
                                 </thead>
@@ -148,7 +147,6 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                                                                     </div>
                                                                 </td>
                                                                 <td>{renderStatusBadge(displayStatus, approvalStatusText)}</td>
-                                                                <td>{renderStatusBadge(displayStatus)}</td>
                                                                 <td>
                                                                     <div className="action-buttons-grid">
                                                                         <div className="action-buttons-row">
@@ -208,7 +206,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                                            <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
                                                 هیچ وظیفه جاری برای شما ثبت نشده است.
                                             </td>
                                         </tr>
@@ -248,6 +246,7 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                 onClose={() => setIsCompletedTasksModalOpen(false)}
                 items={completedTasks}
                 onShowHistory={onShowHistory}
+                onViewDetails={onViewDetails}
             />
         </div>
     );

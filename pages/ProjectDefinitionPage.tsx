@@ -466,7 +466,6 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                         <tr>
                                             <th>#</th>
                                             <th>عنوان</th>
-                                            <th>وضعیت</th>
                                             <th>اهمیت</th>
                                             <th>عملیات</th>
                                         </tr>
@@ -500,7 +499,6 @@ export const ProjectDefinitionPage = ({ users, sections, onSave, projectToEdit, 
                                                             {isSubtask && <span className="item-tag subtask-tag">زیرفعالیت</span>}
                                                         </div>
                                                     </td>
-                                                    <td>{renderStatusBadge(displayStatus)}</td>
                                                     <td>{renderPriorityBadge(activity.priority)}</td>
                                                     <td>
                                                         <div className="action-buttons-grid">

@@ -1,3 +1,7 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
 /* General Resets and Base Styles */
 :root {
   /* Dark Theme Colors */
@@ -22,18 +26,18 @@
 
 body.theme-light {
   /* Light Theme Colors */
-  --c-bg: #f4f7fc;
-  --c-surface: #ffffff;
-  --c-header: #ffffff;
-  --c-primary: #e94560;
+  --c-bg: #fdfaf6;
+  --c-surface: #fdfaf6;
+  --c-header: #fdfaf6;
+  --c-primary: #d43f5a; /* Darker pink for headers */
   --c-text: #2c3e50;
   --c-text-muted: #6c757d;
-  --c-border: #dee2e6;
-  --c-hover-bg: rgba(233, 69, 96, 0.1);
-  --c-table-header-bg: #e9ecef;
-  --c-table-group-header-bg-level-0: #f1f3f5;
-  --c-table-group-header-bg-level-1: #f8f9fa;
-  --c-table-row-bg: #ffffff;
+  --c-border: #edeae4;
+  --c-hover-bg: rgba(212, 63, 90, 0.1); /* Corresponds to darker pink */
+  --c-table-header-bg: #f8f6f2;
+  --c-table-group-header-bg-level-0: #f8f6f2;
+  --c-table-group-header-bg-level-1: #fbf9f7;
+  --c-table-row-bg: #fdfaf6;
 }
 
 * {
@@ -185,6 +189,10 @@ body {
   border-bottom: 0.0625rem solid var(--c-border);
   z-index: 10;
   transition: background-color 0.3s, border-color 0.3s;
+}
+
+body.theme-light .header {
+  background-color: #deb57d;
 }
 
 .header h1 {
@@ -1695,8 +1703,8 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
 
 /* --- Projects & Actions Page --- */
 .projects-actions-list-page .user-list-table th:nth-child(1) { width: 10%; }
-.projects-actions-list-page .user-list-table th:nth-child(2) { width: 40%; }
-.projects-actions-list-page .user-list-table th:nth-child(3) { width: 15%; }
+.projects-actions-list-page .user-list-table th:nth-child(2) { width: 35%; }
+.projects-actions-list-page .user-list-table th:nth-child(3) { width: 20%; }
 .projects-actions-list-page .user-list-table th:nth-child(4) { width: 15%; }
 .projects-actions-list-page .user-list-table th:nth-child(5) { width: 20%; }
 
@@ -1708,34 +1716,34 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
 .dashboard-data-table th:nth-child(5) { width: 20%; }
 
 /* --- Tasks Page --- */
-.tasks-page .user-list-table th:nth-child(1) { width: 10%; }
-.tasks-page .user-list-table th:nth-child(2) { width: 25%; }
-.tasks-page .user-list-table th:nth-child(3) { width: 20%; }
-.tasks-page .user-list-table th:nth-child(4) { width: 15%; }
-.tasks-page .user-list-table th:nth-child(5) { width: 30%; }
+.tasks-page .user-list-table th:nth-child(1) { width: 8%; }
+.tasks-page .user-list-table th:nth-child(2) { width: 38%; }
+.tasks-page .user-list-table th:nth-child(3) { width: 22%; }
+.tasks-page .user-list-table th:nth-child(4) { width: 32%; }
 
 /* --- Approvals Page --- */
 .approvals-page .user-list-table th:nth-child(1) { width: 10%; }
-.approvals-page .user-list-table th:nth-child(2) { width: 30%; }
-.approvals-page .user-list-table th:nth-child(3) { width: 20%; }
-.approvals-page .user-list-table th:nth-child(4) { width: 15%; }
-.approvals-page .user-list-table th:nth-child(5) { width: 25%; }
+.approvals-page .user-list-table th:nth-child(2) { width: 40%; }
+.approvals-page .user-list-table th:nth-child(3) { width: 25%; }
+.approvals-page .user-list-table th:nth-child(4) { width: 25%; }
 
 
 /* --- Modal Tables --- */
 .modal-content .mass-delegate-table th:nth-child(1) { width: 5%; }
 .modal-content .mass-delegate-table th:nth-child(2) { width: 30%; }
-.modal-content .mass-delegate-table th:nth-child(3) { width: 30%; }
-.modal-content .mass-delegate-table th:nth-child(4) { width: 15%; }
-.modal-content .mass-delegate-table th:nth-child(5) { width: 10%; }
-.modal-content .mass-delegate-table th:nth-child(6) { width: 10%; }
+.modal-content .mass-delegate-table th:nth-child(3) { width: 40%; }
+.modal-content .mass-delegate-table th:nth-child(4) { width: 25%; }
 
 
-.modal-content .completed-tasks-table th:nth-child(1) { width: 10%; }   /* # */
-.modal-content .completed-tasks-table th:nth-child(2) { width: 40%; } /* عنوان */
-.modal-content .completed-tasks-table th:nth-child(3) { width: 15%; } /* تاریخچه */
-.modal-content .completed-tasks-table th:nth-child(4) { width: 15%; } /* تاریخ تایید نهایی */
-.modal-content .completed-tasks-table th:nth-child(5) { width: 20%; } /* پروژه / اقدام */
+.modal-content .completed-tasks-table th:nth-child(1) { width: 10%; }
+.modal-content .completed-tasks-table th:nth-child(2) { width: 35%; }
+.modal-content .completed-tasks-table th:nth-child(3) { width: 30%; }
+.modal-content .completed-tasks-table th:nth-child(4) { width: 25%; }
+
+
+.modal-content .completed-tasks-table td:nth-child(4) {
+    white-space: nowrap;
+}
 
 .project-modal-content .activities-table {
     table-layout: fixed;
@@ -1743,9 +1751,8 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
 }
 .project-modal-content .activities-table th:nth-child(1) { width: 10%; }
 .project-modal-content .activities-table th:nth-child(2) { width: 40%; }
-.project-modal-content .activities-table th:nth-child(3) { width: 15%; }
-.project-modal-content .activities-table th:nth-child(4) { width: 15%; }
-.project-modal-content .activities-table th:nth-child(5) { width: 20%; }
+.project-modal-content .activities-table th:nth-child(3) { width: 25%; }
+.project-modal-content .activities-table th:nth-child(4) { width: 25%; }
 
 
 .modal-content .completed-tasks-table td:nth-child(4) {
@@ -1756,6 +1763,24 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
     white-space: normal !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+}
+
+/* Mobile styles for Tasks page header buttons */
+.tasks-page .page-header-actions {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tasks-page .header-action-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+}
+
+.tasks-page .header-action-btn svg {
+    width: 1rem;
+    height: 1rem;
 }
 
 
@@ -1937,17 +1962,15 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
     
     /* --- Tasks Page Grid Widths --- */
     .tasks-page .user-list-table th:nth-child(1) { width: 5%; }
-    .tasks-page .user-list-table th:nth-child(2) { width: 40%; }
-    .tasks-page .user-list-table th:nth-child(3) { width: 15%; }
-    .tasks-page .user-list-table th:nth-child(4) { width: 15%; }
-    .tasks-page .user-list-table th:nth-child(5) { width: 25%; }
+    .tasks-page .user-list-table th:nth-child(2) { width: 50%; }
+    .tasks-page .user-list-table th:nth-child(3) { width: 20%; }
+    .tasks-page .user-list-table th:nth-child(4) { width: 25%; }
 
     /* --- Approvals Page Grid Widths --- */
     .approvals-page .user-list-table th:nth-child(1) { width: 5%; }
-    .approvals-page .user-list-table th:nth-child(2) { width: 30%; }
+    .approvals-page .user-list-table th:nth-child(2) { width: 40%; }
     .approvals-page .user-list-table th:nth-child(3) { width: 15%; }
-    .approvals-page .user-list-table th:nth-child(4) { width: 15%; }
-    .approvals-page .user-list-table th:nth-child(5) { width: 35%; }
+    .approvals-page .user-list-table th:nth-child(4) { width: 40%; }
 }
 
 @media (min-width: 1200px) {
@@ -2359,6 +2382,15 @@ body.theme-light .kanban-card.delegated-task {
 
 .tasks-page .user-list-table td:nth-child(3) .status-badge,
 .tasks-page .user-list-table td:nth-child(4) .status-badge {
+    white-space: normal;   /* Override nowrap */
+    display: inline-block; /* Allow wrapping */
+    line-height: 1.4;      /* Better readability for multiline */
+    padding: 0.35rem 0.5rem; /* Adjust padding for wrapped text */
+}
+
+/* Fix for text wrapping in specific table columns on mobile */
+.approvals-page .user-list-table td:nth-child(4) .status-badge,
+.projects-actions-list-page .user-list-table td:nth-child(3) .status-badge {
     white-space: normal;   /* Override nowrap */
     display: inline-block; /* Allow wrapping */
     line-height: 1.4;      /* Better readability for multiline */

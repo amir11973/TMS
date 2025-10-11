@@ -5,10 +5,10 @@
 import React, { useMemo } from 'react';
 import { User } from '../types';
 import { toPersianDigits } from '../utils';
-import { HistoryIcon } from '../icons';
+import { HistoryIcon, DetailsIcon } from '../icons';
 import { renderStatusBadge } from '../components';
 
-export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivities, allActions, users, onShowHistory }: {
+export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivities, allActions, users, onShowHistory, onViewDetails }: {
     isOpen: boolean;
     onClose: () => void;
     currentUser: User | null;
@@ -16,6 +16,7 @@ export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivitie
     allActions: any[];
     users: User[];
     onShowHistory: (history: any[]) => void;
+    onViewDetails: (item: any) => void;
 }) => {
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
@@ -65,9 +66,7 @@ export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivitie
                                     <th>#</th>
                                     <th>عنوان زیرفعالیت</th>
                                     <th>فعالیت والد</th>
-                                    <th>مسئول</th>
-                                    <th>وضعیت</th>
-                                    <th>تاریخچه</th>
+                                    <th>جزئیات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -77,18 +76,21 @@ export const DelegatedItemsModal = ({ isOpen, onClose, currentUser, allActivitie
                                             <td>{toPersianDigits(index + 1)}</td>
                                             <td>{item.title}</td>
                                             <td>{item.parentTitle}</td>
-                                            <td>{userMap.get(item.responsible) || item.responsible}</td>
-                                            <td>{renderStatusBadge(item.status)}</td>
                                             <td>
-                                                <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory([...(item.history || [])].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()))}>
-                                                    <HistoryIcon />
-                                                </button>
+                                                <div className="action-buttons">
+                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory([...(item.history || [])].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()))}>
+                                                        <HistoryIcon />
+                                                    </button>
+                                                     <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
+                                                        <DetailsIcon />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
                                 }) : (
                                     <tr>
-                                        <td colSpan={6} style={{ textAlign: 'center' }}>شما تاکنون موردی را واگذار نکرده‌اید.</td>
+                                        <td colSpan={4} style={{ textAlign: 'center' }}>شما تاکنون موردی را واگذار نکرده‌اید.</td>
                                     </tr>
                                 )}
                             </tbody>
