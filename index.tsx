@@ -147,26 +147,20 @@ const App = () => {
 
     const fetchData = useCallback(async () => {
         try {
-            const [usersRes, projectsRes, activitiesRes, actionsRes, sectionsRes, teamsRes, customFieldsRes] = await Promise.all([
-                supabase.from('users').select('*'),
-                supabase.from('projects').select('*'),
-                supabase.from('activities').select('*').order('kanban_order', { ascending: true, nullsFirst: false }),
-                supabase.from('actions').select('*').order('kanban_order', { ascending: true, nullsFirst: false }),
-                supabase.from('units').select('name'),
-                supabase.from('teams').select('*'),
-                supabase.from('custom_fields').select('*')
-            ]);
-
+            const usersRes = await supabase.from('users').select('*');
             handleSupabaseError(usersRes.error, 'fetching users');
             setUsers(usersRes.data || []);
 
+            const projectsRes = await supabase.from('projects').select('*');
             handleSupabaseError(projectsRes.error, 'fetching projects');
             const projectsData = projectsRes.data || [];
 
+            const activitiesRes = await supabase.from('activities').select('*').order('kanban_order', { ascending: true, nullsFirst: false });
             handleSupabaseError(activitiesRes.error, 'fetching activities');
             const activitiesData = activitiesRes.data || [];
             setAllActivities(activitiesData);
 
+            const actionsRes = await supabase.from('actions').select('*').order('kanban_order', { ascending: true, nullsFirst: false });
             handleSupabaseError(actionsRes.error, 'fetching actions');
             const actionsData = actionsRes.data || [];
             setAllActions(actionsData);
@@ -180,9 +174,11 @@ const App = () => {
             const topLevelActions = actionsData.filter(a => !a.parent_id);
             setActions(topLevelActions);
 
+            const sectionsRes = await supabase.from('units').select('name');
             handleSupabaseError(sectionsRes.error, 'fetching sections');
             setSections((sectionsRes.data || []).map(u => u.name));
 
+            const teamsRes = await supabase.from('teams').select('*');
             handleSupabaseError(teamsRes.error, 'fetching teams');
             const teamsData = teamsRes.data || [];
             // FIX: Explicitly typing the initial value for `reduce` ensures `reconstructedTeams` is correctly typed.
@@ -195,11 +191,18 @@ const App = () => {
             }, {} as Record<string, TeamMember[]>);
             setTeams(reconstructedTeams);
 
+            const customFieldsRes = await supabase.from('custom_fields').select('*');
             handleSupabaseError(customFieldsRes.error, 'fetching custom fields');
             setCustomFields(customFieldsRes.data || []);
 
         } catch (e: any) {
-            setError(`Failed to load application data: ${e.message}. Please check your network connection and Supabase configuration in supabaseClient.ts.`);
+            let message = `Failed to load application data: ${e.message}.`;
+            if (e.message?.toLowerCase().includes('failed to fetch')) {
+                message += ' This is often a network issue. Please check your internet connection, browser extensions, or firewall configuration.';
+            } else {
+                message += ' Please check the Supabase configuration in supabaseClient.ts.';
+            }
+            setError(message);
         }
     }, []);
 
