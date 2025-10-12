@@ -1263,7 +1263,10 @@ const App = () => {
         };
 
         const userTasks = [
-            ...allActivities.map(a => ({ ...a, type: 'activity' })),
+            ...allActivities.map(a => {
+                const project = projectMap.get(a.project_id);
+                return { ...a, type: 'activity', owner: project?.owner };
+            }),
             ...allActions.map(a => ({ ...a, type: 'action' })),
         ].filter(item => item.responsible === loggedInUser.username);
         

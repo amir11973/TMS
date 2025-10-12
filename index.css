@@ -1383,7 +1383,7 @@ body.theme-light .header {
 .icon-btn.reject-btn { color: var(--c-danger); }
 .details-btn { color: var(--c-info); }
 .history-btn { color: #a0a0a0; }
-.icon-btn.delegate-btn { color: var(--c-success); }
+.icon-btn.subtask-btn { color: var(--c-success); }
 
 
 /* Badges */
@@ -1739,20 +1739,6 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
 .modal-content .completed-tasks-table th:nth-child(2) { width: 35%; }
 .modal-content .completed-tasks-table th:nth-child(3) { width: 30%; }
 .modal-content .completed-tasks-table th:nth-child(4) { width: 25%; }
-
-
-.modal-content .completed-tasks-table td:nth-child(4) {
-    white-space: nowrap;
-}
-
-.project-modal-content .activities-table {
-    table-layout: fixed;
-    width: 100%;
-}
-.project-modal-content .activities-table th:nth-child(1) { width: 10%; }
-.project-modal-content .activities-table th:nth-child(2) { width: 40%; }
-.project-modal-content .activities-table th:nth-child(3) { width: 25%; }
-.project-modal-content .activities-table th:nth-child(4) { width: 25%; }
 
 
 .modal-content .completed-tasks-table td:nth-child(4) {
@@ -2395,4 +2381,4 @@ body.theme-light .kanban-card.delegated-task {
     display: inline-block; /* Allow wrapping */
     line-height: 1.4;      /* Better readability for multiline */
     padding: 0.35rem 0.5rem; /* Adjust padding for wrapped text */
-}
+}]

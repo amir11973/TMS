@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { User, TeamMember } from '../types';
 import { CollapsibleTableSection, JalaliCalendarView, KanbanBoard, renderStatusBadge } from '../components';
-import { DetailsIcon, HistoryIcon, SendIcon, SendForFinishIcon, NotesIcon, CalendarIcon, ListIcon, KanbanIcon, DelegateIcon } from '../icons';
+import { DetailsIcon, HistoryIcon, SendIcon, SendForFinishIcon, NotesIcon, CalendarIcon, ListIcon, KanbanIcon, DelegateIcon, SubtaskIcon } from '../icons';
 import { toPersianDigits } from '../utils';
 import { CompletedTasksModal } from '../modals/index';
 
@@ -156,8 +156,8 @@ export const TasksPage = ({ items, currentUser, onShowHistory, users, teamMember
                                                                             <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item)}>
                                                                                 <HistoryIcon />
                                                                             </button>
-                                                                            <button className="icon-btn delegate-btn" title="ایجاد زیرفعالیت" onClick={() => onOpenSubtaskModal(item)}>
-                                                                                <DelegateIcon />
+                                                                            <button className="icon-btn subtask-btn" title="ایجاد زیرفعالیت" onClick={() => onOpenSubtaskModal(item)}>
+                                                                                <SubtaskIcon />
                                                                             </button>
                                                                             <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'responsible')}>
                                                                                 <NotesIcon />

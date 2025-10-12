@@ -123,7 +123,7 @@ export const DetailsModal = ({ isOpen, onClose, item, users, onViewDetails, cust
     };
 
     return (
-        <div className="modal-backdrop" onClick={onClose}>
+        <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 1050 }}>
             <div className="modal-content details-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>جزئیات {isProject ? 'پروژه' : isActivity ? 'فعالیت' : 'اقدام'}</h3>
