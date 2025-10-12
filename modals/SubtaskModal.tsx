@@ -8,8 +8,9 @@ import { User } from '../types';
 import { JalaliDatePicker, renderPriorityBadge, renderStatusBadge } from '../components';
 import { getTodayString } from '../constants';
 import { toPersianDigits } from '../utils';
+import { EditIcon, DeleteIcon } from '../icons';
 
-export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, approverUsers, currentUser, users, onSave, allActivities, allActions, onRequestAlert }: {
+export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, approverUsers, currentUser, users, onSave, onDelete, allActivities, allActions, onRequestAlert }: {
     isOpen: boolean;
     onClose: () => void;
     parentItem: any;
@@ -18,11 +19,13 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
     currentUser: User | null;
     users: User[];
     onSave: (subtask: any) => void;
+    onDelete: (item: any) => void;
     allActivities: any[];
     allActions: any[];
     onRequestAlert: (props: any) => void;
 }) => {
     const initialSubtaskState = {
+        id: null,
         title: '',
         responsible: '',
         approver: '',
@@ -30,7 +33,7 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
         endDate: getTodayString(),
         priority: 'متوسط'
     };
-    const [newSubtask, setNewSubtask] = useState(initialSubtaskState);
+    const [newSubtask, setNewSubtask] = useState<any>(initialSubtaskState);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
     
@@ -44,15 +47,18 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
         if (isOpen && parentItem && currentUser) {
             const today = getTodayString();
             const parentStart = parentItem.startDate;
-            const parentEnd = parentItem.endDate;
-            setNewSubtask({
-                ...initialSubtaskState,
-                approver: currentUser.username,
-                startDate: moment(today).isBefore(parentStart) ? parentStart : today,
-                endDate: moment(today).isBefore(parentStart) ? parentStart : today,
-            });
+            // If we are not in edit mode, reset the form
+            if (!newSubtask.id) {
+                 setNewSubtask({
+                    ...initialSubtaskState,
+                    responsible: currentUser.username,
+                    approver: currentUser.username,
+                    startDate: moment(today).isBefore(parentStart) ? parentStart : today,
+                    endDate: moment(today).isBefore(parentStart) ? parentStart : today,
+                });
+            }
         }
-    }, [isOpen, parentItem, currentUser]);
+    }, [isOpen, parentItem, currentUser, newSubtask.id]);
 
     if (!isOpen || !parentItem) return null;
 
@@ -89,7 +95,7 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
         setNewSubtask(updatedSubtask);
     };
 
-    const handleAddSubtask = () => {
+    const handleAddOrUpdateSubtask = () => {
         if (!newSubtask.title || !newSubtask.responsible) {
             onRequestAlert({ title: 'خطا', message: 'لطفا عنوان و مسئول را مشخص کنید.' });
             return;
@@ -106,11 +112,12 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
         <div className="modal-backdrop" onClick={onClose}>
             <div className="modal-content details-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h3>ایجاد زیرفعالیت برای: {parentItem.title}</h3>
+                    <h3>مدیریت زیرفعالیت‌ها برای: {parentItem.title}</h3>
                     <button type="button" className="close-button" onClick={onClose}>&times;</button>
                 </div>
                 <div className="modal-body">
                     <div className="add-user-form">
+                         <h4 style={{gridColumn: '1 / -1', marginBottom: 0 }}>{newSubtask.id ? 'ویرایش زیرفعالیت' : 'افزودن زیرفعالیت جدید'}</h4>
                         <div className="input-group">
                             <label>عنوان زیرفعالیت</label>
                             <input name="title" value={newSubtask.title} onChange={handleChange} />
@@ -154,7 +161,14 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
                                 <option value="زیاد">زیاد</option>
                             </select>
                         </div>
-                        <button className="add-user-button" onClick={handleAddSubtask} style={{ alignSelf: 'flex-end' }}>افزودن</button>
+                        <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-end', gridColumn: '1 / -1', justifyContent: 'flex-end' }}>
+                            {newSubtask.id && (
+                                <button type="button" className="add-user-button cancel-btn" onClick={() => setNewSubtask(initialSubtaskState)}>انصراف از ویرایش</button>
+                            )}
+                            <button className="add-user-button" onClick={handleAddOrUpdateSubtask}>
+                                {newSubtask.id ? 'ذخیره تغییرات' : 'افزودن'}
+                            </button>
+                        </div>
                     </div>
                     
                     <h4 className="list-section-header">زیرفعالیت‌های موجود</h4>
@@ -166,6 +180,7 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
                                     <th>مسئول</th>
                                     <th>وضعیت</th>
                                     <th>اهمیت</th>
+                                    <th>عملیات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -175,10 +190,20 @@ export const SubtaskModal = ({ isOpen, onClose, parentItem, responsibleUsers, ap
                                         <td>{userMap.get(st.responsible) || st.responsible}</td>
                                         <td>{renderStatusBadge(st.status)}</td>
                                         <td>{renderPriorityBadge(st.priority)}</td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                <button className="icon-btn edit-btn" title="ویرایش" onClick={() => setNewSubtask(st)}>
+                                                    <EditIcon />
+                                                </button>
+                                                <button className="icon-btn delete-btn" title="حذف" onClick={() => onDelete(st)}>
+                                                    <DeleteIcon />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan={4} style={{textAlign: 'center'}}>هنوز زیرفعالیتی تعریف نشده است.</td>
+                                        <td colSpan={5} style={{textAlign: 'center'}}>هنوز زیرفعالیتی تعریف نشده است.</td>
                                     </tr>
                                 )}
                             </tbody>

@@ -133,14 +133,14 @@ const App = () => {
     
     const userMap = useMemo(() => new Map(users.map(u => [u.username, u.full_name || u.username])), [users]);
 
-    const getActionDescendantIds = useCallback((parentId: number, allActionsList: any[]): number[] => {
-        const children = allActionsList.filter(a => a.parent_id === parentId);
+    const getDescendantIds = useCallback((parentId: number, allItemsList: any[]): number[] => {
+        const children = allItemsList.filter(a => a.parent_id === parentId);
         if (children.length === 0) {
             return [];
         }
         let descendantIds: number[] = children.map(c => c.id);
         children.forEach(child => {
-            descendantIds.push(...getActionDescendantIds(child.id, allActionsList));
+            descendantIds.push(...getDescendantIds(child.id, allItemsList));
         });
         return descendantIds;
     }, []);
@@ -769,7 +769,7 @@ const App = () => {
             onConfirm: async () => {
                 setIsActionLoading(true);
                 try {
-                    const descendantIds = getActionDescendantIds(actionId, allActions);
+                    const descendantIds = getDescendantIds(actionId, allActions);
                     const idsToDelete = [actionId, ...descendantIds];
     
                     const { error } = await supabase.from('actions').delete().in('id', idsToDelete);
@@ -851,42 +851,120 @@ const App = () => {
     const handleSaveSubtask = async (subtask: any) => {
         setIsActionLoading(true);
         try {
-            const { parentItem, ...newSubtaskPayload } = subtask;
-            const tableName = parentItem.type === 'activity' ? 'activities' : 'actions';
+            const { parentItem, ...subtaskData } = subtask;
+            const isActivitySubtask = parentItem.type === 'activity';
+            const isUpdate = !!subtaskData.id;
             
-            const payload: any = { 
-                ...newSubtaskPayload, 
-                owner: loggedInUser!.username,
-                history: [{ status: 'ایجاد شده - شروع نشده', user: loggedInUser!.username, date: new Date().toISOString() }],
-                kanban_order: Date.now(),
-                parent_id: parentItem.id,
-                use_workflow: parentItem.use_workflow
-            };
-
-            if (parentItem.type === 'activity' && parentItem.project_id) {
-                payload.project_id = parentItem.project_id;
+            let payload: any = { ...subtaskData }; // Make a mutable copy
+    
+            // Remove transient UI properties from payload before saving
+            delete payload.parentName; 
+            delete payload.isDelegated;
+            delete payload.isSubtask;
+            delete payload.type;
+    
+            if (isActivitySubtask) {
+                const tableName = 'activities';
+                
+                if (isUpdate) {
+                    // To robustly fix the "clearing is not done" issue, we will explicitly
+                    // build a payload with only the fields that can be edited in the modal.
+                    // This prevents any unwanted fields from being sent in the update request.
+                    const updatePayload = {
+                        title: subtaskData.title,
+                        responsible: subtaskData.responsible,
+                        approver: subtaskData.approver,
+                        startDate: subtaskData.startDate,
+                        endDate: subtaskData.endDate,
+                        priority: subtaskData.priority,
+                    };
+                    
+                    const { error } = await supabase.from(tableName).update(updatePayload).eq('id', subtaskData.id);
+                    handleSupabaseError(error, 'updating activity subtask');
+                    if (error) throw error;
+    
+                } else { // Insert
+                    delete payload.unit;
+                    delete payload.use_workflow;
+                    delete payload.id;
+                    const parentProject = projects.find(p => p.id === parentItem.project_id);
+                    payload.project_id = parentItem.project_id;
+                    payload.parent_id = parentItem.id;
+                    payload.owner = parentProject?.owner; // Set default owner from project
+                    payload.history = [{ status: 'ایجاد شده - شروع نشده', user: loggedInUser!.username, date: new Date().toISOString() }];
+                    payload.kanban_order = Date.now();
+                    
+                    const { error } = await supabase.from(tableName).insert(payload);
+                    handleSupabaseError(error, 'creating activity subtask');
+                    if (error) throw error;
+                }
+    
+            } else { // Action Subtask
+                const tableName = 'actions';
+    
+                // Fields not in 'actions' table
+                delete payload.project_id;
+    
+                if (isUpdate) {
+                    const { error } = await supabase.from(tableName).update(payload).eq('id', payload.id);
+                    handleSupabaseError(error, 'updating action subtask');
+                    if (error) throw error;
+                } else { // Insert
+                    delete payload.id;
+                    payload.parent_id = parentItem.id;
+                    payload.unit = parentItem.unit;
+                    payload.use_workflow = parentItem.use_workflow;
+                    payload.owner = loggedInUser!.username; // Creator is owner
+                    payload.history = [{ status: 'ایجاد شده - شروع نشده', user: loggedInUser!.username, date: new Date().toISOString() }];
+                    payload.kanban_order = Date.now();
+    
+                    const { error } = await supabase.from(tableName).insert(payload);
+                    handleSupabaseError(error, 'creating action subtask');
+                    if (error) throw error;
+                }
             }
             
-            const { error } = await supabase.from(tableName).insert(payload);
-            handleSupabaseError(error, 'creating subtask');
-
-            if (!error) {
-                await fetchData();
-            } else {
-                 handleRequestAlert({
-                    title: 'خطا در ذخیره‌سازی',
-                    message: 'زیرفعالیت ذخیره نشد. لطفا دوباره تلاش کنید.'
-                });
-            }
-
-        } catch(e: any) {
+            await fetchData();
+    
+        } catch (e: any) {
             handleRequestAlert({
                 title: 'خطا در ذخیره‌سازی',
-                message: `زیرفعالیت ذخیره نشد: ${e.message}`
+                message: `عملیات روی زیرمجموعه با خطا مواجه شد: ${e.message}`
             });
         } finally {
             setIsActionLoading(false);
         }
+    };
+
+    const handleDeleteSubtask = (itemToDelete: any) => {
+        handleRequestConfirmation({
+            title: 'حذف زیرمجموعه',
+            message: `آیا از حذف زیرمجموعه "${itemToDelete.title}" اطمینان دارید؟ این عمل تمام زیرمجموعه‌های آن را نیز حذف خواهد کرد.`,
+            onConfirm: async () => {
+                setIsActionLoading(true);
+                try {
+                    // FIX: Correctly identify the item type. The object passed from the modal
+                    // might not have a `type` property. Checking for `project_id` is a reliable way
+                    // to distinguish an activity from an action.
+                    const isActivity = !!itemToDelete.project_id;
+                    const tableName = isActivity ? 'activities' : 'actions';
+                    
+                    const allItemsForType = isActivity ? allActivities : allActions;
+
+                    const descendantIds = getDescendantIds(itemToDelete.id, allItemsForType);
+                    const idsToDelete = [itemToDelete.id, ...descendantIds];
+
+                    const { error } = await supabase.from(tableName).delete().in('id', idsToDelete);
+                    handleSupabaseError(error, 'deleting subtask and descendants');
+
+                    if (!error) {
+                        await fetchData();
+                    }
+                } finally {
+                    setIsActionLoading(false);
+                }
+            }
+        });
     };
 
     const globalApprovalHistory = React.useMemo(() => {
@@ -1438,8 +1516,9 @@ const App = () => {
         setNotesModalProps({ isOpen: true, item, viewMode });
     };
 
+    // FIX: Added the missing 'handleCloseNotesModal' function to properly close the NotesModal.
     const handleCloseNotesModal = () => {
-        setNotesModalProps({ isOpen: false, item: null, viewMode: 'responsible' });
+        setNotesModalProps({ isOpen: false, item: null as any, viewMode: 'responsible' });
     };
 
     const handleAiAnalysisRequest = () => {
@@ -1773,6 +1852,7 @@ const supabaseAnonKey = '...';`}
                 currentUser={loggedInUser}
                 users={users} 
                 onSave={handleSaveSubtask} 
+                onDelete={handleDeleteSubtask}
                 allActivities={allActivities} 
                 allActions={allActions} 
                 onRequestAlert={handleRequestAlert} 
