@@ -20,7 +20,7 @@ interface WebhookPayload {
 }
 
 // The main URL of your application to be placed in the email links
-const APP_URL = 'https://tms.parspmi.ir'; // <-- This has been updated to your application's address
+const APP_URL = 'https://tms.parspmi.ir';
 
 serve(async (req) => {
   // Ensure the request is a POST request
@@ -61,8 +61,8 @@ serve(async (req) => {
       `;
     }
     // Scenarios 2 & 3: A task is updated (UPDATE)
-    else if (type === 'UPDATE') {
-      // Scenario 2: Sent for approval
+    else if (type === 'UPDATE' && old_record) {
+      // Scenario 2: Sent for approval (status changes TO 'ارسال برای تایید')
       if (old_record.status !== 'ارسال برای تایید' && record.status === 'ارسال برای تایید') {
         toUsername = record.approver; // Email is sent to the approver
         subject = `[سامانه مدیریت وظایف] درخواست تایید برای: ${record.title}`;
@@ -79,17 +79,30 @@ serve(async (req) => {
           </div>
         `;
       }
-      // Scenario 3: Review result (approved or rejected)
+      // Scenario 3: Review result (status changes FROM 'ارسال برای تایید')
       else if (old_record.status === 'ارسال برای تایید' && record.status !== 'ارسال برای تایید') {
-        toUsername = record.responsible; // Email is sent to the task owner
-        const decision = record.approvalStatus === 'approved' ? 'تایید شد' : 'رد شد';
-        const decisionColor = record.approvalStatus === 'approved' ? '#28a745' : '#dc3545';
+        toUsername = record.responsible; // Email is sent to the person responsible for the task
+        
+        let decision = '';
+        let decisionColor = '';
+
+        // Determine if it was an approval or rejection by checking if the new status matches the requested one
+        if (record.status === old_record.requestedStatus) {
+            decision = 'تایید شد';
+            decisionColor = '#28a745'; // green
+        } else { // If the new status is not what was requested, it must have been rejected
+            decision = 'رد شد';
+            decisionColor = '#dc3545'; // red
+        }
+        
+        // Get the status that was being requested from the old record
+        const requestedStatusText = old_record.requestedStatus;
         
         subject = `[سامانه مدیریت وظایف] نتیجه بررسی: "${record.title}" ${decision}`;
         htmlBody = `
           <div dir="rtl" style="font-family: tahoma, sans-serif; text-align: right;">
             <h2>سلام،</h2>
-            <p>درخواست تایید شما برای وظیفه <strong>"${record.title}"</strong> بررسی و نتیجه آن به شرح زیر است:</p>
+            <p>درخواست شما برای تغییر وضعیت وظیفه <strong>"${record.title}"</strong> به حالت <strong>"${requestedStatusText}"</strong> بررسی و نتیجه آن به شرح زیر است:</p>
             <p style="font-size: 1.2em; font-weight: bold; color: ${decisionColor};">وضعیت: ${decision}</p>
             <p>برای مشاهده جزئیات بیشتر به کارتابل وظایف خود مراجعه کنید.</p>
             <a href="${APP_URL}" style="display: inline-block; padding: 10px 20px; background-color: #e94560; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px;">

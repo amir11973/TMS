@@ -20,12 +20,12 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
     items: any[];
     currentUser: any;
     onApprovalDecision: (item: any, decision: string) => void;
-    onShowHistory: (history: any[]) => void;
+    onShowHistory: (item: any) => void;
     onShowGlobalHistory: () => void;
     onViewDetails: (item: any) => void;
     onShowInfo: (item: any) => void;
     users: User[];
-    onOpenNotesModal: (item: any, viewMode: 'responsible' | 'approver') => void;
+    onOpenNotesModal: (item: any, viewMode: 'responsible' | 'approver', readOnly?: boolean) => void;
 }) => {
     
     if (!Array.isArray(items)) {
@@ -112,10 +112,10 @@ export const ApprovalsPage = ({ items, onApprovalDecision, onShowHistory, onShow
                                                                     <button className="icon-btn details-btn" title="جزئیات" onClick={() => onViewDetails(item)}>
                                                                         <DetailsIcon />
                                                                     </button>
-                                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item.history)}>
+                                                                    <button className="icon-btn history-btn" title="تاریخچه" onClick={() => onShowHistory(item)}>
                                                                         <HistoryIcon />
                                                                     </button>
-                                                                    <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'approver')}>
+                                                                    <button className="icon-btn" style={{color: '#a0a0a0'}} title="یادداشت‌ها" onClick={() => onOpenNotesModal(item, 'approver', true)}>
                                                                         <NotesIcon />
                                                                     </button>
                                                                     {(approvalRequestInfo?.comment || approvalRequestInfo?.fileUrl) && (

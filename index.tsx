@@ -113,7 +113,7 @@ const App = () => {
     const [isChatbotOpen, setIsChatbotOpen] = useState(false);
     const [isAiAnalysisModalOpen, setIsAiAnalysisModalOpen] = useState(false);
 
-    const [notesModalProps, setNotesModalProps] = useState({ isOpen: false, item: null as any, viewMode: 'responsible' as 'responsible' | 'approver' });
+    const [notesModalProps, setNotesModalProps] = useState({ isOpen: false, item: null as any, viewMode: 'responsible' as 'responsible' | 'approver', readOnly: false });
 
     const [isCustomFieldModalOpen, setIsCustomFieldModalOpen] = useState(false);
     const [editingCustomField, setEditingCustomField] = useState<CustomField | null>(null);
@@ -1344,12 +1344,14 @@ const App = () => {
         };
 
         const userTasks = [
-            ...allActivities.map(a => {
+            // FIX: Explicitly type 'a' as 'any' to prevent 'unknown' type inference on 'project'.
+            ...allActivities.map((a: any) => {
                 const project = projectMap.get(a.project_id);
                 return { ...a, type: 'activity', owner: project?.owner };
             }),
-            ...allActions.map(a => ({ ...a, type: 'action' })),
-        ].filter(item => item.responsible === loggedInUser.username);
+            // FIX: Explicitly type 'a' as 'any' to prevent 'unknown' type inference later.
+            ...allActions.map((a: any) => ({ ...a, type: 'action' })),
+        ].filter((item: any) => item.responsible === loggedInUser.username);
         
         return userTasks.map((item: any) => ({
             ...item,
@@ -1515,13 +1517,13 @@ const App = () => {
         }
     };
 
-    const handleOpenNotesModal = (item: any, viewMode: 'responsible' | 'approver') => {
-        setNotesModalProps({ isOpen: true, item, viewMode });
+    const handleOpenNotesModal = (item: any, viewMode: 'responsible' | 'approver', readOnly = false) => {
+        setNotesModalProps({ isOpen: true, item, viewMode, readOnly });
     };
 
     // FIX: Added the missing 'handleCloseNotesModal' function to properly close the NotesModal.
     const handleCloseNotesModal = () => {
-        setNotesModalProps({ isOpen: false, item: null as any, viewMode: 'responsible' });
+        setNotesModalProps({ isOpen: false, item: null as any, viewMode: 'responsible', readOnly: false });
     };
 
     const handleAiAnalysisRequest = () => {
@@ -1898,6 +1900,7 @@ const supabaseAnonKey = '...';`}
                 viewMode={notesModalProps.viewMode}
                 currentUser={loggedInUser}
                 users={users}
+                readOnly={notesModalProps.readOnly}
             />
             {loggedInUser && (
                 <AiAnalysisModal

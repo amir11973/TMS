@@ -1310,6 +1310,7 @@ body.theme-light .header {
   display: flex;
   gap: 0.25rem;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .action-buttons button:not(.icon-btn) {
@@ -1611,7 +1612,7 @@ body.theme-light .status-badge.status-workflow-disabled { background-color: #343
 
 .cancel-btn { background-color: var(--c-header); color: var(--c-text); }
 .save-btn { background-color: var(--c-primary); color: white; }
-.cancel-btn:hover { background-color: #2a4a7a; }
+.cancel-btn:hover { background-color: #2a4a7a; color: white; }
 .save-btn:hover { background-color: #d43751; }
 .modal-footer .confirm-btn-danger { background-color: var(--c-danger); color: white; }
 .modal-footer .confirm-btn-danger:hover { background-color: #c82333; }
@@ -2381,4 +2382,4 @@ body.theme-light .kanban-card.delegated-task {
     display: inline-block; /* Allow wrapping */
     line-height: 1.4;      /* Better readability for multiline */
     padding: 0.35rem 0.5rem; /* Adjust padding for wrapped text */
-}]
+}

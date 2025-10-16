@@ -95,10 +95,10 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     const typeData = useMemo(() => {
         // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
         // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
-        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
+        const counts = allItems.reduce((acc, item) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return [
             { name: 'پروژه', value: counts['پروژه'] || 0, color: '#e94560' },
             { name: 'اقدام', value: counts['اقدام'] || 0, color: '#17a2b8' },
@@ -108,11 +108,11 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     const statusData = useMemo(() => {
         // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
         // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
-        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
+        const counts = allItems.reduce((acc, item) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
          return [
             { name: 'شروع نشده', value: counts['شروع نشده'] || 0, color: '#888' },
             { name: 'در حال اجرا', value: counts['در حال اجرا'] || 0, color: '#ffc107' },
@@ -123,12 +123,12 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     const responsibleData = useMemo(() => {
         // FIX: Explicitly typing the accumulator of the reduce function ensures 'counts' is correctly typed as Record<string, number>, resolving arithmetic operation errors.
         // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
-        const counts = allItems.reduce((acc: Record<string, number>, item: any) => {
+        const counts = allItems.reduce((acc, item) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
             return acc;
-        }, {});
+        }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, value], index) => ({ 
             name: userMap.get(name) || name, 
             value,
