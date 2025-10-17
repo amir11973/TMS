@@ -71,6 +71,7 @@ export const ChatbotModal = ({
     const [isLoading, setIsLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const finalTranscriptRef = useRef('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -78,11 +79,11 @@ export const ChatbotModal = ({
             setMessages([
                 { id: 1, text: 'سلام! من دستیار هوشمند شما هستم. چطور می‌توانم کمکتان کنم؟ می‌توانید یکی از سوالات زیر را انتخاب کنید یا سوال خود را تایپ کنید.', sender: 'bot' }
             ]);
+            setInput('');
         } else {
              // Stop listening if modal is closed
-            if (isListening) {
-                recognitionRef.current?.stop();
-                setIsListening(false);
+            if (recognitionRef.current && isListening) {
+                recognitionRef.current.stop();
             }
         }
     }, [isOpen]);
@@ -96,61 +97,62 @@ export const ChatbotModal = ({
         }
 
         const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'fa-IR';
 
+        recognition.onstart = () => {
+            setIsListening(true);
+        };
+
         recognition.onresult = (event) => {
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcriptPart = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscriptRef.current += transcriptPart;
+                } else {
+                    interimTranscript += transcriptPart;
+                }
             }
-            setInput(transcript);
+            setInput(finalTranscriptRef.current + interimTranscript);
         };
 
         recognition.onerror = (event) => {
             let errorMessage = 'خطای نامشخص در تشخیص گفتار رخ داد.';
             
-            // FIX: Gracefully handle various speech recognition errors with user-friendly messages.
             switch (event.error) {
                 case 'no-speech':
-                    console.log("No speech detected, stopping recognition.");
-                    setIsListening(false);
-                    return; // Don't show an alert for this common case.
+                    console.log("No speech detected.");
+                    return; 
                 case 'not-allowed':
-                    errorMessage = 'دسترسی به میکروفون رد شد. لطفاً در تنظیمات مرورگر خود این دسترسی را فعال کنید.';
+                case 'service-not-allowed':
+                    errorMessage = 'دسترسی به میکروفون رد شد. لطفاً در تنظیمات مرورگر خود این دسترسی را فعال کرده و صفحه را دوباره بارگذاری کنید.';
                     break;
                 case 'network':
                     errorMessage = 'خطای شبکه در سرویس تشخیص گفتار. لطفاً اتصال اینترنت خود را بررسی کنید.';
                     break;
-                case 'service-not-allowed':
-                    errorMessage = 'سرویس تشخیص گفتار توسط مرورگر یا سیستم عامل مجاز نیست.';
-                    break;
                 case 'audio-capture':
-                    errorMessage = 'مشکلی در دریافت صدا از میکروفون به وجود آمد.';
+                    errorMessage = 'مشکلی در دریافت صدا از میکروفون به وجود آمد. لطفاً مطمئن شوید میکروفون دیگری از آن استفاده نمی‌کند.';
                     break;
             }
 
             console.error('Speech recognition error', event.error, event.message);
-            if (onRequestAlert) {
-                onRequestAlert({ title: 'خطای تشخیص گفتار', message: errorMessage });
-            } else {
-                // Fallback if prop is not passed for some reason
-                alert(errorMessage);
-            }
-            setIsListening(false);
+            onRequestAlert({ title: 'خطای تشخیص گفتار', message: errorMessage });
         };
 
         recognition.onend = () => {
             setIsListening(false);
         };
         
-        recognitionRef.current = recognition;
-
         return () => {
-            recognition.stop();
+            if(recognition) {
+               recognition.stop();
+            }
         };
-    }, []);
+    }, [onRequestAlert]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -159,22 +161,28 @@ export const ChatbotModal = ({
     if (!isOpen || !currentUser) return null;
 
     const handleToggleListen = () => {
-        if (!recognitionRef.current) return;
+        if (!recognitionRef.current) {
+            onRequestAlert({ title: 'پشتیبانی نمی‌شود', message: 'متاسفانه مرورگر شما از قابلیت تشخیص گفتار پشتیبانی نمی‌کند. لطفاً از آخرین نسخه گوگل کروم در دسکتاپ یا اندروید استفاده کنید.' });
+            return;
+        }
         
         if (isListening) {
             recognitionRef.current.stop();
         } else {
+            finalTranscriptRef.current = '';
             setInput('');
-            recognitionRef.current.start();
+            try {
+                recognitionRef.current.start();
+            } catch (err) {
+                console.error("Error starting speech recognition:", err);
+            }
         }
-        setIsListening(!isListening);
     };
 
     const handleSend = async (question: string) => {
         if (!question.trim() || isLoading) return;
         if (isListening) {
             recognitionRef.current?.stop();
-            setIsListening(false);
         }
 
         const newUserMessage: Message = { id: Date.now(), text: question, sender: 'user' };

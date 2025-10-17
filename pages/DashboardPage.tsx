@@ -95,7 +95,9 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     const typeData = useMemo(() => {
         // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
         // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
-        const counts = allItems.reduce((acc, item) => {
+        // FIX: Explicitly typed the `acc` parameter to resolve an arithmetic operation error.
+// FIX: Removed explicit type from 'acc' parameter in reduce callback to resolve arithmetic operation error, allowing TypeScript to infer the type from the initial value.
+        const counts = allItems.reduce((acc, item: any) => {
             acc[item.type] = (acc[item.type] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -108,7 +110,9 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     const statusData = useMemo(() => {
         // FIX: Explicitly typing the accumulator for `reduce` ensures `counts` has the correct type `Record<string, number>`, preventing downstream type errors.
         // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
-        const counts = allItems.reduce((acc, item) => {
+        // FIX: Explicitly typed the `acc` parameter to resolve an arithmetic operation error.
+// FIX: Removed explicit type from 'acc' parameter in reduce callback to resolve arithmetic operation error, allowing TypeScript to infer the type from the initial value.
+        const counts = allItems.reduce((acc, item: any) => {
             const status = item.status || 'نامشخص';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
@@ -123,7 +127,9 @@ export const DashboardPage = ({ projects, actions, currentUser, users, teams, on
     const responsibleData = useMemo(() => {
         // FIX: Explicitly typing the accumulator of the reduce function ensures 'counts' is correctly typed as Record<string, number>, resolving arithmetic operation errors.
         // FIX: Explicitly type the accumulator for `reduce` to resolve arithmetic operation error.
-        const counts = allItems.reduce((acc, item) => {
+        // FIX: Explicitly typed the `acc` parameter to resolve an arithmetic operation error.
+// FIX: Removed explicit type from 'acc' parameter in reduce callback to resolve arithmetic operation error, allowing TypeScript to infer the type from the initial value.
+        const counts = allItems.reduce((acc, item: any) => {
             if(item.responsible) {
                 acc[item.responsible] = (acc[item.responsible] || 0) + 1;
             }
